@@ -21,10 +21,6 @@
 :root[data-theme="dark"] { --paper: #11161B; --card: #192028; --ink: #E5EAEE; --muted: #98A3AE; --line: #2B343E; --accent: #8098FF; --accent-soft: #1F2848; color-scheme: dark; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
-.topnav { background: var(--card); border-bottom: 1px solid var(--line); }
-.topnav-in { max-width: 1040px; margin: 0 auto; padding: 10px 20px; }
-.brand { font-family: var(--f-display); font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
-.brand i { font-style: normal; color: var(--accent); }
 .wrap { max-width: 1040px; margin: 0 auto; padding: 36px 20px 64px; display: grid; gap: 28px; }
 header { display: grid; gap: 8px; }
 h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw, 36px); letter-spacing: -0.02em; margin: 0; }
@@ -44,15 +40,15 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
 .byline { margin: 0; font-size: 14.5px; color: var(--ink); }
 .byline a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .byline a:hover { text-decoration: underline; }
-.note { margin: 4px 0 0; padding: 10px 14px; max-width: 72ch; font-size: 13.5px; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; }
 </style>
 </head>
 <body>
 <main class="wrap">
   <header>
     <h1>Tools per la Didattica</h1>
-    <p class="byline">Sviluppati da <a href="https://mensae.github.io/">Enrico Mensa</a>, Dipartimento di Informatica, Università di Torino.</p>
-    <p class="note">Questi strumenti hanno scopo didattico e per questo contengono semplificazioni rispetto al funzionamento reale dei sistemi. Sono stati sviluppati con l'ausilio di agenti di coding.</p>
+    <p class="lede">Una serie di strumenti per l'ausilio alla didattica dell'informatica.</p>
+    <p class="byline">— <a href="https://mensae.github.io/">Enrico Mensa</a>, Dipartimento di Informatica, Università di Torino.</p>
+    <p class="lede">Questi strumenti hanno scopo didattico e per questo contengono semplificazioni rispetto al funzionamento reale dei sistemi. Sono stati sviluppati con l'ausilio di agenti di coding.</p>
   </header>
   <section class="group">
   <h2 class="section">Introduzione all'Informatica</h2>
