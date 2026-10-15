@@ -29,3 +29,8 @@ jobs:
             **/.github/**
             **/.DS_Store
             README.md
+            **/config.php
+            **/.env
+            **/auth.local.php
+            **/auth.local.example.php
+            embeddings/data/**

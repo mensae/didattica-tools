@@ -1,0 +1,60 @@
+{
+    "__meta__": {
+        "notes": "",
+        "view": {
+            "position": [
+                11.60559,
+                6.50289,
+                -2.305185
+            ],
+            "target": [
+                0,
+                0,
+                0
+            ],
+            "distance": 13.501526
+        },
+        "settings": {
+            "scale": 1.4,
+            "axisExtent": 7,
+            "displayMode": "arrow",
+            "showVectorNames": true,
+            "showPlotLegend": true,
+            "showPlane": true,
+            "showAxisNames": true,
+            "autoRotateEnabled": true
+        }
+    },
+    "__ungrouped__": {
+        "ungrouped": true,
+        "vectors": [
+            {
+                "vector_name": "cane",
+                "coordinates": [
+                    1,
+                    2,
+                    2
+                ],
+                "color": "#4a90d9"
+            },
+            {
+                "vector_name": "gatto",
+                "coordinates": [
+                    1.4164285714285716,
+                    1.5364285714285715,
+                    2.142857142857143
+                ],
+                "color": "#d94a51"
+            },
+            {
+                "vector_name": "democrazia",
+                "coordinates": [
+                    -2.142857142857143,
+                    -2.1107142857142858,
+                    -1.4285714285714286
+                ],
+                "color": "#95d115"
+            }
+        ]
+    }
+}

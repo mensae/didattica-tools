@@ -1,20 +1,17 @@
-# Didattica Tools
+# Tools per la Didattica
 
-Pagine HTML interattive da usare a lezione per spiegare i fondamenti dell'informatica: si esplorano passo per passo, con dati veri o con simulazioni della macchina. Ogni pagina è autonoma (un solo file, nessuna dipendenza da installare) e `index.html` le collega tutte.
+Strumenti interattivi da usare a lezione per spiegare l'informatica, uno per argomento. Invece di guardare uno schema fermo, si fa avanzare la simulazione un passo alla volta, si cambiano i valori e si vede subito cosa succede. `index.html` raccoglie tutti i tool.
 
-Sviluppate da [Enrico Mensa](https://mensae.github.io/), Dipartimento di Informatica, Università di Torino, con l'ausilio di agenti di coding. Hanno scopo didattico e per questo contengono semplificazioni rispetto al funzionamento reale dei sistemi.
+Sviluppati da [Enrico Mensa](https://mensae.github.io/), Dipartimento di Informatica, Università di Torino, con l'ausilio di agenti di coding. Hanno scopo didattico e per questo contengono semplificazioni rispetto al funzionamento reale dei sistemi.
 
-## Pagine
+## Introduzione all'Informatica
 
-- **[Rappresentazione delle informazioni](rappresentazione.html)**: come caratteri, numeri, immagini, video e audio diventano bit, con conversioni tra basi e calcolo dello spazio occupato.
-- **[Architettura degli elaboratori](architettura.html)**: CPU e RAM al lavoro sul ciclo di esecuzione di un programma, istruzione per istruzione, più esercizi sui salti condizionali.
-- **[Processi e memoria virtuale](processi.html)**: tre programmi che si alternano su una sola CPU, con cambi di contesto, page fault, area di swap e coda del disco.
+Pagine HTML autonome, in [`intro-informatica/`](intro-informatica/): ognuna è un solo file e funziona anche aprendola direttamente nel browser.
 
-## Pubblicazione
+- **[Rappresentazione delle informazioni](intro-informatica/rappresentazione.html)**: come diventano bit le informazioni che usiamo ogni giorno. Mostra come un testo viene salvato su disco byte per byte, con la tabella ASCII, e converte i numeri tra binario, decimale ed esadecimale. Calcola quanto pesano un'immagine, un file audio e un video, con esempi pronti e con valori scelti da chi la usa.
+- **[Architettura degli elaboratori](intro-informatica/architettura.html)**: CPU e RAM eseguono un piccolo programma, un'istruzione alla volta, mentre registri, program counter e memoria si aggiornano a ogni passo. Una seconda parte introduce i salti condizionali, con un esercizio.
+- **[Processi e memoria virtuale](intro-informatica/processi.html)**: tre programmi aperti si dividono una sola CPU. Si vede il sistema operativo che salva e ripristina il contesto di ogni processo, gestisce i page fault, sposta pagine tra RAM e area di swap e mette in coda le richieste al disco.
 
-Ogni push su `main` pubblica il sito via FTP tramite il workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). Il workflow usa quattro secrets del repository (Settings → Secrets and variables → Actions):
+## Altri Tools
 
-- `FTP_SERVER`: host FTP
-- `FTP_USERNAME`: utente FTP
-- `FTP_PASSWORD`: password di quell'utente
-- `FTP_DIR`: cartella di destinazione sul server, con la `/` finale
+- **[Visualizzatore di embedding](embeddings/)**: mostra parole e concetti come vettori in uno spazio 3D, da ruotare ed esplorare, per far vedere che termini con significato simile finiscono vicini. Ha alcuni dataset di esempio (frutti, veicoli e pianeti; una parola ambigua come "pesca"; i vicini di "computer"). I vettori si raggruppano per colore e si possono mostrare come frecce o come punti; i dataset si importano ed esportano in JSON. Chiunque può consultarlo in modalità ospite, mentre per creare, modificare o cancellare i dataset serve una password. È in PHP: per installarlo, copia `embeddings/auth.local.example.php` in `auth.local.php` e riempilo seguendo le istruzioni nel file.

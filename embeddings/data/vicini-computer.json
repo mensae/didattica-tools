@@ -1,0 +1,119 @@
+{
+    "__meta__": {
+        "notes": "",
+        "view": {
+            "position": [
+                10.246009,
+                9.284071,
+                -11.947118
+            ],
+            "target": [
+                0,
+                0,
+                0
+            ],
+            "distance": 18.273157,
+            "viewMode": "3d",
+            "viewPlane": "yz",
+            "zoom": 1.525228
+        },
+        "settings": {
+            "scale": 5.4,
+            "axisExtent": 7,
+            "displayMode": "point",
+            "showVectorNames": true,
+            "showPlotLegend": true,
+            "showPlane": true,
+            "showAxisNames": true,
+            "autoRotateEnabled": false
+        }
+    },
+    "Target Word": {
+        "group_name": "Target Word",
+        "color": "#d62728",
+        "vectors": [
+            {
+                "vector_name": "computer",
+                "coordinates": [
+                    0.790137,
+                    0.000719,
+                    0.533022
+                ]
+            }
+        ]
+    },
+    "Nearest Neighbors": {
+        "group_name": "Nearest Neighbors",
+        "color": "#1f77b4",
+        "vectors": [
+            {
+                "vector_name": "computers",
+                "coordinates": [
+                    0.743387,
+                    0.083862,
+                    0.470908
+                ]
+            },
+            {
+                "vector_name": "software",
+                "coordinates": [
+                    0.69951,
+                    0.104973,
+                    0.639898
+                ]
+            },
+            {
+                "vector_name": "technology",
+                "coordinates": [
+                    0.675032,
+                    -0.18488,
+                    0.590797
+                ]
+            },
+            {
+                "vector_name": "electronic",
+                "coordinates": [
+                    0.660887,
+                    -0.054726,
+                    0.609362
+                ]
+            },
+            {
+                "vector_name": "internet",
+                "coordinates": [
+                    0.655011,
+                    -0.039702,
+                    0.591602
+                ]
+            }
+        ]
+    },
+    "Contrast: banana": {
+        "group_name": "Contrast: banana",
+        "color": "#2ca02c",
+        "vectors": [
+            {
+                "vector_name": "banana",
+                "coordinates": [
+                    -0.410163,
+                    0.489097,
+                    0.758615
+                ]
+            }
+        ]
+    },
+    "Contrast: ocean": {
+        "group_name": "Contrast: ocean",
+        "color": "#9467bd",
+        "vectors": [
+            {
+                "vector_name": "ocean",
+                "coordinates": [
+                    -0.209276,
+                    -0.674311,
+                    0.683737
+                ]
+            }
+        ]
+    }
+}

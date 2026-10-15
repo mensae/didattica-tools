@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lezioni interattive</title>
+<title>Tools per la Didattica</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -38,6 +38,8 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
 .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 6px; }
 .tags span { font-family: var(--f-mono); font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); }
+.group { display: grid; gap: 14px; }
+.section { margin: 0; font-family: var(--f-display); font-size: 15px; font-weight: 700; letter-spacing: .02em; color: var(--muted); text-transform: uppercase; }
 .go { font-weight: 600; font-size: 14px; color: var(--accent); }
 .byline { margin: 0; font-size: 14.5px; color: var(--ink); }
 .byline a { color: var(--accent); font-weight: 600; text-decoration: none; }
@@ -46,34 +48,47 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
 </style>
 </head>
 <body>
-<nav class="topnav"><div class="topnav-in"><span class="brand">Lezioni <i>interattive</i></span></div></nav>
+<nav class="topnav"><div class="topnav-in"><span class="brand">Tools per la <i>Didattica</i></span></div></nav>
 <main class="wrap">
   <header>
-    <h1>Lezioni interattive</h1>
-    <p class="lede">Pagine da usare in classe: si esplorano passo per passo, con dati veri o con simulazioni della macchina.</p>
-    <p class="byline">Sviluppate da <a href="https://mensae.github.io/">Enrico Mensa</a>, Dipartimento di Informatica, Università di Torino.</p>
+    <h1>Tools per la Didattica</h1>
+    <p class="byline">Sviluppati da <a href="https://mensae.github.io/">Enrico Mensa</a>, Dipartimento di Informatica, Università di Torino.</p>
     <p class="note">Questi strumenti hanno scopo didattico e per questo contengono semplificazioni rispetto al funzionamento reale dei sistemi. Sono stati sviluppati con l'ausilio di agenti di coding.</p>
   </header>
+  <section class="group">
+  <h2 class="section">Introduzione all'Informatica</h2>
   <ul class="cards">
-    <li><a class="card" href="rappresentazione.html">
+    <li><a class="card" href="intro-informatica/rappresentazione.html">
       <span class="num">01</span>
       <h2>Rappresentazione delle informazioni</h2>
       <p>Come diventano bit i caratteri, i numeri, le immagini, i video e l'audio, e quanto pesano.</p>
       <div><div class="tags"><span>Caratteri</span><span>Conversioni</span><span>Immagini</span><span>Video</span><span>Audio</span></div></div>
     </a></li>
-    <li><a class="card" href="architettura.html">
+    <li><a class="card" href="intro-informatica/architettura.html">
       <span class="num">02</span>
       <h2>Architettura degli elaboratori</h2>
       <p>CPU e RAM al lavoro: il ciclo di esecuzione di un programma, istruzione per istruzione, e gli esercizi sui salti.</p>
       <div><div class="tags"><span>Ciclo di esecuzione</span><span>Salti condizionali</span></div></div>
     </a></li>
-    <li><a class="card" href="processi.html">
+    <li><a class="card" href="intro-informatica/processi.html">
       <span class="num">03</span>
       <h2>Processi e memoria virtuale</h2>
       <p>Tre programmi aperti si alternano su una sola CPU: cambi di contesto, page fault, area di swap e coda del disco.</p>
       <div><div class="tags"><span>Processi</span><span>Scheduler</span><span>Memoria virtuale</span></div></div>
     </a></li>
   </ul>
+  </section>
+  <section class="group">
+  <h2 class="section">Altri Tools</h2>
+  <ul class="cards">
+    <li><a class="card" href="embeddings/">
+      <span class="num">04</span>
+      <h2>Visualizzatore di embedding</h2>
+      <p>Esplora in 3D come i modelli linguistici rappresentano le parole: termini dal significato simile finiscono vicini nello spazio.</p>
+      <div><div class="tags"><span>Embedding</span><span>NLP</span><span>3D</span></div></div>
+    </a></li>
+  </ul>
+  </section>
 </main>
 </body>
 </html>

@@ -1,0 +1,118 @@
+{
+    "__meta__": {
+        "notes": "",
+        "view": {
+            "position": [
+                -8.205748,
+                3.655843,
+                7.638234
+            ],
+            "target": [
+                0,
+                0,
+                0
+            ],
+            "distance": 11.791612
+        },
+        "settings": {
+            "scale": 6.2,
+            "axisExtent": 12,
+            "displayMode": "arrow",
+            "showVectorNames": true,
+            "showPlotLegend": true,
+            "showPlane": true,
+            "showAxisNames": true,
+            "autoRotateEnabled": false
+        }
+    },
+    "Corpi Celesti": {
+        "group_name": "Corpi Celesti",
+        "color": "#e6194b",
+        "vectors": [
+            {
+                "vector_name": "stella",
+                "coordinates": [
+                    -0.096807,
+                    -0.449684,
+                    0.240882
+                ]
+            },
+            {
+                "vector_name": "pianeta",
+                "coordinates": [
+                    -0.055542,
+                    -0.574048,
+                    0.01615
+                ]
+            },
+            {
+                "vector_name": "galassia",
+                "coordinates": [
+                    0.052086,
+                    -0.653737,
+                    -0.157905
+                ]
+            }
+        ]
+    },
+    "Frutta": {
+        "group_name": "Frutta",
+        "color": "#3cb44b",
+        "vectors": [
+            {
+                "vector_name": "banana",
+                "coordinates": [
+                    0.336011,
+                    0.548361,
+                    0.15269
+                ]
+            },
+            {
+                "vector_name": "uva",
+                "coordinates": [
+                    0.423592,
+                    0.455726,
+                    -0.287138
+                ]
+            },
+            {
+                "vector_name": "limone",
+                "coordinates": [
+                    0.564362,
+                    0.402605,
+                    0.330296
+                ]
+            }
+        ]
+    },
+    "Veicoli": {
+        "group_name": "Veicoli",
+        "color": "#ffe119",
+        "vectors": [
+            {
+                "vector_name": "automobile",
+                "coordinates": [
+                    -0.687916,
+                    0.202253,
+                    0.202247
+                ]
+            },
+            {
+                "vector_name": "camion",
+                "coordinates": [
+                    -0.621729,
+                    0.383487,
+                    0.162245
+                ]
+            },
+            {
+                "vector_name": "bicicletta",
+                "coordinates": [
+                    -0.675799,
+                    0.29258,
+                    0.041311
+                ]
+            }
+        ]
+    }
+}

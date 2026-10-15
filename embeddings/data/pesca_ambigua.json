@@ -1,0 +1,131 @@
+{
+    "__meta__": {
+        "notes": "",
+        "view": {
+            "position": [
+                -5.792099,
+                6.635387,
+                11.042494
+            ],
+            "target": [
+                0,
+                0,
+                0
+            ],
+            "distance": 14.124923,
+            "viewMode": "3d",
+            "viewPlane": "xy",
+            "zoom": 0.999487
+        },
+        "settings": {
+            "scale": 3.6,
+            "axisExtent": 7,
+            "displayMode": "arrow",
+            "showVectorNames": true,
+            "showPlotLegend": false,
+            "showPlane": true,
+            "showAxisNames": false,
+            "autoRotateEnabled": false
+        }
+    },
+    "Frutta": {
+        "group_name": "Frutta",
+        "color": "#3cb44b",
+        "vectors": [
+            {
+                "vector_name": "mela",
+                "coordinates": [
+                    0.5183333333333333,
+                    0.72,
+                    -0.15
+                ]
+            },
+            {
+                "vector_name": "arancia",
+                "coordinates": [
+                    0.78,
+                    0.7155555555555556,
+                    -0.22
+                ]
+            },
+            {
+                "vector_name": "limone",
+                "coordinates": [
+                    0.8502777777777777,
+                    0.4958333333333333,
+                    -0.18
+                ]
+            }
+        ]
+    },
+    "Pesci": {
+        "group_name": "Pesci",
+        "color": "#4363d8",
+        "vectors": [
+            {
+                "vector_name": "tonno",
+                "coordinates": [
+                    -0.8866666666666667,
+                    -0.45111111111111113,
+                    0.7
+                ]
+            },
+            {
+                "vector_name": "salmone",
+                "coordinates": [
+                    -0.5238888888888888,
+                    -0.55,
+                    0.78
+                ]
+            },
+            {
+                "vector_name": "trota",
+                "coordinates": [
+                    -0.72,
+                    -0.7,
+                    0.65
+                ]
+            }
+        ]
+    },
+    "Pesca": {
+        "group_name": "Pesca",
+        "color": "#e6194b",
+        "vectors": []
+    },
+    "__ungrouped__": {
+        "ungrouped": true,
+        "vectors": [
+            {
+                "vector_name": "pesca",
+                "coordinates": [
+                    0.0961111111111111,
+                    0.050277777777777775,
+                    0.6336111111111111
+                ],
+                "visible": false,
+                "color": "#e6194b"
+            },
+            {
+                "vector_name": "Pesca (pesce)",
+                "coordinates": [
+                    -0.4797222222222222,
+                    -0.2177777777777778,
+                    0.9472222222222222
+                ],
+                "visible": false,
+                "color": "#e619d5"
+            },
+            {
+                "vector_name": "Pesca (frutto)",
+                "coordinates": [
+                    0.6791666666666666,
+                    0.566111111111111,
+                    0.2777777777777778
+                ],
+                "visible": false,
+                "color": "#d8e619"
+            }
+        ]
+    }
+}
