@@ -39,6 +39,10 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
 .tags { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 6px; }
 .tags span { font-family: var(--f-mono); font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); }
 .go { font-weight: 600; font-size: 14px; color: var(--accent); }
+.byline { margin: 0; font-size: 14.5px; color: var(--ink); }
+.byline a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.byline a:hover { text-decoration: underline; }
+.note { margin: 4px 0 0; padding: 10px 14px; max-width: 72ch; font-size: 13.5px; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; }
 </style>
 </head>
 <body>
@@ -47,6 +51,8 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
   <header>
     <h1>Lezioni interattive</h1>
     <p class="lede">Pagine da usare in classe: si esplorano passo per passo, con dati veri o con simulazioni della macchina.</p>
+    <p class="byline">Sviluppate da <a href="https://mensae.github.io/">Enrico Mensa</a>, Dipartimento di Informatica, Università di Torino.</p>
+    <p class="note">Questi strumenti hanno scopo didattico e per questo contengono semplificazioni rispetto al funzionamento reale dei sistemi. Sono stati sviluppati con l'ausilio di agenti di coding.</p>
   </header>
   <ul class="cards">
     <li><a class="card" href="rappresentazione.html">
