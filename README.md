@@ -1,6 +1,6 @@
 # Tools per la Didattica
 
-Strumenti interattivi da usare a lezione per spiegare l'informatica, uno per argomento. Invece di guardare uno schema fermo, si fa avanzare la simulazione un passo alla volta, si cambiano i valori e si vede subito cosa succede. `index.html` raccoglie tutti i tool.
+Strumenti didattici interattivi per lezioni di informatica. `index.html` raccoglie tutti i tool.
 
 Sviluppati da [Enrico Mensa](https://mensae.github.io/), Dipartimento di Informatica, Università di Torino, con l'ausilio di agenti di coding. Hanno scopo didattico e per questo contengono semplificazioni rispetto al funzionamento reale dei sistemi.
 
