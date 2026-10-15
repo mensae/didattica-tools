@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Processi e memoria virtuale</title>
+<style>a.brand{color:inherit;text-decoration:none}a.brand:hover{color:var(--accent)}</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: in alto i comandi e la descrizione del passo, sotto lo schema (PCB, CPU, code, RAM, disco), in fondo la vita di Word. */
+:root {
+  --paper: #EFF2EF; --card: #FFFFFF; --ink: #18212B; --muted: #5A6570; --line: #D3D9D5;
+  --accent: #2346C8; --accent-soft: #E3E8FA; --k-soft: #E6E9E7;
+  --rem: #B42F66; --rem-soft: #F8E1EA;
+  /* stati (colori delle slide) */
+  --s-creato: #7FF9FD; --s-pronto: #80FC7E; --s-esec: #C8C6FB; --s-attesa: #FFC36D; --s-term: #FE7F7F; --s-ink: #18212B;
+  /* processi */
+  --pw: #2346C8; --pw-soft: #E3E8FA;
+  --ps: #7A3FC2; --ps-soft: #EEE5FA;
+  --pc: #0D756E; --pc-soft: #DDF0EE;
+  --os: #FFF0B3; --os-line: #D9B21C;
+  --f-display: "Martian Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #11161B; --card: #192028; --ink: #E5EAEE; --muted: #98A3AE; --line: #2B343E;
+    --accent: #8098FF; --accent-soft: #1F2848; --k-soft: #262E37; --rem: #F06E9F; --rem-soft: #3A1A28;
+    --pw: #8098FF; --pw-soft: #1F2848; --ps: #B98CFF; --ps-soft: #2D2148; --pc: #4DC1B6; --pc-soft: #133330;
+    --os: #3D3512; --os-line: #B8961A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #11161B; --card: #192028; --ink: #E5EAEE; --muted: #98A3AE; --line: #2B343E;
+  --accent: #8098FF; --accent-soft: #1F2848; --k-soft: #262E37; --rem: #F06E9F; --rem-soft: #3A1A28;
+  --pw: #8098FF; --pw-soft: #1F2848; --ps: #B98CFF; --ps-soft: #2D2148; --pc: #4DC1B6; --pc-soft: #133330;
+  --os: #3D3512; --os-line: #B8961A;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; margin: 0; }
+
+.topnav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40; background: var(--card); border-bottom: 1px solid var(--line); }
+.topnav-in { max-width: 1480px; margin: 0 auto; padding-inline: 20px; padding-block: 12px; display: flex; gap: 22px; align-items: center; }
+.brand { font-family: var(--f-display); font-weight: 700; font-size: 14px; letter-spacing: -0.01em; white-space: nowrap; }
+.brand i { font-style: normal; color: var(--accent); }
+
+.wrap { max-width: 1480px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw, 36px); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 80ch; font-size: 16px; }
+.lede b { color: var(--ink); }
+.viz { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 16px; min-width: 0; }
+
+.stepbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.clock { display: flex; align-items: baseline; gap: 10px; }
+.clk-l { font-weight: 600; font-size: 14px; }
+.clock b { font-family: var(--f-mono); font-size: 22px; font-weight: 600; min-width: 3ch; font-variant-numeric: tabular-nums; color: var(--ink); }
+.clock b.up { color: var(--rem); }
+.clock .count { margin-left: 6px; padding-left: 12px; border-left: 1px solid var(--line); }
+.count { font-family: var(--f-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nav { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn { font-family: var(--f-body); font-weight: 600; font-size: 14px; padding: 7px 14px; border-radius: 8px; background: var(--ink); color: var(--card); border: 1px solid var(--ink); cursor: pointer; white-space: nowrap; }
+.btn:hover { background: var(--accent); border-color: var(--accent); }
+.btn.ghost { background: var(--card); color: var(--ink); border-color: var(--line); }
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn:disabled, .btn:disabled:hover { opacity: .4; cursor: default; background: var(--ink); border-color: var(--ink); color: var(--card); }
+.btn.ghost:disabled, .btn.ghost:disabled:hover { background: var(--card); color: var(--ink); border-color: var(--line); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.desc { margin: 0; font-size: 15.5px; max-width: 92ch; min-height: 6.2em; }
+.desc b { font-weight: 600; }
+.osb { display: inline-block; font-family: var(--f-mono); font-size: 12px; font-weight: 700; line-height: 1.3; padding: 2px 7px; border-radius: 5px; background: var(--os); color: var(--ink); border: 1.5px solid var(--os-line); vertical-align: 1px; text-transform: uppercase; white-space: nowrap; }
+.desc .v { font-family: var(--f-mono); font-weight: 600; color: var(--rem); }
+@media (max-width: 700px) { .desc { min-height: 9.2em; } }
+.machine { overflow-x: auto; min-width: 0; }
+.machine svg { display: block; width: 100%; min-width: 760px; height: auto; }
+
+.opt { margin-right: 10px; display: inline-flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 600; cursor: pointer; justify-self: start; }
+.opt input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+.stage { display: grid; gap: 14px; }
+.vizwrap { display: grid; min-width: 0; }
+.ua-t { font-family: var(--f-display); font-weight: 700; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+/* le azioni dell'utente: una linguetta attaccata sopra il riquadro principale */
+.useracts { justify-self: center; max-width: calc(100% - 36px); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 11px 14px; background: var(--card); border: 1px solid var(--line); border-bottom: 0; border-radius: 10px 10px 0 0; }
+.ulist { display: flex !important; flex-wrap: wrap; justify-content: center; gap: 4px !important; }
+.ulist button { padding: 3px 8px !important; }
+.ulist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; align-content: start; }
+.ulist button { width: 100%; text-align: left; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 6px; align-items: baseline; padding: 4px 7px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 500 12px/1.3 var(--f-body); cursor: pointer; }
+.ulist button:hover { border-color: var(--accent); }
+.ulist button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ulist .n { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
+.ulist li.done button { color: var(--muted); }
+.ulist li.now button { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); font-weight: 600; }
+.footnote { margin: -10px 0 0; font-size: 12.5px; color: var(--muted); padding-inline: 4px; display: grid; gap: 4px; max-width: 110ch; }
+.footnote p { margin: 0; }
+.footnote ul { margin: 0; padding-left: 1.2em; display: grid; gap: 3px; }
+.life { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.life .lbl { font-weight: 600; font-size: 14px; }
+.seq-l { margin-top: 6px; }
+.cpuseq { display: flex; flex-wrap: wrap; gap: 2px; min-height: 28px; align-content: start; }
+.cpuseq .q { position: relative; width: 21px; height: 21px; border-radius: 5px; border: 1px solid var(--line); display: grid; place-items: center; background: var(--card); }
+.cpuseq .q img { width: 14px; height: 14px; }
+.cpuseq .q.os { background: var(--os); border-color: var(--os-line); font: 700 9.5px var(--f-mono); color: var(--ink); }
+.cpuseq .q .irq { position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--os); border: 1.5px solid var(--os-line); }
+.seq-key { font-size: 12.5px; font-weight: 400; color: var(--muted); margin-left: 12px; display: inline-flex; gap: 6px; align-items: center; }
+.seq-key i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--os); border: 1.5px solid var(--os-line); }
+.legend { justify-self: end; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font: 600 11.5px var(--f-mono); color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .q { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #18212B; display: inline-grid; place-items: center; font-size: 7px; }
+.legend .q.os { width: 20px; border-color: var(--os-line); background: var(--os); color: var(--ink); font-size: 8px; }
+.legend .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--os); border: 1.5px solid var(--os-line); }
+.cpuseq .q.st { border-color: #18212B; }
+.cpuseq .q.creato, .legend .q.creato { background: var(--s-creato); }
+.cpuseq .q.pronto, .legend .q.pronto { background: var(--s-pronto); }
+.cpuseq .q.esec, .legend .q.esec { background: var(--s-esec); }
+.cpuseq .q.attesa, .legend .q.attesa { background: var(--s-attesa); }
+.cpuseq .q.term, .legend .q.term { background: var(--s-term); }
+.cpuseq .q.blank { border-color: transparent; background: transparent; }
+.cpurow { padding-top: 8px; border-top: 1px dashed var(--line); }
+.lives { display: grid; gap: 10px; }
+.lrow { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: start; }
+.lname { display: flex; gap: 8px; align-items: center; font-weight: 600; font-size: 14px; padding-top: 2px; }
+.lname img { width: 18px; height: 18px; }
+.chain { display: flex; flex-wrap: wrap; gap: 6px 4px; align-items: center; min-height: 26px; align-content: start; }
+.st { display: inline-block; font-family: var(--f-mono); font-size: 12px; font-weight: 600; line-height: 1.3; padding: 2px 7px; border-radius: 5px; color: var(--s-ink); border: 1px solid var(--s-ink); vertical-align: 1px; white-space: nowrap; }
+.chain .st.now { box-shadow: 0 0 0 2px var(--rem); }
+.chain .ar { color: var(--muted); font-size: 13px; }
+.chain .none { color: var(--muted); font-size: 13.5px; }
+.creato { background: var(--s-creato); } .pronto { background: var(--s-pronto); } .esec { background: var(--s-esec); } .attesa { background: var(--s-attesa); } .term { background: var(--s-term); }
+
+/* SVG */
+.m-card { fill: var(--card); stroke: var(--ink); stroke-width: 1.4; }
+.m-card.ghost { fill: none; stroke: var(--line); stroke-dasharray: 5 5; }
+.m-card.chg { stroke: var(--rem); stroke-width: 2.6; }
+.dim { opacity: .55; }
+.m-area { fill: var(--paper); stroke: var(--line); stroke-width: 1.5; }
+.m-area.chg { stroke: var(--rem); stroke-width: 2.4; }
+.m-title { font: 700 13px var(--f-display); fill: var(--ink); }
+.m-name { font: 700 14px var(--f-display); fill: var(--ink); }
+.m-lbl { font: 600 12px var(--f-mono); fill: var(--muted); letter-spacing: .04em; }
+.m-txt { font: 500 13px var(--f-body); fill: var(--ink); }
+.m-mut { font: italic 500 12.5px var(--f-body); fill: var(--muted); }
+.m-val { font: 500 15px var(--f-mono); fill: var(--ink); }
+.m-big { font: 500 19px var(--f-mono); fill: var(--ink); }
+.m-badge-t { font: 600 11.5px var(--f-mono); fill: var(--s-ink); }
+.b-creato { fill: var(--s-creato); } .b-pronto { fill: var(--s-pronto); } .b-esec { fill: var(--s-esec); } .b-attesa { fill: var(--s-attesa); } .b-term { fill: var(--s-term); }
+.f-W { fill: var(--pw); } .f-S { fill: var(--ps); } .f-C { fill: var(--pc); }
+.s-W { fill: var(--pw-soft); } .s-S { fill: var(--ps-soft); } .s-C { fill: var(--pc-soft); }
+.m-os { fill: var(--os); stroke: var(--os-line); stroke-width: 1.8; }
+.m-os-t { font: 700 14px var(--f-display); fill: var(--ink); }
+.m-os-s { font: italic 500 13px var(--f-body); fill: var(--ink); }
+.m-irq { font: 600 12.5px var(--f-body); fill: var(--ink); }
+.m-dq-t { font: 500 13px var(--f-body); fill: var(--ink); }
+.m-dq-tag { font: 600 11.5px var(--f-mono); fill: var(--accent); }
+.m-more { font: italic 500 13px var(--f-body); fill: var(--muted); }
+.m-mmu-row.hit { fill: var(--accent-soft); }
+.m-mmu-row.miss { fill: var(--rem-soft); }
+.m-mmu-t { font: 500 13px var(--f-mono); fill: var(--ink); }
+.m-mmu-t.miss { fill: var(--rem); font-weight: 700; }
+.m-fr { font: 500 11.5px var(--f-mono); fill: var(--muted); }
+.m-ram { fill: var(--card); stroke: var(--ink); stroke-width: 1.4; }
+.m-sep { stroke: var(--line); stroke-width: 1; }
+.m-row.chg { stroke: var(--rem); stroke-width: 2.4; }
+.m-page { font: 500 13px var(--f-mono); fill: var(--ink); }
+.m-free { font: italic 500 12.5px var(--f-body); fill: var(--muted); }
+.m-halo { fill: none; stroke: var(--card); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+.m-arrow { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.m-arrow.miss { stroke: var(--rem); }
+.m-head { fill: var(--accent); }
+.m-head.miss { fill: var(--rem); }
+.m-pill rect { fill: var(--accent); }
+.m-pill.miss rect { fill: var(--rem); }
+.m-pill text { font: 600 12.5px var(--f-mono); fill: var(--card); }
+</style>
+
+<nav class="topnav" aria-label="Pagina">
+  <div class="topnav-in"><a class="brand" href="./" title="Torna all\'indice">Sistemi <i>operativi</i></a></div>
+</nav>
+
+<main class="wrap">
+  <header>
+    <h1>Processi e memoria virtuale</h1>
+    <p class="lede">Tre processi si alternano sull'unica CPU. A ogni <b>cambio di contesto</b> il PC viene salvato nel PCB del processo che esce e caricato da quello che entra. La RAM ha solo 6 posti: quando una pagina manca, arriva dal <b>disco</b>.</p>
+  </header>
+  <div class="vizwrap">
+  <nav class="useracts" aria-label="Cosa fa l'utente">
+    <ol class="ulist" id="ulist"></ol>
+  </nav>
+  <div class="viz">
+    <div class="stepbar">
+      <div class="clock"><span class="clk-l">Ciclo di clock</span><b id="clk">0</b><span class="count" id="count"></span></div>
+      <div class="nav">
+        <label class="opt"><input type="checkbox" id="mmu"> Virtualizzazione della memoria</label>
+        <button class="btn ghost" type="button" id="first">Ricomincia</button>
+        <button class="btn ghost" type="button" id="prev">◀ Indietro</button>
+        <button class="btn" type="button" id="next">Avanti ▶</button>
+      </div>
+    </div>
+    <p class="desc" id="desc" aria-live="polite"></p>
+    <div class="stage">
+      <div class="machine"><svg id="svg" role="img" aria-label="Processi, CPU, RAM e disco"></svg></div>
+    </div>
+    <div class="life">
+      <span class="lbl">Vita dei processi e della CPU, passo per passo</span>
+      <div class="lives" id="life"></div>
+      <div class="legend">
+        <span><b class="q creato"></b>CREATO</span><span><b class="q pronto"></b>PRONTO</span><span><b class="q esec"></b>IN ESECUZIONE</span>
+        <span><b class="q attesa"></b>IN ATTESA</span><span><b class="q term"></b>TERMINATO</span>
+        <span><b class="q os">SO</b>sistema operativo in CPU</span>
+      </div>
+    </div>
+  </div>
+  </div>
+  <div class="footnote">
+    <p><b>Semplificazioni:</b></p>
+    <ul>
+      <li>i cicli di clock sono indicati a puro scopo illustrativo;</li>
+      <li>il sistema operativo compare in CPU solo quando gestisce un cambio di contesto, un page fault, una richiesta di I/O o la creazione e chiusura di un processo. Interviene per un istante anche ogni volta che un dispositivo (disco, rete, tastiera) finisce un'operazione e lo avvisa con un interrupt: le spiegazioni lo dicono, ma nello schema la CPU continua a mostrare il processo che stava eseguendo;</li>
+      <li>dei file si mostra solo appunti.doc, usato da Word. In realtà tutti questi programmi leggono e scrivono file di continuo (impostazioni, cache, la musica di Spotify, i dati dei siti in Chrome…), e ogni lettura o scrittura passerebbe dalla coda del disco.</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var NS = 'http://www.w3.org/2000/svg';
+  var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function V(x) { return '<span class="v">' + x + '</span>'; }
+  function SB(st) { return '<span class="st ' + st + '">' + ST[st] + '</span>'; }
+
+  var P = {
+    S: { name: 'Spotify', pid: 21 },
+    C: { name: 'Chrome', pid: 34 },
+    W: { name: 'Word', pid: 52 }
+  };
+  var ORDER = ['S', 'C', 'W'];
+  // icone ritagliate dalle slide del corso
+  var LOGO = { S: 'data:image/png;base64,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', C: 'data:image/png;base64,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', W: 'data:image/png;base64,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' };
+  function logo(p, x, y, sz) { return '<image href="' + LOGO[p] + '" x="' + x + '" y="' + y + '" width="' + sz + '" height="' + sz + '" preserveAspectRatio="xMidYMid meet"/>'; }
+  var STS = { creato: 'CREATO', pronto: 'PRONTO', esec: 'ESEC.', attesa: 'ATTESA', term: 'TERM.' };
+  var ST = { creato: 'CREATO', pronto: 'PRONTO', esec: 'IN ESECUZIONE', attesa: 'IN ATTESA', term: 'TERMINATO' };
+
+  /* ---------- Scenario ---------- */
+  var M = {
+    procs: {
+      S: { st: 'esec', pc: 240, r: [5, 9], why: '', files: [] },
+      C: { st: 'pronto', pc: 118, r: [2, 4], why: '', files: [] },
+      W: { st: null, pc: 0, r: [0, 0], why: '', files: [] }
+    },
+    cpu: 'S', cpc: 240, cr: [5, 9],
+    ready: ['C'],
+    ram: [['S', 1], ['S', 2], ['C', 1], ['C', 2], ['C', 3], null],
+    prog: [['S', 1], ['S', 2], ['S', 3], ['C', 1], ['C', 2], ['C', 3], ['C', 4], ['W', 1], ['W', 2], ['W', 3]],
+    swap: [null, null, null, null],
+    dq: []
+  };
+  var steps = [];
+  var M0prog = null;
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  // ogni passo dura almeno un ciclo di clock; quando la CPU esegue, un'istruzione per ciclo
+  var clk = 0;
+  function push(desc, arrows, chg, cyc) {
+    if (steps.length) clk += cyc || 1;
+    var s = clone(M); s.desc = desc; s.arrows = arrows || []; s.chg = chg || {}; s.clk = clk; steps.push(s);
+  }
+  function nm(p) { return P[p].name; }
+  function pg(p, n) { return nm(p) + ' pag. ' + n; }
+
+  function exec(dpc, dr, desc, arrows) {
+    M.cpc += dpc;
+    push(desc, arrows, { cpu: 1 }, dpc);
+  }
+  // il sistema operativo prende la CPU e salva il contesto del processo che esce
+  function save(st, why, osdo, desc, reqs, later) {
+    var p = M.cpu, c = {}; c['proc:' + p] = 1; c.cpu = 1;
+    var pr = M.procs[p]; pr.pc = M.cpc; pr.st = st; pr.why = why || '';
+    if (st === 'pronto' && !later) { M.ready.push(p); c.ready = 1; }
+    if (st === 'attesa') c.wait = 1;
+    M.cpu = 'OS'; M.osdo = osdo;
+    if (reqs) { reqs.forEach(function (r) { M.dq.push(r); }); c.dq = 1; }
+    push(desc, [{ k: 'cpu-pcb', p: p, label: 'PC ' + pr.pc }], c, 3);
+  }
+  // lo scheduler sceglie il primo della coda e gli passa la CPU
+  function load(desc) {
+    var p = M.ready.shift(), pr = M.procs[p], c = { cpu: 1, ready: 1 }; c['proc:' + p] = 1;
+    pr.st = 'esec'; M.cpu = p; M.cpc = pr.pc; M.osdo = '';
+    c.mmu = 1;
+    push(desc, [{ k: 'pcb-cpu', p: p, label: 'PC ' + pr.pc }], c, 2);
+    steps[steps.length - 1].kind = 'load'; steps[steps.length - 1].kp = p;
+  }
+  function ask(n, desc) {
+    var p = M.cpu, f = -1;
+    M.ram.forEach(function (x, i) { if (x && x[0] === p && x[1] === n) f = i; });
+    push(desc, [{ k: 'cpu-ram', frame: f, page: n, label: 'pag. ' + n + (f < 0 ? ' ?' : ''), miss: f < 0 }], {});
+    steps[steps.length - 1].kind = 'ask'; steps[steps.length - 1].look = { p: p, n: n, f: f };
+  }
+  function moveIn(p, n, frame, desc, wake) {
+    // la pagina arriva dall'area di swap (e lì si libera) oppure dal file del programma (e lì resta)
+    var area = 'swap', slot = -1;
+    M.swap.forEach(function (x, i) { if (x && x[0] === p && x[1] === n) slot = i; });
+    if (slot < 0) { area = 'prog'; M.prog.forEach(function (x, i) { if (x[0] === p && x[1] === n) slot = i; }); }
+    var c = {}; c['ram:' + frame] = 1; c[area + ':' + slot] = 1;
+    if (area === 'swap') M.swap[slot] = null;
+    M.ram[frame] = [p, n]; M.dq.shift(); c.dq = 1;
+    if (wake) { var pr = M.procs[p]; pr.st = 'pronto'; pr.why = ''; M.ready.push(p); c['proc:' + p] = 1; c.ready = 1; c.wait = 1; }
+    desc += wake ? ' Finita la copia, il disco avvisa il ' + SO + ', che aggiorna la tabella delle pagine e rimette ' + nm(p) + ' tra i ' + SB('pronto') + '.'
+                 : ' Finita la copia, il disco avvisa il ' + SO + ', che aggiorna la tabella delle pagine.';
+    push(desc, [{ k: 'disk-ram', area: area, slot: slot, frame: frame, label: nm(p) + '\npag. ' + n }], c);
+  }
+  function moveOut(frame, desc) {
+    var x = M.ram[frame], slot = M.swap.indexOf(null), c = {}; c['ram:' + frame] = 1; c['swap:' + slot] = 1;
+    M.swap[slot] = x; M.ram[frame] = null; M.dq.shift(); c.dq = 1;
+    desc += ' Finita la scrittura, il disco avvisa il ' + SO + ', che aggiorna le tabelle e fa partire la richiesta successiva.';
+    push(desc, [{ k: 'ram-disk', area: 'swap', slot: slot, frame: frame, label: nm(x[0]) + '\npag. ' + x[1] }], c);
+  }
+  // appunti.doc: dal disco (zona dei file) alla RAM e ritorno
+  function fileIn(frame, desc) {
+    var c = { 'file:0': 1, dq: 1, 'proc:W': 1, ready: 1 }; c['ram:' + frame] = 1;
+    M.ram[frame] = ['W', 'doc']; M.dq.shift();
+    var pr = M.procs.W; pr.st = 'pronto'; pr.why = ''; M.ready.push('W');
+    desc += ' Finita la copia, il disco avvisa il ' + SO + ', che rimette Word tra i ' + SB('pronto') + '.';
+    push(desc, [{ k: 'disk-ram', area: 'file', slot: 0, frame: frame, label: 'appunti\n.doc' }], c);
+  }
+  function fileOut(frame, desc) {
+    var c = { 'file:0': 1, dq: 1, 'proc:W': 1, ready: 1 };
+    M.dq.shift();
+    var pr = M.procs.W; pr.st = 'pronto'; pr.why = ''; M.ready.push('W');
+    desc += ' Finita la scrittura, il disco avvisa il ' + SO + ', che rimette Word tra i ' + SB('pronto') + '.';
+    push(desc, [{ k: 'ram-disk', area: 'file', slot: 0, frame: frame, label: 'appunti\n.doc' }], c);
+  }
+  function wake(p, desc, disk) {
+    var pr = M.procs[p], c = { ready: 1, wait: 1 }; c['proc:' + p] = 1;
+    if (disk) { M.dq.shift(); c.dq = 1; }
+    pr.st = 'pronto'; pr.why = ''; M.ready.push(p);
+    push(desc, [], c);
+  }
+  var SO = '<span class="osb">sistema operativo</span>';
+  // azioni dell'utente, per la barra laterale
+  var USER = [];
+  function user(t) { USER.push({ t: t, step: steps.length }); }
+  function term(p, desc) {
+    var c = { cpu: 1 }; c['proc:' + p] = 1;
+    M.procs[p].st = 'term'; M.procs[p].files = []; M.cpu = 'OS'; M.osdo = 'chiude ' + nm(p);
+    M.ram.forEach(function (x, i) { if (x && x[0] === p) { M.ram[i] = null; c['ram:' + i] = 1; } });
+    M.swap.forEach(function (x, i) { if (x && x[0] === p) { M.swap[i] = null; c['swap:' + i] = 1; } });
+    push(desc, [], c, 3);
+  }
+
+  user('Musica, Chrome aperto');
+  push('Situazione iniziale. Spotify è ' + SB('esec') + ' nella CPU; Chrome è ' + SB('pronto') + ' e aspetta il suo turno. La RAM contiene alcune pagine di Spotify e Chrome. Sul disco ci sono i programmi installati, con tutte le loro pagine, e l\'area di swap, per ora vuota.', [], {});
+  exec(6, [], 'Spotify è in esecuzione: la CPU esegue le sue istruzioni e il PC avanza da 240 a ' + V(246) + '.');
+  user('Apri Word');
+  save('pronto', '', 'gestisce il doppio clic', 'L\'utente fa <b>doppio clic su Word</b>. Un interrupt avvisa il ' + SO + ', che prende la CPU: salva il PC di Spotify (' + V(246) + ') nel suo PCB. Spotify è ' + SB('pronto') + '.', null, true);
+  (function () { M.procs.W.st = 'creato'; M.osdo = 'crea il processo Word'; push('Il ' + SO + ' crea il processo Word (PID 52) e il suo PCB. Word è ' + SB('creato') + '. Nessuna pagina di Word è ancora in RAM: sono tutte nel programma installato sul disco.', [], { 'proc:W': 1, cpu: 1 }, 3); })();
+  (function () { M.procs.W.st = 'pronto'; M.ready.push('W'); M.ready.push('S'); push('Word è ' + SB('pronto') + ' ed entra nella coda dei pronti. Anche Spotify torna in coda, dietro a Word.', [{ k: 'pcb-queue', p: 'W', label: 'Word' }], { 'proc:W': 1, ready: 1 }); })();
+  load('Lo scheduler del ' + SO + ' sceglie Chrome, il primo della coda: carica il suo PC (' + V(118) + ') dal PCB e gli lascia la CPU. Chrome è ' + SB('esec') + '.');
+  exec(3, [], 'Chrome esegue le sue istruzioni: il PC avanza a ' + V(121) + '.');
+  ask(4, 'Chrome ha bisogno della sua <b>pagina 4</b>, ma la pagina non è in RAM: è solo nel programma installato sul disco. È un <b>page fault</b>.');
+  save('attesa', 'pagina 4', 'gestisce il page fault', 'Il page fault interrompe Chrome e il ' + SO + ' prende la CPU: salva il PC di Chrome (' + V(121) + ') nel PCB, lo mette ' + SB('attesa') + ' e aggiunge la lettura della pagina 4 alla coda del disco.', [{ p: 'C', t: 'pag. 4 → RAM' }]);
+  load('Lo scheduler sceglie Word, il primo della coda. È la prima volta che va in esecuzione, quindi il suo PC vale ' + V(0) + '.');
+  ask(1, 'Word ha bisogno della sua <b>pagina 1</b>, ma nessuna pagina di Word è ancora in RAM: un altro <b>page fault</b>.');
+  save('attesa', 'pagina 1', 'gestisce il page fault', 'Il ' + SO + ' prende di nuovo la CPU: salva il PC di Word nel PCB, lo mette ' + SB('attesa') + '. La RAM si sta riempiendo: nella coda del disco aggiunge due richieste, liberare un posto e leggere la pagina 1.', [{ p: 'C', t: 'pag. 1 → swap' }, { p: 'W', t: 'pag. 1 → RAM' }]);
+  load('Lo scheduler sceglie Spotify. Riprende esattamente da dove si era fermato: il PC caricato dal PCB vale ' + V(246) + '.');
+  moveIn('C', 4, 5, 'Intanto il disco serve la prima richiesta della coda: copia la <b>pagina 4 di Chrome</b> dal programma installato nell\'unico posto libero della RAM, senza usare la CPU: nel programma la pagina resta.', true);
+  moveOut(2, 'Ora la RAM è piena. Il disco serve la richiesta successiva: sposta nell\'area di swap una pagina che non serve da un po\', ' + V('Chrome pag. 1') + '.');
+  moveIn('W', 1, 2, 'Al suo posto arriva la <b>pagina 1 di Word</b>, copiata dal programma installato.', true);
+  exec(6, [], 'Spotify continua a eseguire: il PC avanza a ' + V(252) + '.');
+  save('pronto', '', 'cambio di contesto', '<b>Cambio di contesto.</b> Il turno di Spotify finisce: il ' + SO + ' prende la CPU, salva il PC (' + V(252) + ') nel PCB di Spotify e lo rimette in coda.');
+  load('Lo scheduler sceglie Chrome: riprende da PC ' + V(121) + ', proprio dall\'istruzione che aveva bisogno della pagina 4.');
+  ask(4, 'Questa volta la pagina 4 di Chrome è in RAM: Chrome la legge e può proseguire.');
+  exec(9, [], 'Chrome esegue altre istruzioni: il PC avanza a ' + V(130) + '.');
+  user('Chrome carica una pagina');
+  save('attesa', 'dati dalla rete', 'avvia l\'I/O di rete', 'Chrome chiede una pagina web: il ' + SO + ' prende la CPU, avvia la richiesta in rete, salva il PC di Chrome e lo mette ' + SB('attesa') + '.');
+  load('Lo scheduler sceglie Word: carica il suo PC (' + V(0) + ') dal PCB. Ora la pagina 1 è in RAM.');
+  user('Apri appunti.doc');
+  exec(14, [], 'L\'utente apre <b>appunti.doc</b>: il PC di Word avanza a ' + V(14) + ' e Word chiede al ' + SO + ' di aprire il file.');
+  (function () { M.procs.W.files = ['appunti.doc']; })();
+  save('attesa', 'lettura file', 'apre il file', 'Il ' + SO + ' prende la CPU e registra appunti.doc nella lista dei file aperti del PCB di Word. Per leggere il file serve un posto in RAM: nella coda del disco aggiunge due richieste, liberare un posto e leggere il file. Word passa ' + SB('attesa') + '.', [{ p: 'C', t: 'pag. 3 → swap' }, { p: 'W', t: 'appunti.doc → RAM' }]);
+  load('Lo scheduler sceglie Spotify, l\'unico processo pronto: riprende da PC ' + V(252) + '.');
+  moveOut(4, 'Il disco serve la prima richiesta: sposta nell\'area di swap ' + V('Chrome pag. 3') + ', che non serve da un po\'.');
+  fileIn(4, 'Poi copia <b>appunti.doc</b> dalla zona dei file nel posto liberato: il contenuto del file ora è in RAM, dove Word può leggerlo e modificarlo.');
+  exec(8, [], 'Spotify continua a eseguire: il PC avanza a ' + V(260) + '.');
+  save('pronto', '', 'cambio di contesto', '<b>Cambio di contesto.</b> Il turno di Spotify finisce: il ' + SO + ' prende la CPU e salva il PC (' + V(260) + ') nel PCB di Spotify.');
+  load('Lo scheduler sceglie Word: riprende da PC ' + V(14) + '.');
+  exec(4, [], 'Word mostra il contenuto di appunti.doc: il PC avanza a ' + V(18) + '. Ora non ha altro da fare finché l\'utente non scrive qualcosa.');
+  save('attesa', 'tastiera', 'aspetta un tasto per Word', 'Word chiede al ' + SO + ' il prossimo tasto premuto. Il ' + SO + ' prende la CPU, salva il PC di Word e lo mette ' + SB('attesa') + ' finché l\'utente non preme un tasto.');
+  load('Lo scheduler sceglie Spotify: riprende da PC ' + V(260) + '.');
+  user('Scrivi una parola');
+  wake('W', 'L\'utente scrive una parola: la tastiera avvisa il ' + SO + ', che rimette Word tra i ' + SB('pronto') + '.');
+  exec(2, [], 'Spotify continua a eseguire: il PC avanza a ' + V(262) + '.');
+  save('pronto', '', 'cambio di contesto', '<b>Cambio di contesto.</b> Il turno di Spotify finisce: il ' + SO + ' prende la CPU e salva il PC (' + V(262) + ') nel PCB di Spotify.');
+  load('Lo scheduler sceglie Word: riprende da PC ' + V(18) + '.');
+  exec(6, [], 'Word riceve la parola scritta dall\'utente: il PC avanza a ' + V(24) + '.');
+  ask(2, 'Per inserire la parola nel documento Word ha bisogno della sua <b>pagina 2</b>, che non è ancora in RAM: <b>page fault</b>.');
+  save('attesa', 'pagina 2', 'gestisce il page fault', 'Il ' + SO + ' salva il PC di Word e lo mette ' + SB('attesa') + '. La RAM è piena: nella coda del disco aggiunge due richieste, liberare un posto e leggere la pagina 2 di Word.', [{ p: 'S', t: 'pag. 1 → swap' }, { p: 'W', t: 'pag. 2 → RAM' }]);
+  load('Lo scheduler sceglie Spotify: riprende da PC ' + V(262) + '.');
+  moveOut(0, 'Il disco serve la prima richiesta: sposta nell\'area di swap una pagina che non serve da un po\', ' + V('Spotify pag. 1') + '.');
+  moveIn('W', 2, 0, 'Al suo posto arriva la <b>pagina 2 di Word</b>, copiata dal programma installato.', true);
+  exec(2, [], 'Spotify continua a eseguire: il PC avanza a ' + V(264) + '.');
+  ask(1, 'Ora Spotify ha bisogno proprio della sua <b>pagina 1</b>, che poco fa è finita nell\'area di swap: <b>page fault</b>.');
+  save('attesa', 'pagina 1', 'gestisce il page fault', 'Il ' + SO + ' salva il PC di Spotify (' + V(264) + ') e lo mette ' + SB('attesa') + '. Nella coda del disco aggiunge due richieste: liberare un posto e riportare la pagina 1 dallo swap.', [{ p: 'S', t: 'pag. 2 → swap' }, { p: 'S', t: 'pag. 1: swap → RAM' }]);
+  load('Lo scheduler sceglie Word: riprende da PC ' + V(24) + ', con la pagina 2 ora in RAM.');
+  wake('C', 'Sono arrivati i dati dalla rete per Chrome: la scheda di rete avvisa il ' + SO + ', che rimette Chrome tra i ' + SB('pronto') + '.');
+  moveOut(1, 'Intanto il disco sposta nell\'area di swap ' + V('Spotify pag. 2') + ' per fare spazio.');
+  moveIn('S', 1, 1, 'Poi riporta la <b>pagina 1 di Spotify</b> dall\'area di swap in RAM: il suo posto nello swap si libera.', true);
+  (function () { M.cpc += 6; push('Word inserisce la parola nella copia di appunti.doc che sta in RAM: il PC avanza a ' + V(30) + '. Il file sul disco per ora non cambia.', [], { cpu: 1, 'ram:4': 1 }, 6); })();
+  user('Salvi appunti.doc');
+  exec(5, [], 'L\'utente <b>salva appunti.doc</b>: il PC di Word avanza a ' + V(35) + ' e Word chiede di riscrivere il file sul disco.');
+  save('attesa', 'salvataggio file', 'accoda il salvataggio', 'Il ' + SO + ' prende la CPU e aggiunge alla coda del disco la scrittura di appunti.doc. Word passa ' + SB('attesa') + ' finché il salvataggio non termina.', [{ p: 'W', t: 'appunti.doc → disco' }]);
+  load('Lo scheduler sceglie Chrome: riprende da PC ' + V(130) + ' con i dati arrivati dalla rete.');
+  fileOut(4, 'Il disco copia la versione modificata di appunti.doc dalla RAM nel file sul disco: ora anche il file contiene la parola scritta. La copia in RAM resta.');
+  exec(6, [], 'Chrome mostra la pagina web: il PC avanza a ' + V(136) + '.');
+  save('pronto', '', 'cambio di contesto', '<b>Cambio di contesto.</b> Il turno di Chrome finisce: il ' + SO + ' prende la CPU e salva il PC (' + V(136) + ') nel PCB di Chrome.');
+  load('Lo scheduler sceglie Spotify: riprende da PC ' + V(264) + ', con la pagina 1 di nuovo in RAM.');
+  user('Chiudi Spotify');
+  term('S', 'L\'utente chiude Spotify: il processo è ' + SB('term') + '. Il ' + SO + ' prende la CPU e libera i posti occupati dalle pagine di Spotify in RAM e nell\'area di swap. Il programma Spotify sul disco resta: è sempre installato.');
+  load('Lo scheduler sceglie Word: riprende da PC ' + V(35) + '.');
+  user('Chiudi Word');
+  term('W', 'L\'utente chiude Word: il processo è ' + SB('term') + '. Il ' + SO + ' chiude appunti.doc, che sparisce dalla lista dei file aperti, e libera i posti occupati in RAM dalle pagine di Word e dalla copia del file. Sul disco restano il programma Word e il file appunti.doc salvato.');
+  load('Lo scheduler sceglie Chrome, l\'unico processo rimasto: riprende da PC ' + V(136) + '.');
+
+  /* ---------- Geometria ---------- */
+  var W = 1330, H = 700, MMU = false, PAGES = { S: 3, C: 4, W: 3 };
+  var CARD = { x: 16, w: 300, h: 152, gap: 14, y0: 34 };
+  var CPU = { x: 420, y: 34, w: 264, h: 108 };
+  var Q = { x: 420, y: 202, w: 264, h: 60 };
+  var MB = { x: 770, y: 306, w: 240, h: 130 };
+  function geom() {}
+  var RAM = { x: 770, y: 34, w: 240, rh: 36, n: 6 };
+  var SWP = { x: 1130, y: 66, w: 176, rh: 30, n: 4 };
+  var PRG = { x: 1130, y: 220, w: 176, rh: 30, n: 10 };
+  // i programmi sono file: ogni file è diviso in parti grandi una pagina
+  var FILES = [{ p: 'S', name: 'spotify.exe' }, { p: 'C', name: 'chrome.exe' }, { p: 'W', name: 'word.exe' }];
+  var FH = 26, FR = 22, FGAP = 8;
+  function progLayout() {
+    var y = PRG.y, out = { files: [], rows: {} };
+    FILES.forEach(function (f) {
+      var n = PAGES[f.p], h = FH + n * FR + 6;
+      out.files.push({ f: f, y: y, h: h });
+      for (var k = 1; k <= n; k++) out.rows[f.p + k] = y + FH + (k - 1) * FR;
+      y += h + FGAP;
+    });
+    out.bottom = y - FGAP;
+    return out;
+  }
+  var PL = progLayout();
+  M0prog = M.prog;
+  var FIL = { x: 1130, y: PL.bottom + 34, w: 176, rh: 30, n: 2 };
+  var DBOX = { x: 1118, y: 34, w: 200, h: FIL.y + FIL.n * FIL.rh + 12 - 34 };
+  function cardY(p) { return CARD.y0 + ORDER.indexOf(p) * (CARD.h + CARD.gap); }
+  function ramY(i) { return RAM.y + i * RAM.rh; }
+  function dskY(area, i) { if (area === 'swap') return SWP.y + i * SWP.rh + SWP.rh / 2; if (area === 'file') return FIL.y + i * FIL.rh + FIL.rh / 2; var x = M0prog[i]; return PL.rows[x[0] + x[1]] + FR / 2; }
+
+  function poly(pts, r) {
+    r = r || 10;
+    var d = 'M' + pts[0][0] + ',' + pts[0][1];
+    for (var i = 1; i < pts.length - 1; i++) {
+      var p = pts[i - 1], c = pts[i], n = pts[i + 1];
+      var l1 = Math.hypot(c[0] - p[0], c[1] - p[1]), l2 = Math.hypot(n[0] - c[0], n[1] - c[1]);
+      if (l1 < 0.5 || l2 < 0.5) { d += ' L' + c[0] + ',' + c[1]; continue; }
+      var rr = Math.min(r, l1 / 2, l2 / 2);
+      if (i === pts.length - 2) rr = Math.max(0, Math.min(rr, l2 - 20));
+      var a = [c[0] - (c[0] - p[0]) / l1 * rr, c[1] - (c[1] - p[1]) / l1 * rr];
+      var b = [c[0] + (n[0] - c[0]) / l2 * rr, c[1] + (n[1] - c[1]) / l2 * rr];
+      d += ' L' + a[0] + ',' + a[1] + ' Q' + c[0] + ',' + c[1] + ' ' + b[0] + ',' + b[1];
+    }
+    var e = pts[pts.length - 1];
+    return d + ' L' + e[0] + ',' + e[1];
+  }
+  // Collegamento orizzontale con un tratto verticale in mezzo (o dritto se le altezze coincidono)
+  function hv(x1, y1, xm, y2, x2) {
+    if (Math.abs(y1 - y2) < 2) return 'M' + x1 + ',' + y2 + ' L' + x2 + ',' + y2;
+    return poly([[x1, y1], [xm, y1], [xm, y2], [x2, y2]], 10);
+  }
+  function arrowPath(a) {
+    var cr = CARD.x + CARD.w, cy, y;
+    switch (a.k) {
+      case 'pcb-cpu': cy = cardY(a.p) + 50; return { d: hv(cr, cy, 368, CPU.y + 68, CPU.x), t: 0.5 };
+      case 'cpu-pcb': cy = cardY(a.p) + 50; return { d: hv(CPU.x, CPU.y + 68, 368, cy, cr), t: 0.5 };
+      case 'pcb-queue': cy = cardY(a.p) + 50; return { d: hv(cr, cy, 368, Q.y + Q.h / 2, Q.x), t: 0.5 };
+      case 'cpu-mmu': return { d: hv(CPU.x + CPU.w, CPU.y + 68, 727, MB.y + 18, MB.x), t: 0.5 };
+      case 'mmu-ram': var my = MB.y + 36 + (a.page - 1) * 22 + 11, fy = ramY(a.frame) + RAM.rh / 2;
+        return { d: poly([[MB.x + MB.w, my], [MB.x + MB.w + 30, my], [MB.x + MB.w + 30, fy], [RAM.x + RAM.w, fy]], 10), t: 0.5 };
+      case 'cpu-ram':
+        y = a.frame < 0 ? RAM.y + RAM.n * RAM.rh / 2 : ramY(a.frame) + RAM.rh / 2;
+        return { d: hv(CPU.x + CPU.w, CPU.y + 68, 727, y, RAM.x), t: 0.5 };
+      case 'disk-ram': return { d: hv(PRG.x - 3, dskY(a.area, a.slot), (RAM.x + RAM.w + PRG.x) / 2, ramY(a.frame) + RAM.rh / 2, RAM.x + RAM.w), t: 0.5 };
+      case 'ram-disk': return { d: hv(RAM.x + RAM.w, ramY(a.frame) + RAM.rh / 2, (RAM.x + RAM.w + PRG.x) / 2, dskY(a.area, a.slot), PRG.x - 1), t: 0.5 };
+    }
+  }
+
+  /* ---------- Disegno ---------- */
+  function badge(x, y, st) {
+    var t = ST[st], w = t.length * 7.4 + 16;
+    return '<rect class="b-' + st + '" x="' + x + '" y="' + y + '" width="' + w + '" height="22" rx="5" stroke="#18212B" stroke-width="1"/>' +
+      '<text class="m-badge-t" x="' + (x + w / 2) + '" y="' + (y + 15) + '" text-anchor="middle">' + t + '</text>';
+  }
+  function draw(s, live, look) {
+    var chg = live ? {} : s.chg, h = '';
+    // PCB
+    h += '<text class="m-title" x="' + CARD.x + '" y="22">Processi</text>';
+    // il sistema operativo, sempre presente
+    var lastY = CARD.y0 + ORDER.length * (CARD.h + CARD.gap) - CARD.gap;
+    h += '<rect class="m-os" x="' + CARD.x + '" y="' + (lastY + CARD.gap) + '" width="' + CARD.w + '" height="46" rx="10"/>';
+    h += '<text class="m-os-t" x="' + (CARD.x + 20) + '" y="' + (lastY + CARD.gap + 28) + '">Sistema operativo</text>';
+    // dopo le schede: altri processi non mostrati
+    h += '<text class="m-more" x="' + (CARD.x + CARD.w / 2) + '" y="' + (lastY + CARD.gap + 46 + 26) + '" text-anchor="middle">… e altri processi</text>';
+    ORDER.forEach(function (p) {
+      var pr = s.procs[p], y = cardY(p), x = CARD.x, c = chg['proc:' + p];
+      if (!pr.st) {
+        h += '<rect class="m-card ghost" x="' + x + '" y="' + y + '" width="' + CARD.w + '" height="' + CARD.h + '" rx="10"/>';
+        return;
+      }
+      h += '<g' + (pr.st === 'term' ? ' class="dim"' : '') + '>';
+      h += '<rect class="m-card' + (c ? ' chg' : '') + '" x="' + x + '" y="' + y + '" width="' + CARD.w + '" height="' + CARD.h + '" rx="10"/>';
+      h += logo(p, x + 20, y + 9, 24);
+      h += '<text class="m-name" x="' + (x + 52) + '" y="' + (y + 26) + '">' + P[p].name + '</text>';
+      h += '<text class="m-lbl" x="' + (x + CARD.w - 14) + '" y="' + (y + 26) + '" text-anchor="end">PID ' + P[p].pid + '</text>';
+      h += badge(x + 22, y + 46, pr.st);
+      if (pr.why) h += '<text class="m-mut" x="' + (x + 22) + '" y="' + (y + 88) + '">attende: ' + esc(pr.why) + '</text>';
+      h += '<text class="m-lbl" x="' + (x + 22) + '" y="' + (y + 117) + '">PC</text><text class="m-val" x="' + (x + 46) + '" y="' + (y + 118) + '">' + pr.pc + '</text>';
+      h += '<line class="m-sep" x1="' + (x + 14) + '" x2="' + (x + CARD.w - 14) + '" y1="' + (y + 98) + '" y2="' + (y + 98) + '"/>';
+      if (MMU) h += '<text class="m-mut" x="' + (x + CARD.w - 14) + '" y="' + (y + 118) + '" text-anchor="end">rif. tabella delle pagine</text>';
+      h += '<text class="m-lbl" x="' + (x + 22) + '" y="' + (y + 140) + '">FILE APERTI</text><text class="m-txt" x="' + (x + 116) + '" y="' + (y + 140) + '">' + (pr.files && pr.files.length ? esc(pr.files.join(', ')) : '—') + '</text>';
+      h += '</g>';
+    });
+    // CPU
+    h += '<text class="m-title" x="' + (CPU.x + CPU.w) + '" y="' + (CPU.y - 12) + '" text-anchor="end">CPU</text>';
+    h += '<rect class="m-area' + (chg.cpu ? ' chg' : '') + '" x="' + CPU.x + '" y="' + CPU.y + '" width="' + CPU.w + '" height="' + CPU.h + '" rx="12"/>';
+    if (s.cpu === 'OS') {
+      h += '<rect class="m-os" x="' + (CPU.x + 18) + '" y="' + (CPU.y + 18) + '" width="' + (CPU.w - 36) + '" height="' + (CPU.h - 36) + '" rx="8"/>';
+      h += '<text class="m-os-t" x="' + (CPU.x + CPU.w / 2) + '" y="' + (CPU.y + 48) + '" text-anchor="middle">Sistema operativo</text>';
+      h += '<text class="m-os-s" x="' + (CPU.x + CPU.w / 2) + '" y="' + (CPU.y + 70) + '" text-anchor="middle">' + esc(s.osdo || '') + '</text>';
+    } else if (s.cpu) {
+      var px = CPU.x + 18;
+      h += logo(s.cpu, px, CPU.y + 12, 24);
+      h += '<text class="m-name" x="' + (px + 32) + '" y="' + (CPU.y + 29) + '">' + P[s.cpu].name + '</text>';
+      h += '<text class="m-lbl" x="' + (CPU.x + CPU.w - 18) + '" y="' + (CPU.y + 29) + '" text-anchor="end">PID ' + P[s.cpu].pid + '</text>';
+      h += '<rect class="m-card" x="' + px + '" y="' + (CPU.y + 48) + '" width="' + (CPU.w - 36) + '" height="40" rx="8"/>';
+      h += '<text class="m-lbl" x="' + (px + 12) + '" y="' + (CPU.y + 74) + '">PC</text><text class="m-big" x="' + (px + 44) + '" y="' + (CPU.y + 75) + '">' + s.cpc + '</text>';
+    } else {
+      h += '<text class="m-mut" x="' + (CPU.x + CPU.w / 2) + '" y="' + (CPU.y + CPU.h / 2 + 4) + '" text-anchor="middle">nessun processo in esecuzione</text>';
+    }
+    // Coda dei pronti
+    h += '<text class="m-title" x="' + Q.x + '" y="' + (Q.y - 12) + '">Coda dei pronti</text>';
+    h += '<rect class="m-area' + (chg.ready ? ' chg' : '') + '" x="' + Q.x + '" y="' + Q.y + '" width="' + Q.w + '" height="' + Q.h + '" rx="12"/>';
+    if (!s.ready.length) h += '<text class="m-mut" x="' + (Q.x + Q.w / 2) + '" y="' + (Q.y + Q.h / 2 + 4) + '" text-anchor="middle">vuota</text>';
+    s.ready.forEach(function (p, i) {
+      var cx = Q.x + 10 + i * 82;
+      h += '<rect class="s-' + p + '" x="' + cx + '" y="' + (Q.y + 15) + '" width="78" height="30" rx="6" stroke="var(--ink)" stroke-width="1"/>';
+      h += logo(p, cx + 5, Q.y + 21, 18);
+      h += '<text class="m-txt" x="' + (cx + 27) + '" y="' + (Q.y + 35) + '" style="font-size:12.5px">' + P[p].name + '</text>';
+    });
+    // RAM e disco
+    // rettangolo con angoli arrotondati solo sopra (rt) o solo sotto (rb): segue il bordo del riquadro
+    function rrect(x, y, w, hh, rt, rb) {
+      return 'M' + (x + rt) + ',' + y + ' H' + (x + w - rt) + (rt ? ' A' + rt + ',' + rt + ' 0 0 1 ' + (x + w) + ',' + (y + rt) : '') +
+        ' V' + (y + hh - rb) + (rb ? ' A' + rb + ',' + rb + ' 0 0 1 ' + (x + w - rb) + ',' + (y + hh) : '') +
+        ' H' + (x + rb) + (rb ? ' A' + rb + ',' + rb + ' 0 0 1 ' + x + ',' + (y + hh - rb) : '') +
+        ' V' + (y + rt) + (rt ? ' A' + rt + ',' + rt + ' 0 0 1 ' + (x + rt) + ',' + y : '') + ' Z';
+    }
+    function column(B, rows, title, key) {
+      var Ht = B.n * B.rh, box = 'x="' + B.x + '" y="' + B.y + '" width="' + B.w + '" height="' + Ht + '" rx="6"';
+      var o = title ? '<text class="m-title" x="' + (B.x + B.w) + '" y="' + (B.y - 12) + '" text-anchor="end">' + title + '</text>' : '';
+      // le righe colorate stanno dentro il contorno arrotondato
+      o += '<clipPath id="clip-' + key + '"><rect ' + box + '/></clipPath>';
+      o += '<rect class="m-ram" ' + box + ' style="stroke:none"/>';
+      o += '<g clip-path="url(#clip-' + key + ')">';
+      var marks = '';
+      rows.forEach(function (x, i) {
+        var y = B.y + i * B.rh, ty = y + B.rh / 2 + 5;
+        if (x && x !== '…') o += '<rect class="s-' + x[0] + '" x="' + B.x + '" y="' + y + '" width="' + B.w + '" height="' + B.rh + '"/>' + logo(x[0], B.x + 9, y + (B.rh - 20) / 2, 20);
+        if (i) o += '<line class="m-sep" x1="' + B.x + '" x2="' + (B.x + B.w) + '" y1="' + y + '" y2="' + y + '"/>';
+        o += x === '…' ? '<text class="m-free" x="' + (B.x + 16) + '" y="' + ty + '">…</text>'
+             : x ? '<text class="m-page" x="' + (B.x + 38) + '" y="' + ty + '">' + (x[1] === 'doc' ? '<tspan font-weight="600">appunti.doc</tspan>' : '<tspan font-weight="600">' + P[x[0]].name + '</tspan> · pag. ' + x[1]) + '</text>'
+               : '<text class="m-free" x="' + (B.x + 16) + '" y="' + ty + '">libero</text>';
+        if (MMU && key === 'ram') o += '<text class="m-fr" x="' + (B.x + B.w - 8) + '" y="' + (y + 22) + '" text-anchor="end">frame ' + i + '</text>';
+        if (chg[key + ':' + i]) marks += '<path class="m-row chg" fill="none" d="' + rrect(B.x, y, B.w, B.rh, i === 0 ? 6 : 0, i === rows.length - 1 ? 6 : 0) + '"/>';
+      });
+      o += '</g><rect class="m-ram" ' + box + ' style="fill:none"/>' + marks;
+      return o;
+    }
+    if (MMU) {
+      h += '<text class="m-title" x="' + (MB.x + MB.w) + '" y="' + (MB.y - 12) + '" text-anchor="end">MMU</text>';
+      h += '<rect class="m-area' + (chg.mmu ? ' chg' : '') + '" x="' + MB.x + '" y="' + MB.y + '" width="' + MB.w + '" height="' + MB.h + '" rx="12"/>';
+      if (s.cpu && s.cpu !== 'OS') {
+        var q = s.cpu;
+        h += logo(q, MB.x + 14, MB.y + 9, 18);
+        h += '<text class="m-txt" x="' + (MB.x + 38) + '" y="' + (MB.y + 23) + '">tabella di <tspan font-weight="600">' + P[q].name + '</tspan></text>';
+        for (var n = 1; n <= PAGES[q]; n++) {
+          var fr = -1; s.ram.forEach(function (x, i) { if (x && x[0] === q && x[1] === n) fr = i; });
+          var ry = MB.y + 36 + (n - 1) * 22, lk = look && look.p === q && look.n === n ? (look.f < 0 ? ' miss' : ' hit') : '';
+          if (lk) h += '<rect class="m-mmu-row' + lk + '" x="' + (MB.x + 10) + '" y="' + ry + '" width="' + (MB.w - 20) + '" height="22" rx="4"/>';
+          h += '<text class="m-mmu-t' + (lk === ' miss' ? ' miss' : '') + '" x="' + (MB.x + 24) + '" y="' + (ry + 15) + '">pag. ' + n + '</text>';
+          h += '<text class="m-mmu-t' + (lk === ' miss' ? ' miss' : '') + '" x="' + (MB.x + 104) + '" y="' + (ry + 15) + '">→  ' + (fr < 0 ? 'disco' : 'frame ' + fr) + '</text>';
+        }
+      } else {
+        h += '<text class="m-mut" x="' + (MB.x + MB.w / 2) + '" y="' + (MB.y + MB.h / 2 + 4) + '" text-anchor="middle">' + (s.cpu === 'OS' ? 'nessuna tabella di processo caricata' : 'vuota') + '</text>';
+      }
+    }
+    h += column(RAM, s.ram, 'RAM', 'ram');
+    var dc = DBOX.x + DBOX.w / 2;
+    h += '<text class="m-title" x="' + dc + '" y="' + (DBOX.y - 12) + '" text-anchor="middle">Disco</text>';
+    h += '<rect class="m-area" x="' + DBOX.x + '" y="' + DBOX.y + '" width="' + DBOX.w + '" height="' + DBOX.h + '" rx="12"/>';
+    h += '<text class="m-lbl" x="' + dc + '" y="' + (SWP.y - 10) + '" text-anchor="middle">AREA DI SWAP</text>';
+    h += '<text class="m-lbl" x="' + dc + '" y="' + (PRG.y - 10) + '" text-anchor="middle">PROGRAMMI INSTALLATI</text>';
+    h += '<text class="m-lbl" x="' + dc + '" y="' + (FIL.y - 10) + '" text-anchor="middle">FILE</text>';
+    h += column(FIL, [['W', 'doc'], '…'], '', 'file');
+    h += column(SWP, s.swap, '', 'swap');
+    PL.files.forEach(function (F) {
+      var f = F.f, x = PRG.x, w = PRG.w;
+      h += '<rect class="s-' + f.p + '" x="' + x + '" y="' + F.y + '" width="' + w + '" height="' + F.h + '" rx="6" stroke="var(--ink)" stroke-width="1.2"/>';
+      h += logo(f.p, x + 9, F.y + 4, 18);
+      h += '<text class="m-page" x="' + (x + 34) + '" y="' + (F.y + 18) + '" font-weight="600">' + f.name + '</text>';
+      h += '<line class="m-sep" x1="' + x + '" x2="' + (x + w) + '" y1="' + (F.y + FH) + '" y2="' + (F.y + FH) + '" style="stroke:var(--ink);stroke-opacity:.35"/>';
+      for (var k = 1; k <= PAGES[f.p]; k++) {
+        var ry = PL.rows[f.p + k], idx = -1;
+        s.prog.forEach(function (q, i) { if (q[0] === f.p && q[1] === k) idx = i; });
+        if (k > 1) h += '<line x1="' + (x + 10) + '" x2="' + (x + w - 10) + '" y1="' + ry + '" y2="' + ry + '" style="stroke:var(--muted);stroke-dasharray:3 3;stroke-width:1"/>';
+        h += '<text class="m-free" x="' + (x + 20) + '" y="' + (ry + 15) + '">parte ' + k + '</text>';
+        h += '<text class="m-page" x="' + (x + w - 12) + '" y="' + (ry + 15) + '" text-anchor="end">→ pag. ' + k + '</text>';
+        if (chg['prog:' + idx]) { var last = k === PAGES[f.p]; h += '<path class="m-row chg" fill="none" d="' + rrect(x, ry, w, last ? F.y + F.h - ry : FR, 0, last ? 6 : 0) + '"/>'; }
+      }
+    });
+    // coda delle richieste al disco
+    // sotto la CPU e fino al bordo della RAM, allineata in basso: sopra resta il posto per l'MMU
+    var DQ = { x: CPU.x, w: RAM.x + RAM.w - CPU.x, h: 128 };
+    DQ.y = DBOX.y + DBOX.h - DQ.h;
+    h += '<text class="m-title" x="' + DQ.x + '" y="' + (DQ.y - 12) + '">Coda del disco</text>';
+    h += '<rect class="m-area' + (chg.dq ? ' chg' : '') + '" x="' + DQ.x + '" y="' + DQ.y + '" width="' + DQ.w + '" height="' + DQ.h + '" rx="12"/>';
+    if (!s.dq.length) h += '<text class="m-mut" x="' + (DQ.x + DQ.w / 2) + '" y="' + (DQ.y + DQ.h / 2 + 4) + '" text-anchor="middle">nessuna richiesta</text>';
+    s.dq.forEach(function (r, i) {
+      var y = DQ.y + 12 + i * 36;
+      h += '<rect class="s-' + r.p + '" x="' + (DQ.x + 12) + '" y="' + y + '" width="' + (DQ.w - 24) + '" height="30" rx="6" style="stroke:' + (i === 0 ? 'var(--accent)' : 'var(--ink)') + ';stroke-width:' + (i === 0 ? 2.2 : 1) + '"/>';
+      h += '<text class="m-lbl" x="' + (DQ.x + 26) + '" y="' + (y + 20) + '">' + (i + 1) + '</text>';
+      h += logo(r.p, DQ.x + 42, y + 6, 18);
+      h += '<text class="m-dq-t" x="' + (DQ.x + 68) + '" y="' + (y + 20) + '"><tspan font-weight="600">' + P[r.p].name + '</tspan> · ' + esc(r.t) + '</text>';
+      if (i === 0) h += '<text class="m-dq-tag" x="' + (DQ.x + DQ.w - 24) + '" y="' + (y + 20) + '" text-anchor="end">IN CORSO</text>';
+    });
+    h += '<g class="arrows"></g>';
+    var svg = $('svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.innerHTML = h;
+  }
+
+  /* ---------- Frecce ---------- */
+  var HEAD_L = 12, HEAD_W = 5.5, END_GAP = 3, token = null;
+  function drawArrows(list, animate, done) {
+    var layer = $('svg').querySelector('.arrows');
+    var items = list.map(function (a) {
+      var p = arrowPath(a), miss = a.miss ? ' miss' : '';
+      var g = document.createElementNS(NS, 'g');
+      var halo = document.createElementNS(NS, 'path'); halo.setAttribute('class', 'm-halo'); halo.setAttribute('d', p.d);
+      var path = document.createElementNS(NS, 'path'); path.setAttribute('class', 'm-arrow' + miss); path.setAttribute('d', p.d);
+      var head = document.createElementNS(NS, 'path'); head.setAttribute('class', 'm-head' + miss);
+      g.appendChild(halo); g.appendChild(path); g.appendChild(head); layer.appendChild(g);
+      var len = path.getTotalLength(), tipL = len - END_GAP;
+      var T = path.getPointAtLength(tipL), Q0 = path.getPointAtLength(Math.max(0, tipL - 1));
+      var ang = Math.atan2(T.y - Q0.y, T.x - Q0.x), ca = Math.cos(ang), sa = Math.sin(ang);
+      var bx = T.x - ca * HEAD_L, by = T.y - sa * HEAD_L;
+      head.setAttribute('d', 'M' + T.x + ',' + T.y + ' L' + (bx - sa * HEAD_W) + ',' + (by + ca * HEAD_W) + ' L' + (bx + sa * HEAD_W) + ',' + (by - ca * HEAD_W) + ' Z');
+      var pill = null;
+      if (a.label) {
+        pill = document.createElementNS(NS, 'g'); pill.setAttribute('class', 'm-pill' + miss);
+        var r = document.createElementNS(NS, 'rect'), t = document.createElementNS(NS, 'text');
+        // etichetta su una o più righe
+        var lines = String(a.label).split('\n'), lh = 15, n0 = lines.length;
+        t.setAttribute('text-anchor', 'middle');
+        lines.forEach(function (ln, k) {
+          var ts = document.createElementNS(NS, 'tspan'); ts.textContent = ln; ts.setAttribute('x', 0);
+          ts.setAttribute('y', 4.5 + (k - (n0 - 1) / 2) * lh); t.appendChild(ts);
+        });
+        pill.appendChild(r); pill.appendChild(t); layer.appendChild(pill);
+        var w = t.getBBox().width + 14, hh = 20 + (n0 - 1) * lh;
+        r.setAttribute('x', -w / 2); r.setAttribute('y', -hh / 2); r.setAttribute('width', w); r.setAttribute('height', hh); r.setAttribute('rx', 10);
+      }
+      return { path: path, halo: halo, head: head, pill: pill, t: p.t, len: len, vis: Math.max(0, tipL - HEAD_L + 2), dash: !!a.miss, dx: p.dx || 0 };
+    });
+    function place(it, f) {
+      if (!it.pill) return;
+      var pt = it.path.getPointAtLength(it.len * Math.min(f, it.t));
+      // l'etichetta può stare di fianco alla freccia, per non coprirla
+      var bw = it.dx ? it.pill.getBBox().width / 2 + 8 : 0;
+      it.pill.setAttribute('transform', 'translate(' + (pt.x + (f >= it.t ? bw * Math.sign(it.dx) : 0)) + ',' + pt.y + ')');
+    }
+    function setDraw(it, e) {
+      var off = it.vis * (1 - e);
+      [it.path, it.halo].forEach(function (el) { el.style.strokeDasharray = it.vis + ' ' + (it.len + 20); el.style.strokeDashoffset = off; });
+    }
+    if (!animate) { items.forEach(function (it) { setDraw(it, 1); place(it, 1); }); if (done) done(); return; }
+    var D = 650, t0 = performance.now(), my = token = {};
+    items.forEach(function (it) { setDraw(it, 0); it.head.style.opacity = 0; if (it.pill) it.pill.style.opacity = 0; });
+    function frame(now) {
+      if (token !== my) return;
+      var all = true;
+      items.forEach(function (it, i) {
+        var f = (now - t0 - i * (D + 120)) / D;
+        if (f < 0) { all = false; return; }
+        if (f >= 1) { if (!it.fin) { it.fin = true; setDraw(it, 1); it.head.style.opacity = 1; place(it, 1); if (it.pill) it.pill.style.opacity = 1; } return; }
+        all = false;
+        var e = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+        setDraw(it, e); if (it.pill) { it.pill.style.opacity = 1; place(it, e); }
+      });
+      if (all) { if (done) done(); } else requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- Passi ---------- */
+  var cur = 0;
+  // una riga di quadratini per processo (stato a ogni passo) e una per la CPU (chi stava eseguendo)
+  function life(i) {
+    var rows = ORDER.map(function (p) {
+      var sq = '', ended = false;
+      for (var k = 1; k <= i; k++) {
+        var st = steps[k].procs[p].st;
+        if (!st || ended) { sq += '<span class="q blank"></span>'; continue; }
+        if (st === 'term') ended = true;
+        sq += '<span class="q st ' + st + (k === i ? ' now' : '') + '" title="passo ' + k + ': ' + ST[st] + '"></span>';
+      }
+      return '<div class="lrow"><span class="lname"><img src="' + LOGO[p] + '" alt="">' + P[p].name + '</span><div class="cpuseq">' + (sq || '<span class="none">—</span>') + '</div></div>';
+    });
+    var cs = '';
+    for (var k = 1; k <= i; k++) {
+      var st2 = steps[k], who = st2.cpu;
+      var tip = 'passo ' + k + ': ' + (who === 'OS' ? 'sistema operativo' : P[who].name);
+      cs += '<span class="q' + (who === 'OS' ? ' os' : '') + (k === i ? ' now' : '') + '" title="' + tip + '">' + (who === 'OS' ? 'SO' : '<img src="' + LOGO[who] + '" alt="' + P[who].name + '">') + '</span>';
+    }
+    rows.push('<div class="lrow cpurow"><span class="lname">CPU</span><div class="cpuseq">' + (cs || '<span class="none">—</span>') + '</div></div>');
+    return rows.join('');
+  }
+  function arrowsOf(s) {
+    if (!MMU) return s.arrows;
+    var out = [];
+    s.arrows.forEach(function (a) {
+      if (a.k !== 'cpu-ram') { out.push(a); return; }
+      out.push({ k: 'cpu-mmu', label: 'pag. ' + a.page, miss: a.miss });
+      if (!a.miss) out.push({ k: 'mmu-ram', page: a.page, frame: a.frame, label: 'frame ' + a.frame });
+    });
+    return out;
+  }
+  function descOf(s) {
+    var d = s.desc;
+    if (!MMU) return d;
+    if (s.kind === 'load') d += ' Nell\'MMU viene caricato anche il riferimento alla tabella delle pagine di ' + P[s.kp].name + '.';
+    if (s.kind === 'ask') d += s.look.f < 0 ? ' L\'MMU trova «disco» nella tabella delle pagine: è lei a far scattare il page fault.'
+                                           : ' L\'MMU traduce con la tabella delle pagine: pagina ' + s.look.n + ' → frame ' + s.look.f + '.';
+    return d;
+  }
+  function render(animate) {
+    var s = steps[cur], arr = arrowsOf(s);
+    token = null; geom();
+    $('desc').innerHTML = descOf(s);
+    $('count').textContent = cur === 0 ? 'Inizio' : 'Passo ' + cur + ' di ' + (steps.length - 1);
+    $('clk').textContent = s.clk; $('clk').classList.toggle('up', cur > 0);
+    $('first').disabled = cur === 0; $('prev').disabled = cur === 0; $('next').disabled = cur === steps.length - 1;
+    $('life').innerHTML = life(cur);
+    var nowU = -1; USER.forEach(function (u, k) { if (u.step <= cur) nowU = k; });
+    [].forEach.call($('ulist').children, function (li, k) { li.className = k === nowU ? 'now' : k < nowU ? 'done' : ''; });
+    if (animate && !REDUCED && arr.length && cur > 0) {
+      // prima lo stato precedente con le frecce che si disegnano, poi lo stato nuovo
+      draw(steps[cur - 1], true, s.look);
+      var at = cur;
+      drawArrows(arr, true, function () { if (cur !== at) return; draw(s, false, s.look); drawArrows(arr, false); });
+    } else {
+      draw(s, false, s.look); drawArrows(arr, false);
+    }
+  }
+  function go(d) {
+    var j = Math.max(0, Math.min(steps.length - 1, cur + d));
+    if (j === cur) return; cur = j; render(d > 0);
+  }
+  $('next').addEventListener('click', function () { go(1); });
+  $('ulist').innerHTML = USER.map(function (u, k) { return '<li><button type="button" data-step="' + u.step + '"><span class="n">' + (k + 1) + '</span><span>' + esc(u.t) + '</span></button></li>'; }).join('');
+  $('ulist').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; cur = +b.dataset.step; render(false); });
+  $('mmu').addEventListener('change', function () { MMU = this.checked; render(false); });
+  $('prev').addEventListener('click', function () { go(-1); });
+  $('first').addEventListener('click', function () { cur = 0; render(false); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') { go(1); e.preventDefault(); }
+    if (e.key === 'ArrowLeft') { go(-1); e.preventDefault(); }
+  });
+  render(false);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { render(false); });
+})();
+</script>

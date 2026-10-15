@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architettura degli elaboratori</title>
+<style>a.brand{color:inherit;text-decoration:none}a.brand:hover{color:var(--accent)}</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra in alto con i due esercizi; comandi a sinistra, macchina (CPU + RAM) a destra. */
+:root {
+  --paper: #EFF2EF;
+  --card: #FFFFFF;
+  --ink: #18212B;
+  --muted: #5A6570;
+  --line: #D3D9D5;
+  --accent: #2346C8;
+  --accent-soft: #E3E8FA;
+  --g-soft: #DCF1E4;
+  --k-soft: #E6E9E7;
+  --rem: #B42F66; --rem-soft: #F8E1EA;
+  --f-display: "Martian Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #11161B; --card: #192028; --ink: #E5EAEE; --muted: #98A3AE; --line: #2B343E;
+    --accent: #8098FF; --accent-soft: #1F2848; --g-soft: #15301F; --k-soft: #262E37; --rem: #F06E9F; --rem-soft: #3A1A28;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #11161B; --card: #192028; --ink: #E5EAEE; --muted: #98A3AE; --line: #2B343E;
+  --accent: #8098FF; --accent-soft: #1F2848; --g-soft: #15301F; --k-soft: #262E37; --rem: #F06E9F; --rem-soft: #3A1A28;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; margin: 0; }
+
+.topnav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40; background: var(--card); border-bottom: 1px solid var(--line); }
+.topnav-in { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 10px; display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; }
+.brand { font-family: var(--f-display); font-weight: 700; font-size: 14px; letter-spacing: -0.01em; white-space: nowrap; }
+.brand i { font-style: normal; color: var(--accent); }
+.tabs { display: flex; gap: 4px; overflow-x: auto; min-width: 0; flex: 1 1 auto; scrollbar-width: none; }
+.tab { font-family: var(--f-body); font-size: 14px; font-weight: 600; white-space: nowrap; padding: 7px 12px; border-radius: 8px; border: 0; cursor: pointer; background: transparent; color: var(--muted); }
+.tab:hover { background: var(--paper); color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--card); }
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) { .brand { display: none; } }
+
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw, 36px); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 78ch; font-size: 16px; }
+.lede b { color: var(--ink); }
+h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0; }
+.cols { display: grid; grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 920px) { .cols { grid-template-columns: minmax(0, 1fr); } .cols .panel { order: 2; } }
+.panel, .viz { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 18px; min-width: 0; }
+.ctl { display: grid; gap: 8px; min-width: 0; }
+.ctl + .ctl { padding-top: 16px; border-top: 1px solid var(--line); }
+.lbl { font-weight: 600; font-size: 14px; }
+.hint { margin: 0; font-size: 13px; color: var(--muted); }
+.hint b { color: var(--ink); font-family: var(--f-mono); font-weight: 600; }
+
+.cells { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
+.cell { display: grid; gap: 3px; min-width: 0; }
+.cell span { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.num { font-family: var(--f-mono); font-size: 18px; font-weight: 500; width: 100%; min-width: 0; padding: 5px 10px; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; font-variant-numeric: tabular-nums; }
+.num:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--f-mono); font-size: 12.5px; padding: 3px 10px; border-radius: 999px; background: var(--card); color: var(--ink); border: 1px solid var(--line); cursor: pointer; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.isa { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; margin: 0; font-size: 13px; }
+.isa dt { font-family: var(--f-mono); font-weight: 600; font-size: 12.5px; white-space: nowrap; }
+.isa dd { margin: 0; color: var(--muted); }
+
+.guess { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.fb { margin: 0; font-size: 13.5px; min-height: 1.5em; }
+.fb.ok { color: var(--accent); font-weight: 600; }
+.fb.no { color: var(--rem); font-weight: 600; }
+
+.btn { font-family: var(--f-body); font-weight: 600; font-size: 14px; padding: 7px 14px; border-radius: 8px; background: var(--ink); color: var(--card); border: 1px solid var(--ink); cursor: pointer; white-space: nowrap; }
+.btn:hover { background: var(--accent); border-color: var(--accent); }
+.btn.ghost { background: var(--card); color: var(--ink); border-color: var(--line); }
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn:disabled:hover { background: var(--ink); border-color: var(--ink); }
+.btn.ghost:disabled:hover { background: var(--card); color: var(--ink); border-color: var(--line); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.stepbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.phases { display: flex; gap: 1px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--line); }
+.phases span { padding: 5px 12px; font-family: var(--f-mono); font-size: 13px; font-weight: 500; background: var(--card); color: var(--muted); }
+.phases span.on { background: var(--ink); color: var(--card); }
+.nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.count { font-family: var(--f-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.count.oneline { display: block; margin-top: -8px; overflow: hidden; text-overflow: ellipsis; }
+.desc { margin: 0; font-size: 15px; min-height: 3.2em; max-width: 80ch; }
+.desc b { font-weight: 600; }
+.desc .v { font-family: var(--f-mono); font-weight: 600; color: var(--rem); }
+.machine { overflow-x: auto; min-width: 0; }
+.machine svg { display: block; width: 100%; min-width: 660px; height: auto; }
+.cap { margin: 0; font-size: 13.5px; color: var(--muted); max-width: 80ch; }
+.cap b { color: var(--ink); }
+.trace { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
+.trace .t { font-family: var(--f-mono); font-size: 13px; padding: 2px 8px; border-radius: 6px; background: var(--k-soft); color: var(--ink); }
+.trace .t.now { background: var(--accent); color: var(--card); }
+.trace .t.skip { background: transparent; color: var(--rem); text-decoration: line-through; border: 1px dashed var(--rem); }
+.trace .ar { color: var(--muted); }
+
+/* Macchina (SVG) */
+.m-cpu { fill: var(--paper); stroke: var(--line); stroke-width: 1.5; }
+.m-ram { fill: var(--card); stroke: var(--ink); stroke-width: 1.4; }
+.m-box { fill: var(--card); stroke: var(--ink); stroke-width: 1.4; transition: stroke .3s; }
+.m-box.chg { stroke: var(--rem); stroke-width: 2.6; }
+.m-box.act { fill: var(--accent-soft); }
+.m-title { font: 700 13px var(--f-display); fill: var(--ink); }
+.m-unit { font: 700 15px var(--f-display); fill: var(--ink); }
+.m-lbl { font: 600 12px var(--f-mono); fill: var(--muted); letter-spacing: .05em; }
+.m-val { font: 500 19px var(--f-mono); fill: var(--ink); transition: opacity .25s; }
+.m-ir { font: 500 15px var(--f-mono); fill: var(--ink); transition: opacity .25s; }
+.m-small { font: 500 13px var(--f-mono); fill: var(--ink); transition: opacity .25s; }
+.m-cu { font: 500 14px var(--f-body); fill: var(--ink); transition: opacity .25s; }
+.machine .chg-t, .state .chg-t { fill: var(--rem); font-weight: 700; }
+.pend { opacity: 0; }
+.m-sep { stroke: var(--line); stroke-width: 1; }
+.m-row { fill: transparent; }
+.m-row.data { fill: var(--g-soft); }
+.m-row.act { fill: var(--accent-soft); }
+.m-row.chg { fill: var(--rem-soft); }
+.m-addr { font: 500 13px var(--f-mono); fill: var(--muted); }
+.m-cell { font: 500 13.5px var(--f-mono); fill: var(--ink); transition: opacity .25s; }
+.m-cell.big { font-size: 17px; }
+.m-cell.empty, .m-val.empty { fill: var(--muted); }
+.m-brace { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+.m-bt { font: 500 12px var(--f-body); fill: var(--muted); }
+.m-halo { fill: none; stroke: var(--card); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+.m-arrow { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.m-head { fill: var(--accent); }
+.m-pill rect { fill: var(--accent); }
+.m-pill text { font: 600 12.5px var(--f-mono); fill: var(--card); }
+.m-jump { fill: none; stroke: var(--muted); stroke-opacity: .55; stroke-width: 1.6; stroke-dasharray: 4 4; }
+.m-jhead { fill: var(--muted); fill-opacity: .7; }
+
+/* Controlli a "mangianastri" */
+.deck { display: flex; gap: 1px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--line); }
+.dk { width: 42px; height: 38px; display: grid; place-items: center; padding: 0; border: 0; background: var(--card); color: var(--ink); cursor: pointer; }
+.dk svg { width: 18px; height: 18px; fill: currentColor; }
+.dk:hover { background: var(--accent-soft); color: var(--accent); }
+.dk:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.dk:disabled { color: var(--line); cursor: default; background: var(--card); }
+.dk.play { background: var(--ink); color: var(--card); width: 50px; }
+.dk.play:hover { background: var(--accent); color: var(--card); }
+.dk.play:disabled { background: var(--k-soft); color: var(--muted); }
+.dk .i-pause, .dk.playing .i-play { display: none; }
+.dk.playing .i-pause { display: block; }
+.textblock { display: grid; gap: 8px; align-content: start; }
+.textblock .desc { min-height: 4.5em; }
+.subs { min-height: calc(4.5em + 4px); }
+@media (max-width: 700px) { .textblock .desc { min-height: 10.5em; } .subs { min-height: calc(7.5em + 4px); } }
+.subs { margin: 0; padding-left: 1.5em; display: grid; align-content: start; gap: 2px; font-size: 14px; color: var(--muted); }
+.subs li.on { color: var(--ink); font-weight: 600; }
+.subs li::marker { font-family: var(--f-mono); }
+/* Salti condizionali: testo dell'esercizio a sinistra, esecuzione a destra */
+.kindbar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.kindbar .chips { flex: 1 1 auto; }
+.cols2 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 980px) { .cols2 { grid-template-columns: minmax(0, 1fr); } }
+.intro { margin: 0; font-size: 15.5px; }
+.listing { position: relative; }
+.listing .gut { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.line { display: grid; grid-template-columns: 2.6em minmax(0, 1fr) auto; gap: 4px 8px; align-items: baseline; padding: 4px 8px; border-radius: 6px; font-size: 16px; line-height: 1.45; transition: background .2s; }
+.line .ln { font-weight: 700; font-variant-numeric: tabular-nums; }
+.line b { font-weight: 700; }
+.line u { text-underline-offset: 2px; }
+.line .tag { font-family: var(--f-mono); font-size: 11.5px; color: var(--rem); white-space: nowrap; }
+.line.cur { background: var(--accent-soft); }
+.line.next { box-shadow: inset 3px 0 0 var(--accent); }
+.line.skip { color: var(--muted); }
+.line.skip .tx { text-decoration: line-through; text-decoration-color: var(--rem); }
+.qs { display: grid; gap: 6px; padding-top: 14px; border-top: 1px solid var(--line); }
+.qs ol, .ans { margin: 0; padding-left: 1.4em; display: grid; gap: 4px; }
+.ansbox { display: grid; gap: 10px; justify-items: start; }
+.ans { font-size: 14.5px; }
+.ans b { font-family: var(--f-mono); color: var(--rem); }
+.state { min-width: 0; }
+.state svg { display: block; width: 100%; max-width: 560px; height: auto; margin-inline: auto; }
+@media (prefers-reduced-motion: reduce) { .m-box, .m-val, .m-ir, .m-small, .m-cu, .m-cell { transition: none; } }
+</style>
+
+<nav class="topnav" aria-label="Esercizi">
+  <div class="topnav-in">
+    <a class="brand" href="./" title="Torna all\'indice">Architettura <i>degli elaboratori</i></a>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" type="button" data-page="ciclo">Ciclo di esecuzione</button>
+      <button class="tab" role="tab" type="button" data-page="salti">Salti condizionali</button>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <section id="p-ciclo" class="page">
+    <div class="wrap">
+      <header>
+        <h1>Ciclo di esecuzione</h1>
+        <p class="lede">Un programma di 10 istruzioni. Per ogni istruzione la CPU ripete tre fasi: <b>fetch</b> (prende l'istruzione indicata dal PC), <b>decode</b> (la CU capisce che cosa fare) ed <b>execute</b> (la esegue). Le frecce mostrano dove si spostano i dati.</p>
+      </header>
+      <div class="cols">
+        <aside class="panel">
+          <div class="ctl">
+            <span class="lbl">Dati in RAM</span>
+            <div class="cells">
+              <label class="cell"><span>cella 1010</span><input class="num" id="a-d0" type="number" min="0" max="99" value="12" inputmode="numeric"></label>
+              <label class="cell"><span>cella 1011</span><input class="num" id="a-d1" type="number" min="0" max="99" value="15" inputmode="numeric"></label>
+              <label class="cell"><span>cella 1100</span><input class="num" id="a-d2" type="number" min="0" max="99" value="3" inputmode="numeric"></label>
+              <label class="cell"><span>cella 1101</span><input class="num" id="a-d3" type="number" min="0" max="99" value="6" inputmode="numeric"></label>
+            </div>
+            <p class="hint">Cambiando un dato il programma ricomincia.</p>
+          </div>
+          <div class="ctl">
+            <span class="lbl">Le istruzioni</span>
+            <dl class="isa">
+              <dt>LOAD x R</dt><dd>copia il dato della cella x nel registro R</dd>
+              <dt>STORE R x</dt><dd>copia il registro R nella cella x</dd>
+              <dt>ADD R S</dt><dd>R + S, il risultato va in R</dd>
+              <dt>SUB R S</dt><dd>R − S, il risultato va in R</dd>
+              <dt>MUL R S</dt><dd>R × S, il risultato va in R</dd>
+              <dt>HALT</dt><dd>ferma il programma</dd>
+            </dl>
+          </div>
+          <div class="ctl">
+            <span class="lbl">Prova a prevedere</span>
+            <p class="hint">Che cosa ci sarà alla fine nelle celle 1110 e 1111?</p>
+            <div class="guess">
+              <div class="cells">
+                <label class="cell"><span>cella 1110</span><input class="num" id="a-g0" type="number" inputmode="numeric"></label>
+                <label class="cell"><span>cella 1111</span><input class="num" id="a-g1" type="number" inputmode="numeric"></label>
+              </div>
+              <button class="btn ghost" type="button" id="a-check">Verifica</button>
+            </div>
+            <p class="fb" id="a-fb" aria-live="polite"></p>
+          </div>
+        </aside>
+        <div class="viz">
+          <div class="stepbar">
+            <div class="phases" id="a-phases"></div>
+            <div class="nav">
+              <button class="btn ghost" type="button" id="a-first">Ricomincia</button>
+              <button class="btn ghost" type="button" id="a-prev">◀ Indietro</button>
+              <button class="btn" type="button" id="a-next">Avanti ▶</button>
+            </div>
+          </div>
+          <span class="count oneline" id="a-count"></span>
+          <div class="textblock">
+            <p class="desc" id="a-desc" aria-live="polite"></p>
+            <ol class="subs" id="a-subs"></ol>
+          </div>
+          <div class="machine"><svg id="a-svg" role="img" aria-label="CPU e RAM"></svg></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="p-salti" class="page" hidden>
+    <div class="wrap">
+      <header>
+        <h1>Salti condizionali</h1>
+        <p class="lede">Le istruzioni vengono eseguite in ordine perché il PC aumenta di 1. Un <b>salto</b> cambia il PC: se la condizione è vera, l'esecuzione continua dall'istruzione indicata.</p>
+      </header>
+      <div class="kindbar">
+        <span class="lbl">Tipo di esercizio</span>
+        <div class="chips" id="b-kind">
+          <button class="chip" type="button" data-k="tutti">Qualsiasi</button>
+          <button class="chip" type="button" data-k="parita">Pari o dispari</button>
+          <button class="chip" type="button" data-k="confronto">Confronto</button>
+          <button class="chip" type="button" data-k="fasce">Fasce di valori</button>
+          <button class="chip" type="button" data-k="ciclo">Ciclo</button>
+        </div>
+        <button class="btn" type="button" id="b-new">Nuovo esercizio</button>
+      </div>
+      <div class="cols2">
+        <article class="panel excard">
+          <h2>Esercizio</h2>
+          <p class="intro" id="b-intro"></p>
+          <div class="listing" id="b-listing"><div id="b-lines"></div></div>
+          <div class="qs">
+            <span class="lbl">Domande</span>
+            <ol id="b-qs"></ol>
+          </div>
+          <div class="ansbox">
+            <button class="btn ghost" type="button" id="b-ans" aria-expanded="false">Mostra le risposte</button>
+            <ol class="ans" id="b-answers" hidden></ol>
+          </div>
+        </article>
+        <div class="viz">
+          <div class="stepbar">
+            <span class="count" id="b-count"></span>
+            <div class="nav">
+              <button class="btn ghost" type="button" id="b-reset">Ricomincia</button>
+              <button class="btn ghost" type="button" id="b-prev">◀ Indietro</button>
+              <button class="btn" type="button" id="b-next">Avanti ▶</button>
+            </div>
+          </div>
+          <p class="desc" id="b-desc" aria-live="polite"></p>
+          <div class="state"><svg id="b-svg" role="img" aria-label="Registri e memoria"></svg></div>
+          <div class="trace" id="b-trace"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var NS = 'http://www.w3.org/2000/svg';
+  var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Geometria della macchina ---------- */
+  var G = {
+    W: 980, cpu: { x: -4, y: 30, w: 564, h: 474 },
+    regY: 74, regH: 60, regW: 110, regGap: 12, mid: 278,
+    alu: { inL: 212, inR: 344, top: 200, bot: 282 },
+    cu: { x: 40, y: 340, w: 224, h: 112 },
+    pc: { x: 300, y: 336, w: 216, h: 46 },
+    ir: { x: 300, y: 414, w: 216, h: 46 },
+    ram: { x: 664, w: 264, top: 16, rowY: 30, rowH: 25 }
+  };
+  function regX(i, n) { return G.mid - (n * G.regW + (n - 1) * G.regGap) / 2 + i * (G.regW + G.regGap); }
+  function regC(i, n) { return regX(i, n) + G.regW / 2; }
+  function rowC(i) { return G.ram.rowY + i * G.ram.rowH + G.ram.rowH / 2; }
+
+  function poly(pts, r) {
+    r = r || 10;
+    var d = 'M' + pts[0][0] + ',' + pts[0][1];
+    for (var i = 1; i < pts.length - 1; i++) {
+      var p = pts[i - 1], c = pts[i], n = pts[i + 1];
+      var l1 = Math.hypot(c[0] - p[0], c[1] - p[1]), l2 = Math.hypot(n[0] - c[0], n[1] - c[1]);
+      var rr = Math.min(r, l1 / 2, l2 / 2);
+      // l'ultimo tratto deve restare dritto per almeno la lunghezza della punta
+      if (i === pts.length - 2) rr = Math.max(0, Math.min(rr, l2 - 20));
+      if (i === 1) rr = Math.max(0, Math.min(rr, l1 - 4));
+      var a = [c[0] - (c[0] - p[0]) / l1 * rr, c[1] - (c[1] - p[1]) / l1 * rr];
+      var b = [c[0] + (n[0] - c[0]) / l2 * rr, c[1] + (n[1] - c[1]) / l2 * rr];
+      d += ' L' + a[0] + ',' + a[1] + ' Q' + c[0] + ',' + c[1] + ' ' + b[0] + ',' + b[1];
+    }
+    var e = pts[pts.length - 1];
+    return d + ' L' + e[0] + ',' + e[1];
+  }
+
+  // Percorso di ogni freccia: restituisce { d, t } (t = posizione dell'etichetta lungo il percorso)
+  function arrowPath(a, M) {
+    var n = M.regs.length, ri, cx, y;
+    var pcR = G.pc.x + G.pc.w, irR = G.ir.x + G.ir.w, ramL = G.ram.x;
+    switch (a.k) {
+      case 'pc-ram':
+        y = rowC(a.row) - 4; var y0 = G.pc.y + 20, s1 = 572 - pcR, tot = s1 + (y0 - y) + (ramL - 572);
+        return { d: poly([[pcR, y0], [572, y0], [572, y], [ramL, y]]), t: (s1 + (y0 - y) / 2) / tot };
+      case 'ram-ir':
+        y = rowC(a.row) + 4; var y3 = G.ir.y + 23, s0 = ramL - 606, tt = s0 + (y3 - y) + (606 - irR);
+        return { d: poly([[ramL, y], [606, y], [606, y3], [irR, y3]]), t: (s0 + Math.max(10, (G.pc.y + 46 - y))) / tt };
+      case 'pc-inc': return { d: poly([[336, G.pc.y], [336, G.pc.y - 32], [404, G.pc.y - 32], [404, G.pc.y]]), t: 0.5 };
+      case 'ir-cu': return { d: 'M' + G.ir.x + ',' + (G.ir.y + 23) + ' L' + (G.cu.x + G.cu.w) + ',' + (G.ir.y + 23), t: 0.5 };
+      case 'ram-reg': ri = M.regs.indexOf(a.reg); cx = regC(ri, n); y = rowC(a.row);
+        return { d: poly([[ramL, y], [606, y], [606, 44], [cx, 44], [cx, G.regY]]), t: 0.3 };
+      case 'reg-ram': ri = M.regs.indexOf(a.reg); cx = regC(ri, n); y = rowC(a.row);
+        return { d: poly([[cx, G.regY], [cx, 44], [606, 44], [606, y], [ramL, y]]), t: 0.7 };
+      case 'reg-alu': ri = M.regs.indexOf(a.reg); cx = regC(ri, n);
+        var ix = a.side === 'L' ? G.alu.inL : G.alu.inR;
+        var yb = G.regY + G.regH, yh = 166, dxx = Math.abs(ix - cx);
+        return { d: poly([[cx, yb], [cx, yh], [ix, yh], [ix, G.alu.top]]), t: ((yh - yb) + dxx / 2) / ((yh - yb) + dxx + (G.alu.top - yh)) };
+      case 'ir-alu': return { d: poly([[G.ir.x, G.ir.y + 14], [284, G.ir.y + 14], [284, 320], [136, 320], [136, 176], [G.alu.inR, 176], [G.alu.inR, G.alu.top]]), t: 0.86 };
+      case 'alu-reg': ri = M.regs.indexOf(a.reg); cx = regC(ri, n);
+        var sx = cx < G.mid ? 18 : 538;
+        return { d: poly([[G.mid, G.alu.bot], [G.mid, 308], [sx, 308], [sx, 44], [cx, 44], [cx, G.regY]]), t: 0.12 };
+      case 'reg-cu': ri = M.regs.indexOf(a.reg); cx = regC(ri, n);
+        return { d: poly([[cx, G.regY + G.regH], [cx, 150], [26, 150], [26, G.cu.y + 40], [G.cu.x, G.cu.y + 40]]), t: 0.5 };
+      case 'ir-pc': return { d: 'M' + 350 + ',' + G.ir.y + ' L' + 350 + ',' + (G.pc.y + G.pc.h), t: 0.5, dx: 40 };
+      case 'jump': var y1 = rowC(a.from), y2 = rowC(a.to), xr = G.ram.x + G.ram.w, b = a.bulge;
+        return { d: 'M' + xr + ',' + y1 + ' C' + (xr + b) + ',' + y1 + ' ' + (xr + b) + ',' + y2 + ' ' + (xr + 2) + ',' + y2, t: 0.5, nolabel: true };
+    }
+  }
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function show(v) { return v === null || v === undefined ? '####' : String(v); }
+
+  /* ---------- Disegno ---------- */
+  function draw(M, st, animate, sub, from) {
+    var svg = M.svg, n = M.regs.length, chg = st.chg || {}, act = st.act || {};
+    var nA = st.arrows.length;
+    if (sub === undefined || sub === null) sub = nA - 1;
+    if (from === undefined || from === null) from = 0;
+    var arrs = st.arrows.slice(0, sub + 1);
+    // quale freccia aggiorna ciascun valore (senza indicazione: l'ultima)
+    var setter = {};
+    st.arrows.forEach(function (a, i) { (a.sets || []).forEach(function (k) { setter[k] = i; }); });
+    Object.keys(chg).forEach(function (k) { if (setter[k] === undefined) setter[k] = nA - 1; });
+    var pendK = function (k) { return chg[k] && setter[k] > sub; };
+    var animK = function (k) { return chg[k] && animate && !REDUCED && setter[k] >= from && setter[k] <= sub; };
+    var isChg = function (k) { return chg[k] && !pendK(k); };
+    var rows = M.rows, H = Math.max(G.cpu.y + G.cpu.h, G.ram.rowY + rows.length * G.ram.rowH) + 8;
+    svg.setAttribute('viewBox', '0 0 ' + G.W + ' ' + H);
+    var pv = st._prev || st;
+    // testo di un valore: prima della sua freccia mostra il valore vecchio; durante l'animazione lo sostituisce alla fine della freccia
+    function vt(key, base, x, y, anchor, newT, oldT) {
+      var a = ' x="' + x + '" y="' + y + '"' + (anchor ? ' text-anchor="' + anchor + '"' : '');
+      if (pendK(key)) return '<text class="' + base + '"' + a + '>' + esc(oldT) + '</text>';
+      if (animK(key)) return '<text class="' + base + '"' + a + ' data-key="' + key + '" data-new="' + esc(newT).replace(/"/g, '&quot;') + '">' + esc(oldT) + '</text>';
+      return '<text class="' + base + (chg[key] ? ' chg-t' : '') + '"' + a + '>' + esc(newT) + '</text>';
+    }
+    var cls = function (key, base) { return base + (chg[key] ? ' chg-t' + (animK(key) ? ' pend' : '') : ''); };
+    var h = '<g transform="translate(10,0)">';
+    // CPU
+    var c = G.cpu;
+    h += '<rect class="m-cpu" x="' + c.x + '" y="' + c.y + '" width="' + c.w + '" height="' + c.h + '" rx="14"/>';
+    h += '<text class="m-title" x="' + (c.x + c.w) + '" y="' + (c.y - 9) + '" text-anchor="end">CPU</text>';
+    // registri
+    M.regs.forEach(function (r, i) {
+      var x = regX(i, n), v = st.regs[r], o = pv.regs[r];
+      h += '<rect class="m-box' + (isChg('reg:' + r) ? ' chg' : '') + '" x="' + x + '" y="' + G.regY + '" width="' + G.regW + '" height="' + G.regH + '" rx="8"/>';
+      h += '<text class="m-lbl" x="' + (x + 10) + '" y="' + (G.regY + 17) + '">' + r + '</text>';
+      h += vt('reg:' + r, 'm-val' + ((pendK('reg:' + r) || animK('reg:' + r) ? o : v) === null ? ' empty' : ''), x + G.regW / 2, G.regY + 46, 'middle', show(v), show(o));
+    });
+    // ALU
+    var A = G.alu, m = G.mid;
+    var aluT = pendK('alu') ? null : st.alu;
+    h += '<path class="m-box' + (aluT ? ' act' : '') + '" d="M' + (m - 120) + ',' + A.top + ' L' + (m - 12) + ',' + A.top + ' L' + m + ',' + (A.top + 16) + ' L' + (m + 12) + ',' + A.top + ' L' + (m + 120) + ',' + A.top + ' L' + (m + 68) + ',' + A.bot + ' L' + (m - 68) + ',' + A.bot + ' Z"/>';
+    h += '<text class="m-unit" x="' + m + '" y="' + (A.top + 38) + '" text-anchor="middle">ALU</text>';
+    if (aluT) h += '<text class="' + cls('alu', 'm-small') + '" x="' + m + '" y="' + (A.top + 62) + '" text-anchor="middle">' + esc(st.alu) + '</text>';
+    // CU
+    var u = G.cu, ucx = u.x + u.w / 2;
+    var cuL = pendK('cu') ? pv.cu : st.cu;
+    h += '<rect class="m-box' + (isChg('cu') ? ' act' : '') + '" x="' + u.x + '" y="' + u.y + '" width="' + u.w + '" height="' + u.h + '" rx="8"/>';
+    h += '<text class="m-unit" x="' + ucx + '" y="' + (u.y + 28) + '" text-anchor="middle">Control Unit</text>';
+    (cuL || []).forEach(function (line, i) {
+      h += '<text class="' + cls('cu', 'm-cu') + '" x="' + ucx + '" y="' + (u.y + 62 + i * 22) + '" text-anchor="middle">' + esc(line) + '</text>';
+    });
+    // PC e IR
+    [['pc', 'PC', M.fa(st.pc), 'm-val', M.fa(pv.pc)], ['ir', 'IR', st.ir ? M.txt(st.ir) : '####', 'm-ir', pv.ir ? M.txt(pv.ir) : '####']].forEach(function (b) {
+      var g = G[b[0]], empty = b[0] === 'ir' && !((pendK('ir') || animK('ir')) ? pv.ir : st.ir);
+      h += '<rect class="m-box' + (isChg(b[0]) ? ' chg' : '') + '" x="' + g.x + '" y="' + g.y + '" width="' + g.w + '" height="' + g.h + '" rx="8"/>';
+      h += '<text class="m-lbl" x="' + (g.x + 12) + '" y="' + (g.y + 28) + '">' + b[1] + '</text>';
+      h += vt(b[0], b[3] + (empty ? ' empty' : ''), g.x + 44, g.y + 30, '', b[2], b[4]);
+    });
+    // RAM
+    var R = G.ram, rb = G.ram.rowY + rows.length * R.rowH;
+    h += '<text class="m-title" x="' + (R.x + R.w) + '" y="' + (R.rowY - 9) + '" text-anchor="end">RAM</text>';
+    h += '<rect class="m-ram" x="' + R.x + '" y="' + G.ram.rowY + '" width="' + R.w + '" height="' + (rows.length * R.rowH) + '" rx="6"/>';
+    rows.forEach(function (row, i) {
+      var y = R.rowY + i * R.rowH, key = 'ram:' + row.addr;
+      var rc = isChg(key) ? ' chg' : act[key] ? ' act' : row.data ? ' data' : '';
+      h += '<rect class="m-row' + rc + '" x="' + (R.x + 1) + '" y="' + (y + 0.5) + '" width="' + (R.w - 2) + '" height="' + (R.rowH - 1) + '"/>';
+      h += '<text class="m-addr" x="' + (R.x + 14) + '" y="' + (y + 17) + '">' + M.fa(row.addr) + '</text>';
+      var fmt = function (v) { return v === undefined ? '…' : (v && v.op ? M.txt(v) : show(v)); };
+      var v = st.ram[row.addr], o = pv.ram[row.addr], sh = pendK(key) || animK(key) ? o : v;
+      h += vt(key, 'm-cell' + (sh === null || sh === undefined ? ' empty' : ''), R.x + M.colX, y + 17, '', fmt(v), fmt(o));
+      if (i) h += '<line class="m-sep" x1="' + (R.x + 1) + '" x2="' + (R.x + R.w - 1) + '" y1="' + y + '" y2="' + y + '"/>';
+    });
+    h += '<line class="m-sep" x1="' + (R.x + M.colX - 12) + '" x2="' + (R.x + M.colX - 12) + '" y1="' + R.rowY + '" y2="' + rb + '"/>';
+    (M.braces || []).forEach(function (b) {
+      var y1 = R.rowY + b[0] * R.rowH + 3, y2 = R.rowY + (b[1] + 1) * R.rowH - 3, xb = R.x + R.w + 10;
+      h += '<path class="m-brace" d="M' + xb + ',' + y1 + ' h6 V' + y2 + ' h-6"/>';
+      h += '<text class="m-bt" transform="translate(' + (xb + 20) + ',' + ((y1 + y2) / 2) + ') rotate(90)" text-anchor="middle">' + b[2] + '</text>';
+    });
+    h += '<g class="arrows"></g></g>';
+    svg.innerHTML = h;
+    drawArrows(M, { arrows: arrs }, animate && !REDUCED && arrs.length > from, from);
+  }
+
+  // Sostituisce il valore vecchio con quello nuovo (in rosso) negli elementi indicati.
+  function swapVals(svg, keys) {
+    svg.querySelectorAll('[data-new]').forEach(function (el) {
+      if (keys && keys.indexOf(el.getAttribute('data-key')) < 0) return;
+      el.textContent = el.getAttribute('data-new'); el.removeAttribute('data-new');
+      el.classList.remove('empty'); el.classList.add('chg-t');
+    });
+  }
+
+  var HEAD_L = 12, HEAD_W = 5.5, END_GAP = 3;
+  function drawArrows(M, st, animate, from) {
+    from = from || 0;
+    var layer = M.svg.querySelector('.arrows');
+    var items = st.arrows.map(function (a) {
+      var aa = a.k === 'jump' ? { k: 'jump', from: M.rowIdx(a.from), to: M.rowIdx(a.to), bulge: a.bulge } : a;
+      var p = M.pathFn ? M.pathFn(a) : arrowPath(aa, M);
+      var g = document.createElementNS(NS, 'g');
+      var halo = document.createElementNS(NS, 'path'); halo.setAttribute('class', 'm-halo'); halo.setAttribute('d', p.d);
+      var path = document.createElementNS(NS, 'path'); path.setAttribute('class', 'm-arrow'); path.setAttribute('d', p.d);
+      var head = document.createElementNS(NS, 'path'); head.setAttribute('class', 'm-head');
+      g.appendChild(halo); g.appendChild(path); g.appendChild(head); layer.appendChild(g);
+      var len = path.getTotalLength(), tipL = len - END_GAP;
+      // punta della freccia disegnata a mano, allineata alla tangente finale
+      var T = path.getPointAtLength(tipL), P = path.getPointAtLength(Math.max(0, tipL - 1));
+      var ang = Math.atan2(T.y - P.y, T.x - P.x), ca = Math.cos(ang), sa = Math.sin(ang);
+      var bx = T.x - ca * HEAD_L, by = T.y - sa * HEAD_L;
+      head.setAttribute('d', 'M' + T.x + ',' + T.y + ' L' + (bx - sa * HEAD_W) + ',' + (by + ca * HEAD_W) + ' L' + (bx + sa * HEAD_W) + ',' + (by - ca * HEAD_W) + ' Z');
+      var vis = Math.max(0, tipL - HEAD_L + 2);
+      var pill = null;
+      if (a.label !== undefined && a.label !== '' && !p.nolabel) {
+        pill = document.createElementNS(NS, 'g'); pill.setAttribute('class', 'm-pill');
+        var r = document.createElementNS(NS, 'rect'), t = document.createElementNS(NS, 'text');
+        t.textContent = a.label; t.setAttribute('text-anchor', 'middle'); t.setAttribute('dy', '4.5');
+        pill.appendChild(r); pill.appendChild(t); layer.appendChild(pill);
+        var w = t.getComputedTextLength() + 14;
+        r.setAttribute('x', -w / 2); r.setAttribute('y', -10); r.setAttribute('width', w); r.setAttribute('height', 20); r.setAttribute('rx', 10);
+      }
+      return { a: a, path: path, halo: halo, head: head, pill: pill, t: p.t, dx: p.dx || 0, len: len, vis: vis };
+    });
+    function place(it, f) {
+      if (!it.pill) return;
+      var pt = it.path.getPointAtLength(it.len * Math.min(f, it.t));
+      var dx = f >= it.t ? it.dx : 0;
+      it.pill.setAttribute('transform', 'translate(' + (pt.x + dx) + ',' + pt.y + ')');
+    }
+    function setDraw(it, e) {
+      var arr = it.vis + ' ' + (it.len + 20), off = it.vis * (1 - e);
+      [it.path, it.halo].forEach(function (el) { el.style.strokeDasharray = arr; el.style.strokeDashoffset = off; });
+    }
+    if (!animate) {
+      items.forEach(function (it) { setDraw(it, 1); place(it, 1); });
+      return;
+    }
+    var D = 520, gap = 120, t0 = performance.now(), token = M.token = {};
+    items.forEach(function (it, i) {
+      if (i < from) { it.fin = true; setDraw(it, 1); place(it, 1); return; }
+      setDraw(it, 0); it.head.style.opacity = 0; if (it.pill) it.pill.style.opacity = 0;
+    });
+    function frame(now) {
+      if (M.token !== token) return;
+      var done = true;
+      items.forEach(function (it, i) {
+        if (i < from) return;
+        var f = (now - t0 - (i - from) * (D + gap)) / D;
+        if (f < 0) { done = false; return; }
+        if (f >= 1) {
+          if (!it.fin) {
+            it.fin = true; setDraw(it, 1); it.head.style.opacity = 1; place(it, 1); if (it.pill) it.pill.style.opacity = 1;
+            if (it.a.sets) swapVals(M.svg, it.a.sets);
+          }
+          return;
+        }
+        done = false;
+        var e = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+        setDraw(it, e);
+        if (it.pill) { it.pill.style.opacity = 1; place(it, e); }
+      });
+      if (done) { swapVals(M.svg); M.svg.querySelectorAll('.pend').forEach(function (el) { el.classList.remove('pend'); }); }
+      else requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- Simulazione ---------- */
+  function clone(s) {
+    return { pc: s.pc, ir: s.ir, regs: Object.assign({}, s.regs), ram: Object.assign({}, s.ram), cu: s.cu, alu: null };
+  }
+  function simulate(M) {
+    var regs = {}; M.regs.forEach(function (r) { regs[r] = null; });
+    var s = { pc: M.start, ir: null, regs: regs, ram: Object.assign({}, M.ram), cu: null, alu: null };
+    var steps = [Object.assign(clone(s), { phase: -1, arrows: [], chg: {}, act: {}, desc: M.initDesc(s), trace: [] })];
+    var trace = [], fa = M.fa, guard = 0;
+    while (guard++ < 60) {
+      // FETCH
+      var pc = s.pc, ins = s.ram[pc];
+      var f = clone(s); f.ir = ins; f.pc = pc + 1; f.cu = null;
+      trace = trace.concat([pc]);
+      var act = {}; act['ram:' + pc] = 1;
+      steps.push(Object.assign(f, { phase: 0, instr: trace.length, trace: trace,
+        arrows: [{ k: 'pc-ram', row: M.rowIdx(pc), label: fa(pc), note: 'Il PC indica la cella da leggere: ' + fa(pc) + '.' }, { k: 'ram-ir', row: M.rowIdx(pc), label: M.txt(ins), sets: ['ir'], note: 'L\'istruzione ' + M.txt(ins) + ' viene copiata dalla RAM nell\'IR.' }, { k: 'pc-inc', label: '+1', sets: ['pc'], note: 'Il PC aumenta di 1 e diventa ' + fa(pc + 1) + '.' }],
+        chg: { pc: 1, ir: 1 }, act: act,
+        desc: '<b>Fetch</b>. Il PC vale ' + fa(pc) + ': l\'istruzione nella cella ' + fa(pc) + ' (<span class="v">' + esc(M.txt(ins)) + '</span>) viene copiata nell\'IR e il PC aumenta di 1, diventando <span class="v">' + fa(pc + 1) + '</span>.' }));
+      s = f;
+      var mean = M.meaning(ins);
+      if (M.decode) {
+        var d = clone(s); d.cu = mean.cu;
+        steps.push(Object.assign(d, { phase: 1, instr: trace.length, trace: trace, arrows: [{ k: 'ir-cu', sets: ['cu'] }], chg: { cu: 1 }, act: {},
+          desc: '<b>Decode</b>. La CU legge l\'istruzione nell\'IR e capisce che cosa fare: ' + mean.long + '.' }));
+        s = d;
+      }
+      // EXECUTE
+      var e = clone(s), ex = M.execute(ins, e);
+      if (!M.decode) e.cu = ex.cu || mean.cu;
+      steps.push(Object.assign(e, { phase: M.decode ? 2 : 1, instr: trace.length, trace: trace, arrows: ex.arrows, chg: ex.chg, act: ex.act || {},
+        desc: '<b>Execute</b>. ' + ex.desc, end: !!ex.halt }));
+      s = e;
+      if (ex.halt) break;
+    }
+    return steps;
+  }
+
+  function calc(op, a, b) { return op === 'ADD' ? a + b : op === 'SUB' ? a - b : a * b; }
+  var SYM = { ADD: '+', SUB: '−', MUL: '×' };
+  function V(x) { return '<span class="v">' + x + '</span>'; }
+
+  /* ---------- Esercizio A: ciclo lungo ---------- */
+  function bin4(n) { return (n >>> 0).toString(2).padStart(4, '0').slice(-4); }
+  var A_PROG = [
+    { op: 'LOAD', a: 10, r: 'R0' },
+    { op: 'LOAD', a: 11, r: 'R1' },
+    { op: 'ADD', r: 'R0', s: 'R1' },
+    { op: 'LOAD', a: 12, r: 'R2' },
+    { op: 'MUL', r: 'R0', s: 'R2' },
+    { op: 'STORE', r: 'R0', a: 14 },
+    { op: 'LOAD', a: 13, r: 'R3' },
+    { op: 'SUB', r: 'R0', s: 'R3' },
+    { op: 'STORE', r: 'R0', a: 15 },
+    { op: 'HALT' }
+  ];
+  function txtA(i) {
+    if (!i || !i.op) return '';
+    if (i.op === 'LOAD') return 'LOAD ' + bin4(i.a) + ' ' + i.r;
+    if (i.op === 'STORE') return 'STORE ' + i.r + ' ' + bin4(i.a);
+    if (i.op === 'HALT') return 'HALT';
+    return i.op + ' ' + i.r + ' ' + i.s;
+  }
+  var VERB = { ADD: ['sommare', 'somma'], SUB: ['sottrarre', 'sottrai'], MUL: ['moltiplicare', 'moltiplica'] };
+  function meaningA(i) {
+    if (i.op === 'LOAD') return { long: 'copiare il dato della cella ' + bin4(i.a) + ' nel registro ' + i.r, cu: ['copia la cella ' + bin4(i.a), 'nel registro ' + i.r] };
+    if (i.op === 'STORE') return { long: 'copiare il contenuto di ' + i.r + ' nella cella ' + bin4(i.a), cu: ['copia il registro ' + i.r, 'nella cella ' + bin4(i.a)] };
+    if (i.op === 'HALT') return { long: 'fermare il programma', cu: ['ferma il programma'] };
+    var l = i.op === 'ADD' ? 'sommare ' + i.r + ' e ' + i.s : i.op === 'SUB' ? 'sottrarre ' + i.s + ' da ' + i.r : 'moltiplicare ' + i.r + ' per ' + i.s;
+    return { long: l + ' e mettere il risultato in ' + i.r, cu: [i.r + ' ' + SYM[i.op] + ' ' + i.s + ' nell\'ALU', 'risultato in ' + i.r] };
+  }
+  function execCommon(i, s, M) {
+    var fa = M.fa, chg = {}, act = {};
+    if (i.op === 'LOAD') {
+      var v = s.ram[i.a]; s.regs[i.r] = v; chg['reg:' + i.r] = 1; act['ram:' + i.a] = 1;
+      return { arrows: [{ k: 'ram-reg', row: M.rowIdx(i.a), reg: i.r, label: show(v), sets: ['reg:' + i.r] }], chg: chg, act: act,
+        desc: 'Il dato della cella ' + fa(i.a) + ' (' + V(show(v)) + ') viene copiato nel registro ' + i.r + '.' };
+    }
+    if (i.op === 'STORE') {
+      var w = s.regs[i.r]; s.ram[i.a] = w; chg['ram:' + i.a] = 1;
+      return { arrows: [{ k: 'reg-ram', row: M.rowIdx(i.a), reg: i.r, label: show(w), sets: ['ram:' + i.a] }], chg: chg,
+        desc: 'Il contenuto di ' + i.r + ' (' + V(show(w)) + ') viene scritto nella cella ' + fa(i.a) + '.' };
+    }
+    if (SYM[i.op]) {
+      var x = s.regs[i.r], y = s.regs[i.s], z = calc(i.op, x, y);
+      s.regs[i.r] = z; s.alu = x + ' ' + SYM[i.op] + ' ' + y + ' = ' + z; chg['reg:' + i.r] = 1; chg.alu = 1;
+      return { arrows: [{ k: 'reg-alu', reg: i.r, side: 'L', label: x, note: i.r + ' (' + x + ') entra nell\'ALU.' }, { k: 'reg-alu', reg: i.s, side: 'R', label: y, sets: ['alu'], note: i.s + ' (' + y + ') entra nell\'ALU, che calcola ' + x + ' ' + SYM[i.op] + ' ' + y + ' = ' + z + '.' }, { k: 'alu-reg', reg: i.r, label: z, sets: ['reg:' + i.r], note: 'Il risultato ' + z + ' va in ' + i.r + '.' }], chg: chg,
+        desc: i.r + ' (' + x + ') e ' + i.s + ' (' + y + ') entrano nell\'ALU, che calcola ' + x + ' ' + SYM[i.op] + ' ' + y + ' = ' + V(z) + '. Il risultato va in ' + i.r + '.' };
+    }
+    return null;
+  }
+  function makeA() {
+    var data = [0, 1, 2, 3].map(function (k) { var v = parseInt($('a-d' + k).value, 10); return isNaN(v) ? 0 : Math.max(0, Math.min(99, v)); });
+    var ram = {};
+    A_PROG.forEach(function (ins, k) { ram[k] = ins; });
+    ram[10] = data[0]; ram[11] = data[1]; ram[12] = data[2]; ram[13] = data[3]; ram[14] = null; ram[15] = null;
+    var rows = []; for (var k = 0; k < 16; k++) rows.push({ addr: k, data: k >= 10 });
+    var M = {
+      id: 'a', svg: $('a-svg'), regs: ['R0', 'R1', 'R2', 'R3'], start: 0, ram: ram, rows: rows, colX: 76, decode: true,
+      fa: bin4, txt: txtA, meaning: meaningA, rowIdx: function (a) { return a; },
+      braces: [[0, 9, 'programma'], [10, 15, 'dati']],
+      initDesc: function () { return 'Situazione iniziale. Il PC vale ' + V('0000') + ': la prima istruzione da eseguire è nella cella 0000. I registri non contengono ancora nulla di utile (<b>####</b>).'; },
+      execute: function (i, s) {
+        if (i.op === 'HALT') return { arrows: [], chg: {}, halt: true, desc: 'La CPU si ferma: il programma è finito. Nella cella 1110 c\'è ' + V(s.ram[14]) + ', nella cella 1111 c\'è ' + V(s.ram[15]) + '.' };
+        return execCommon(i, s, M);
+      }
+    };
+    M.expect = [(data[0] + data[1]) * data[2], (data[0] + data[1]) * data[2] - data[3]];
+    return M;
+  }
+
+  /* ---------- Esercizio B: salti condizionali (testo generato a caso) ---------- */
+  function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  // Modelli di esercizio. R = tre registri, A = tre indirizzi consecutivi.
+  var TPL = {
+    parita: function (R, A) {
+      var v = rnd(11, 60), kE = rnd(2, 5), kO = pick([2, 3, 4, 5].filter(function (k) { return k !== kE; }));
+      return { items: [
+        { op: 'LOAD', a: A[0], r: R[0] },
+        { op: 'MOD2', r: R[0], d: R[1] },
+        { op: 'IFEQ', r: R[1], k: 0, t: 'pari' },
+        { op: 'IFEQ', r: R[1], k: 1, t: 'disp' },
+        { label: 'pari', op: pick(['MULK', 'ADDK']), r: R[0], k: kE, d: R[2] },
+        { op: 'JMP', t: 'end' },
+        { label: 'disp', op: pick(['MULK', 'ADDK']), r: R[0], k: kO, d: R[2] },
+        { label: 'end', op: 'STORE', r: R[2], a: A[1] }
+      ], mem: [[A[0], v], [A[1], null]], ask: { mem: A[1], reg: R[1] } };
+    },
+    differenza: function (R, A) {
+      var v1 = rnd(5, 60), v2; do { v2 = rnd(5, 60); } while (v2 === v1);
+      return { items: [
+        { op: 'LOAD', a: A[0], r: R[0] },
+        { op: 'LOAD', a: A[1], r: R[1] },
+        { op: 'IFGT', r: R[0], s: R[1], t: 'mag' },
+        { op: 'SUB', r: R[1], s: R[0], d: R[2] },
+        { op: 'SET', r: R[3], k: 2 },
+        { op: 'JMP', t: 'end' },
+        { label: 'mag', op: 'SUB', r: R[0], s: R[1], d: R[2] },
+        { op: 'SET', r: R[3], k: 1 },
+        { label: 'end', op: 'STORE', r: R[2], a: A[2] }
+      ], mem: [[A[0], v1], [A[1], v2], [A[2], null]], ask: { mem: A[2], reg: R[3] } };
+    },
+    massimo: function (R, A) {
+      var v1 = rnd(5, 60), v2; do { v2 = rnd(5, 60); } while (v2 === v1);
+      return { items: [
+        { op: 'LOAD', a: A[0], r: R[0] },
+        { op: 'LOAD', a: A[1], r: R[1] },
+        { op: 'IFGT', r: R[0], s: R[1], t: 'mag' },
+        { op: 'STORE', r: R[1], a: A[2] },
+        { op: 'SET', r: R[2], k: 2 },
+        { op: 'JMP', t: 'fin' },
+        { label: 'mag', op: 'STORE', r: R[0], a: A[2] },
+        { op: 'SET', r: R[2], k: 1 }
+      ], mem: [[A[0], v1], [A[1], v2], [A[2], null]], ask: { mem: A[2], reg: R[2] } };
+    },
+    fasce: function (R, A) {
+      var k1 = rnd(8, 15), k2 = k1 + rnd(8, 15), v = rnd(0, k2 + 12);
+      return { items: [
+        { op: 'LOAD', a: A[0], r: R[0] },
+        { op: 'IFLT', r: R[0], k: k1, t: 'basso' },
+        { op: 'IFLT', r: R[0], k: k2, t: 'medio' },
+        { op: 'SET', r: R[1], k: 3 },
+        { op: 'JMP', t: 'end' },
+        { label: 'basso', op: 'SET', r: R[1], k: 1 },
+        { op: 'JMP', t: 'end' },
+        { label: 'medio', op: 'SET', r: R[1], k: 2 },
+        { label: 'end', op: 'ADD', r: R[0], s: R[1], d: R[2] },
+        { op: 'STORE', r: R[2], a: A[1] }
+      ], mem: [[A[0], v], [A[1], null]], ask: { mem: A[1], reg: R[1] } };
+    },
+    moltiplica: function (R, A) {
+      var n = rnd(2, 3), x = rnd(3, 9);
+      return { items: [
+        { op: 'LOAD', a: A[0], r: R[0] },
+        { op: 'LOAD', a: A[1], r: R[1] },
+        { op: 'SET', r: R[2], k: 0 },
+        { label: 'ciclo', op: 'IFEQ', r: R[0], k: 0, t: 'end' },
+        { op: 'ADD', r: R[2], s: R[1], d: R[2], cnt: true },
+        { op: 'SUBK', r: R[0], k: 1, d: R[0] },
+        { op: 'JMP', t: 'ciclo' },
+        { label: 'end', op: 'STORE', r: R[2], a: A[2] }
+      ], mem: [[A[0], n], [A[1], x], [A[2], null]], ask: { mem: A[2], reg: R[0] } };
+    },
+    somma: function (R, A) {
+      var n = rnd(2, 4);
+      return { items: [
+        { op: 'LOAD', a: A[0], r: R[0] },
+        { op: 'SET', r: R[1], k: 0 },
+        { label: 'ciclo', op: 'IFEQ', r: R[0], k: 0, t: 'end' },
+        { op: 'ADD', r: R[1], s: R[0], d: R[1], cnt: true },
+        { op: 'SUBK', r: R[0], k: 1, d: R[0] },
+        { op: 'JMP', t: 'ciclo' },
+        { label: 'end', op: 'STORE', r: R[1], a: A[1] }
+      ], mem: [[A[0], n], [A[1], null]], ask: { mem: A[1], reg: R[0] } };
+    }
+  };
+  var GROUPS = { parita: ['parita'], confronto: ['differenza', 'massimo'], fasce: ['fasce'], ciclo: ['moltiplica', 'somma'] };
+
+  function buildEx(kind) {
+    var g = kind === 'tutti' ? pick(Object.keys(GROUPS)) : kind;
+    var R = shuffle(['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9']).slice(0, 4);
+    var base = rnd(100, 230), start = rnd(10, 60);
+    var t = TPL[pick(GROUPS[g])](R, [base, base + 1, base + 2]);
+    var lines = [{ op: 'DOTS' }].concat(t.items, [{ op: 'DOTS', label: 'fin' }]), lab = {};
+    lines.forEach(function (l, i) { l.n = start - 1 + i; if (l.label) lab[l.label] = i; });
+    if (lab.end === undefined) lab.end = lab.fin;
+    lines.forEach(function (l) { if (l.t) l.ti = lab[l.t]; });
+    var regs = [];
+    t.items.forEach(function (l) { ['r', 's', 'd'].forEach(function (f) { if (l[f] && regs.indexOf(l[f]) < 0) regs.push(l[f]); }); });
+    return { lines: lines, mem: t.mem, ask: t.ask, regs: regs };
+  }
+
+  function B(x) { return '<b>' + x + '</b>'; }
+  function lineText(l, L) {
+    var N = l.ti !== undefined ? B(L[l.ti].n) : '';
+    switch (l.op) {
+      case 'DOTS': return '…';
+      case 'LOAD': return 'Carica dall\'indirizzo di memoria ' + B(l.a) + ' al registro ' + B(l.r);
+      case 'STORE': return 'Salva il contenuto di ' + B(l.r) + ' all\'indirizzo di memoria ' + B(l.a);
+      case 'SET': return 'Metti il valore ' + B(l.k) + ' nel registro ' + B(l.r);
+      case 'MOD2': return 'Dividi per due il contenuto di ' + B(l.r) + ' e metti il resto della divisione in ' + B(l.d);
+      case 'MULK': return 'Moltiplica il contenuto di ' + B(l.r) + ' per ' + B(l.k) + ' e metti il risultato in ' + B(l.d);
+      case 'ADDK': return 'Somma ' + B(l.k) + ' al contenuto di ' + B(l.r) + ' e metti il risultato in ' + B(l.d);
+      case 'SUBK': return 'Sottrai ' + B(l.k) + ' dal contenuto di ' + B(l.r) + ' e metti il risultato in ' + B(l.d);
+      case 'ADD': return 'Somma il contenuto di ' + B(l.r) + ' e di ' + B(l.s) + ' e metti il risultato in ' + B(l.d);
+      case 'SUB': return 'Sottrai il contenuto di ' + B(l.s) + ' da quello di ' + B(l.r) + ' e metti il risultato in ' + B(l.d);
+      case 'IFEQ': return '<u>Se</u> il contenuto di ' + B(l.r) + ' è ' + B(l.k) + ' vai all\'istruzione ' + N;
+      case 'IFLT': return '<u>Se</u> il contenuto di ' + B(l.r) + ' è minore di ' + B(l.k) + ' vai all\'istruzione ' + N;
+      case 'IFGT': return '<u>Se</u> il contenuto di ' + B(l.r) + ' è maggiore del contenuto di ' + B(l.s) + ' vai all\'istruzione ' + N;
+      case 'JMP': return 'Vai all\'istruzione ' + N;
+    }
+  }
+
+  function runEx(ex) {
+    var L = ex.lines, regs = {}, mem = {}, pc = 1, trace = [], steps = [], guard = 0;
+    ex.regs.forEach(function (r) { regs[r] = null; });
+    ex.mem.forEach(function (m) { mem[m[0]] = m[1]; });
+    steps.push({ regs: Object.assign({}, regs), mem: Object.assign({}, mem), pc: L[1].n, cur: -1, next: 1, jump: null, arrows: [], chg: {}, read: {}, trace: [],
+      desc: 'L\'esecuzione parte dall\'istruzione ' + V(L[1].n) + '.' });
+    while (L[pc].op !== 'DOTS' && guard++ < 300) {
+      var l = L[pc], nx = pc + 1, chg = {}, read = {}, arrows = [], d = '', x, y, z, lab;
+      switch (l.op) {
+        case 'LOAD':
+          x = mem[l.a]; regs[l.r] = x; chg['reg:' + l.r] = 1; read['mem:' + l.a] = 1;
+          arrows.push({ k: 'mem-reg', a: l.a, r: l.r, label: x });
+          d = 'il valore all\'indirizzo ' + l.a + ' (' + V(x) + ') viene copiato in ' + l.r + '.'; break;
+        case 'STORE':
+          x = regs[l.r]; mem[l.a] = x; chg['mem:' + l.a] = 1; read['reg:' + l.r] = 1;
+          arrows.push({ k: 'reg-mem', a: l.a, r: l.r, label: x });
+          d = 'il contenuto di ' + l.r + ' (' + V(x) + ') viene salvato all\'indirizzo ' + l.a + '.'; break;
+        case 'SET':
+          regs[l.r] = l.k; chg['reg:' + l.r] = 1; arrows.push({ k: 'const', r: l.r, label: l.k });
+          d = l.r + ' prende il valore ' + V(l.k) + '.'; break;
+        case 'MOD2': case 'MULK': case 'ADDK': case 'SUBK':
+          x = regs[l.r];
+          if (l.op === 'MOD2') { z = x % 2; lab = '÷ 2, resto'; d = x + ' diviso 2 fa ' + Math.floor(x / 2) + ' con resto ' + V(z) + ': il resto va in ' + l.d + '.'; }
+          else if (l.op === 'MULK') { z = x * l.k; lab = '× ' + l.k; d = x + ' × ' + l.k + ' = ' + V(z) + ', il risultato va in ' + l.d + '.'; }
+          else if (l.op === 'ADDK') { z = x + l.k; lab = '+ ' + l.k; d = x + ' + ' + l.k + ' = ' + V(z) + ', il risultato va in ' + l.d + '.'; }
+          else { z = x - l.k; lab = '− ' + l.k; d = x + ' − ' + l.k + ' = ' + V(z) + ', il risultato va in ' + l.d + '.'; }
+          regs[l.d] = z; chg['reg:' + l.d] = 1;
+          arrows.push(l.d === l.r ? { k: 'self', r: l.r, label: lab } : { k: 'reg-reg', from: l.r, to: l.d, label: lab });
+          break;
+        case 'ADD': case 'SUB':
+          x = regs[l.r]; y = regs[l.s]; z = l.op === 'ADD' ? x + y : x - y;
+          var sym = l.op === 'ADD' ? '+' : '−';
+          regs[l.d] = z; chg['reg:' + l.d] = 1;
+          if (l.r !== l.d) arrows.push({ k: 'reg-reg', from: l.r, to: l.d, label: x });
+          arrows.push({ k: 'reg-reg', from: l.s, to: l.d, label: sym + ' ' + y });
+          d = x + ' ' + sym + ' ' + y + ' = ' + V(z) + ', il risultato va in ' + l.d + '.'; break;
+        case 'IFEQ': case 'IFLT': case 'IFGT':
+          x = regs[l.r]; read['reg:' + l.r] = 1;
+          var ok, cond;
+          if (l.op === 'IFGT') { y = regs[l.s]; read['reg:' + l.s] = 1; ok = x > y; cond = l.r + ' maggiore di ' + l.s; }
+          else if (l.op === 'IFLT') { ok = x < l.k; cond = l.r + ' minore di ' + l.k; }
+          else { ok = x === l.k; cond = l.r + ' uguale a ' + l.k; }
+          if (ok) nx = l.ti;
+          d = l.r + ' vale ' + x + (l.op === 'IFGT' ? ' e ' + l.s + ' vale ' + y : '') + ', quindi la condizione «' + cond + '» è ' +
+            (ok ? '<b>vera</b>: si salta all\'istruzione ' + V(L[nx].n) + '.' : '<b>falsa</b>: si prosegue con l\'istruzione ' + V(L[nx].n) + '.');
+          break;
+        case 'JMP':
+          nx = l.ti; d = 'salto senza condizione all\'istruzione ' + V(L[nx].n) + '.'; break;
+      }
+      if (nx !== pc + 1) chg.pc = 1;
+      trace.push(l.n);
+      var end = L[nx].op === 'DOTS';
+      d = '<b>Istruzione ' + l.n + '</b>: ' + d + (end ? ' Si arriva alla riga ' + L[nx].n + ' (…): l\'esercizio finisce qui.' : '');
+      steps.push({ regs: Object.assign({}, regs), mem: Object.assign({}, mem), pc: L[nx].n, cur: pc, next: nx, jump: nx !== pc + 1 ? [pc, nx] : null,
+        arrows: arrows, chg: chg, read: read, trace: trace.slice(), desc: d, end: end });
+      pc = nx;
+    }
+    return steps;
+  }
+
+  /* Disegno di registri e memoria */
+  var SG = { W: 560, top: 40, h: 46, gap: 14, rx: 132, rw: 140, mx: 392, mw: 150, rh: 34, ac: 62 };
+  function mY(k) { return SG.top + (k + 1) * SG.rh; }
+  function sY(i) { return SG.top + i * (SG.h + SG.gap); }
+  var BM = { id: 'b', svg: $('b-svg'), token: null };
+  BM.pathFn = function (a) {
+    var ex = BX.ex, ri = function (r) { return ex.regs.indexOf(r); }, mi = function (ad) { return ex.mem.map(function (m) { return m[0]; }).indexOf(ad); };
+    var cy = function (i) { return sY(i) + SG.h / 2; }, L = SG.rx, Rr = SG.rx + SG.rw, M = SG.mx;
+    var y1, y2, b;
+    switch (a.k) {
+      case 'mem-reg': y1 = mY(mi(a.a)) + SG.rh / 2; y2 = cy(ri(a.r)); return across(M, y1, Rr, y2);
+      case 'reg-mem': y1 = cy(ri(a.r)); y2 = mY(mi(a.a)) + SG.rh / 2; return across(Rr, y1, M, y2);
+      case 'reg-reg':
+        var i1 = ri(a.from), i2 = ri(a.to); y1 = cy(i1); y2 = cy(i2) + (i1 < i2 ? -7 : 7); b = 30 + 22 * (Math.abs(i1 - i2) - 1);
+        return { d: poly([[L, y1], [L - b, y1], [L - b, y2], [L, y2]], 10), t: 0.5 };
+      case 'self': y1 = cy(ri(a.r));
+        return { d: poly([[L, y1 - 9], [L - 30, y1 - 9], [L - 30, y1 + 9], [L, y1 + 9]], 7), t: 0.5, dx: -28 };
+      case 'const': y1 = cy(ri(a.r)); return { d: 'M' + (L - 70) + ',' + y1 + ' L' + L + ',' + y1, t: 0.02 };
+    }
+  };
+  function across(x1, y1, x2, y2) {
+    if (Math.abs(y1 - y2) < 1) return { d: 'M' + x1 + ',' + y1 + ' L' + x2 + ',' + y2, t: 0.5 };
+    var xm = (x1 + x2) / 2;
+    return { d: poly([[x1, y1], [xm, y1], [xm, y2], [x2, y2]], 10), t: 0.5 };
+  }
+  function drawState(st, animate) {
+    var ex = BX.ex, svg = BM.svg, chg = st.chg, rd = st.read;
+    var nR = ex.regs.length, nM = ex.mem.length, H = Math.max(sY(nR), mY(nM + 1)) + 4;
+    svg.setAttribute('viewBox', '0 0 ' + SG.W + ' ' + H);
+    var pend = animate && !REDUCED && st.arrows.length;
+    var h = '<defs><marker id="b-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="m-head"/></marker></defs>';
+    h += '<text class="m-title" x="' + SG.rx + '" y="24">Registri</text><text class="m-title" x="' + SG.mx + '" y="24">RAM</text>';
+    var pv = pend ? st._prev : null;
+    function sv(v) { return v === null || v === undefined ? '—' : String(v); }
+    function box(x, w, i, key, lbl, v, o) {
+      var y = sY(i), c = chg[key], swap = c && pv && st.arrows.length;
+      var shown = swap ? o : v, vc = 'm-val' + (shown === null || shown === undefined ? ' empty' : '') + (c && !swap ? ' chg-t' : '');
+      return '<rect class="m-box' + (c ? ' chg' : '') + (rd[key] ? ' act' : '') + '" x="' + x + '" y="' + y + '" width="' + w + '" height="' + SG.h + '" rx="8"/>' +
+        '<text class="m-lbl" x="' + (x + 12) + '" y="' + (y + 28) + '">' + lbl + '</text>' +
+        '<text class="' + vc + '" x="' + (x + w - 14) + '" y="' + (y + 31) + '" text-anchor="end"' + (swap ? ' data-key="' + key + '" data-new="' + sv(v) + '"' : '') + '>' + sv(shown) + '</text>';
+    }
+    ex.regs.forEach(function (r, i) { h += box(SG.rx, SG.rw, i, 'reg:' + r, r, st.regs[r], pv && pv.regs[r]); });
+    // RAM come tabella: indirizzo | contenuto, con una riga "…" sopra e sotto
+    var tx = SG.mx, nrow = nM + 2;
+    h += '<rect class="m-ram" x="' + tx + '" y="' + SG.top + '" width="' + SG.mw + '" height="' + (nrow * SG.rh) + '" rx="6"/>';
+    for (var k = -1; k <= nM; k++) {
+      var y = mY(k), m = ex.mem[k];
+      if (k > -1) h += '<line class="m-sep" x1="' + (tx + 1) + '" x2="' + (tx + SG.mw - 1) + '" y1="' + y + '" y2="' + y + '"/>';
+      if (!m) {
+        h += '<text class="m-addr" x="' + (tx + 14) + '" y="' + (y + 22) + '">…</text><text class="m-addr" x="' + (tx + SG.ac + 12) + '" y="' + (y + 22) + '">…</text>';
+        continue;
+      }
+      var key = 'mem:' + m[0], c = chg[key], v = st.mem[m[0]], o = pv && pv.mem[m[0]], swap = c && pv && st.arrows.length, shown = swap ? o : v;
+      h += '<rect class="m-row' + (c ? ' chg' : rd[key] ? ' act' : '') + '" x="' + (tx + 1) + '" y="' + (y + 0.5) + '" width="' + (SG.mw - 2) + '" height="' + (SG.rh - 1) + '"/>';
+      h += '<text class="m-addr" x="' + (tx + 14) + '" y="' + (y + 22) + '">' + m[0] + '</text>';
+      h += '<text class="m-cell big' + (shown === null || shown === undefined ? ' empty' : '') + (c && !swap ? ' chg-t' : '') + '" x="' + (tx + SG.ac + 12) + '" y="' + (y + 22) + '"' +
+        (swap ? ' data-key="' + key + '" data-new="' + sv(v) + '"' : '') + '>' + sv(shown) + '</text>';
+    }
+    h += '<line class="m-sep" x1="' + (tx + SG.ac) + '" x2="' + (tx + SG.ac) + '" y1="' + SG.top + '" y2="' + (SG.top + nrow * SG.rh) + '"/>';
+    h += '<g class="arrows"></g>';
+    svg.innerHTML = h;
+    BM.token = null;
+    drawArrows(BM, st, pend);
+  }
+
+  function drawGutter() {}
+
+  var BX = { kind: 'tutti', ex: null, steps: [], i: 0 };
+  var RB = {
+    newEx: function () {
+      BX.ex = buildEx(BX.kind); BX.steps = runEx(BX.ex); BX.i = 0;
+      var ex = BX.ex, L = ex.lines, fin = BX.steps[BX.steps.length - 1];
+      var known = ex.mem.filter(function (m) { return m[1] !== null; });
+      $('b-intro').innerHTML = 'In memoria ' + known.map(function (m) { return 'all\'indirizzo ' + B(m[0]) + ' c\'è il valore ' + B(m[1]); }).join(' e ') + '.';
+      $('b-lines').innerHTML = L.map(function (l, i) {
+        return '<div class="line" data-i="' + i + '"><span class="ln">' + l.n + ':</span><span class="tx">' + lineText(l, L) + '</span><span class="tag"></span></div>';
+      }).join('');
+      var cell = 'all\'indirizzo di memoria ' + B(ex.ask.mem), reg = 'nel registro ' + B(ex.ask.reg);
+      var cntLine = L.filter(function (l) { return l.cnt; })[0];
+      var execd = fin.trace, skipped = L.filter(function (l) { return l.op !== 'DOTS' && execd.indexOf(l.n) < 0; }).map(function (l) { return l.n; });
+      var qs = ['Che cosa c\'è ' + cell + ' alla fine?', 'Che cosa c\'è ' + reg + ' alla fine?', 'In che ordine vengono eseguite le istruzioni?' + (skipped.length ? ' Quali non vengono mai eseguite?' : '')];
+      var an = ['All\'indirizzo di memoria ' + ex.ask.mem + ' c\'è ' + B(fin.mem[ex.ask.mem]) + '.', 'Nel registro ' + ex.ask.reg + ' c\'è ' + B(fin.regs[ex.ask.reg]) + '.',
+        'Ordine: ' + execd.join(' → ') + '.' + (skipped.length ? ' Mai eseguite: ' + skipped.join(', ') + '.' : '')];
+      if (cntLine) {
+        var c = execd.filter(function (n) { return n === cntLine.n; }).length;
+        qs.push('Quante volte viene eseguita l\'istruzione ' + B(cntLine.n) + '?');
+        an.push('L\'istruzione ' + cntLine.n + ' viene eseguita ' + B(c) + (c === 1 ? ' volta.' : ' volte.'));
+      }
+      $('b-qs').innerHTML = qs.map(function (q) { return '<li>' + q + '</li>'; }).join('');
+      $('b-answers').innerHTML = an.map(function (q) { return '<li>' + q + '</li>'; }).join('');
+      $('b-answers').hidden = true; $('b-ans').textContent = 'Mostra le risposte'; $('b-ans').setAttribute('aria-expanded', 'false');
+      RB.render(false);
+    },
+    render: function (animate) {
+      if (!BX.ex) return;
+      var st = BX.steps[BX.i], L = BX.ex.lines, fin = st.end;
+      var execd = BX.steps[BX.steps.length - 1].trace;
+      [].forEach.call($('b-lines').children, function (el, i) {
+        var l = L[i], skip = fin && l.op !== 'DOTS' && st.trace.indexOf(l.n) < 0;
+        el.classList.toggle('cur', i === st.cur);
+        el.classList.toggle('skip', !!skip);
+        el.querySelector('.tag').textContent = skip ? 'mai eseguita' : '';
+      });
+      drawGutter();
+      drawState(st, animate);
+      $('b-desc').innerHTML = st.desc;
+      $('b-count').textContent = BX.i === 0 ? 'Inizio' : 'Passo ' + BX.i + ' di ' + (BX.steps.length - 1);
+      $('b-prev').disabled = BX.i === 0; $('b-reset').disabled = BX.i === 0; $('b-next').disabled = BX.i === BX.steps.length - 1;
+      var tr = st.trace, h = '<span>Istruzioni eseguite:</span>';
+      if (!tr.length) h += '<span>nessuna</span>';
+      tr.forEach(function (n, k) { if (k) h += '<span class="ar">→</span>'; h += '<span class="t' + (k === tr.length - 1 ? ' now' : '') + '">' + n + '</span>'; });
+      $('b-trace').innerHTML = h;
+      void execd;
+    },
+    go: function (d) {
+      var j = Math.max(0, Math.min(BX.steps.length - 1, BX.i + d));
+      if (j === BX.i) return;
+      BX.i = j; BX.steps[j]._prev = d > 0 ? BX.steps[j - 1] : null; RB.render(d > 0);
+    }
+  };
+  $('b-next').addEventListener('click', function () { RB.go(1); });
+  $('b-prev').addEventListener('click', function () { RB.go(-1); });
+  $('b-reset').addEventListener('click', function () { BX.i = 0; RB.render(false); });
+  $('b-new').addEventListener('click', function () { RB.newEx(); });
+  function pressKind() { [].forEach.call($('b-kind').children, function (c) { c.setAttribute('aria-pressed', String(c.dataset.k === BX.kind)); }); }
+  $('b-kind').addEventListener('click', function (e) {
+    var c = e.target.closest('.chip'); if (!c) return;
+    BX.kind = c.dataset.k; pressKind(); RB.newEx();
+  });
+  pressKind();
+  $('b-ans').addEventListener('click', function () {
+    var a = $('b-answers'), open = a.hidden; a.hidden = !open;
+    this.textContent = open ? 'Nascondi le risposte' : 'Mostra le risposte'; this.setAttribute('aria-expanded', String(open));
+  });
+  var rzT = 0;
+  window.addEventListener('resize', function () { clearTimeout(rzT); rzT = setTimeout(function () { if (BX.ex) drawGutter(); }, 100); });
+
+  /* ---------- Controllo dei passi (esercizio A): fase intera o singolo sottopasso ---------- */
+  function Runner(p, make, phaseNames) {
+    var R = { M: null, steps: [], S: 0, j: 0, timer: null };
+    $(p + '-phases').innerHTML = phaseNames.map(function (n) { return '<span>' + n + '</span>'; }).join('');
+    function nSub(S) { return Math.max(1, R.steps[S].arrows.length); }
+    function last() { return R.steps.length - 1; }
+    R.render = function (from) {
+      var st = R.steps[R.S], M = R.M;
+      st._prev = R.steps[R.S - 1] || st;
+      M.token = null;
+      var animate = from !== null && from !== undefined;
+      draw(M, st, animate, st.arrows.length ? R.j : -1, animate ? from : 0);
+      $(p + '-desc').innerHTML = st.desc;
+      var notes = st.arrows.length > 1 ? st.arrows.slice(0, R.j + 1).map(function (a, k) { return '<li' + (k === R.j ? ' class="on"' : '') + '>' + esc(a.note || '') + '</li>'; }).join('') : '';
+      $(p + '-subs').innerHTML = notes;
+      var spans = $(p + '-phases').children;
+      for (var k = 0; k < spans.length; k++) spans[k].classList.toggle('on', k === st.phase);
+      $(p + '-count').textContent = st.phase < 0 ? 'Inizio' : 'Istruzione ' + st.instr + ' di ' + M.instrCount + (nSub(R.S) > 1 ? ' · passo ' + (R.j + 1) + ' di ' + nSub(R.S) : '') + '\u00a0';
+      var atStart = R.S === 0 && R.j === 0, atEnd = R.S === last() && R.j === nSub(R.S) - 1;
+      $(p + '-first').disabled = atStart; $(p + '-prev').disabled = atStart; $(p + '-next').disabled = atEnd;
+    };
+    R.load = function () {
+      R.stop();
+      R.M = make(); R.steps = simulate(R.M); R.S = 0; R.j = 0;
+      R.M.instrCount = R.steps[R.steps.length - 1].instr;
+      R.render(null);
+    };
+    // un sottopasso avanti o indietro
+    R.micro = function (d) {
+      if (d > 0) {
+        if (R.j < nSub(R.S) - 1) { R.j++; R.render(R.j); }
+        else if (R.S < last()) { R.S++; R.j = 0; R.render(0); }
+      } else {
+        if (R.j > 0) { R.j--; R.render(null); }
+        else if (R.S > 0) { R.S--; R.j = nSub(R.S) - 1; R.render(null); }
+      }
+    };
+    // una fase intera avanti o indietro
+    R.phase = function (d) {
+      if (d > 0) {
+        if (R.j < nSub(R.S) - 1) { var f = R.j + 1; R.j = nSub(R.S) - 1; R.render(f); }
+        else if (R.S < last()) { R.S++; R.j = nSub(R.S) - 1; R.render(0); }
+      } else {
+        if (R.j < nSub(R.S) - 1 && R.S > 0) { R.S--; }
+        else if (R.S > 0) { R.S--; }
+        else { R.j = 0; R.render(null); return; }
+        R.j = nSub(R.S) - 1; R.render(null);
+      }
+    };
+    R.go = function (d) { R.micro(d); };
+    R.stop = function () {};
+    function user(fn) { return function () { R.stop(); fn(); }; }
+    $(p + '-first').addEventListener('click', user(function () { R.S = 0; R.j = 0; R.render(null); }));
+    $(p + '-prev').addEventListener('click', user(function () { R.micro(-1); }));
+    $(p + '-next').addEventListener('click', user(function () { R.micro(1); }));
+    return R;
+  }
+
+  var RA = Runner('a', makeA, ['Fetch', 'Decode', 'Execute']);
+  // dati modificabili
+  var tA = 0;
+  [0, 1, 2, 3].forEach(function (k) { $('a-d' + k).addEventListener('input', function () { clearTimeout(tA); tA = setTimeout(function () { RA.load(); $('a-fb').textContent = ''; $('a-fb').className = 'fb'; }, 200); }); });
+  // verifiche
+  $('a-check').addEventListener('click', function () {
+    var g0 = parseInt($('a-g0').value, 10), g1 = parseInt($('a-g1').value, 10), e = RA.M.expect, fb = $('a-fb');
+    if (isNaN(g0) || isNaN(g1)) { fb.className = 'fb'; fb.textContent = 'Scrivi un valore per entrambe le celle.'; return; }
+    var ok0 = g0 === e[0], ok1 = g1 === e[1];
+    if (ok0 && ok1) { fb.className = 'fb ok'; fb.textContent = 'Giusto: 1110 = ' + e[0] + ' e 1111 = ' + e[1] + '.'; }
+    else { fb.className = 'fb no'; fb.textContent = ok0 ? 'La cella 1110 è giusta, la 1111 no. Segui l\'esecuzione per controllare.' : ok1 ? 'La cella 1111 è giusta, la 1110 no. Segui l\'esecuzione per controllare.' : 'Non ancora. Segui l\'esecuzione passo per passo per controllare.'; }
+  });
+  // tastiera: frecce sinistra e destra
+  document.addEventListener('keydown', function (e) {
+    if (e.target.closest && e.target.closest('input, textarea')) return;
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    var d = e.key === 'ArrowRight' ? 1 : -1;
+    if (current === 'salti') RB.go(d);
+    else { RA.stop(); if (e.shiftKey) RA.phase(d); else RA.micro(d); }
+    e.preventDefault();
+  });
+
+  // pagine
+  var PAGES = ['ciclo', 'salti'], current = 'ciclo';
+  function showPage(p) {
+    if (PAGES.indexOf(p) < 0) p = 'ciclo';
+    current = p;
+    PAGES.forEach(function (q) { $('p-' + q).hidden = q !== p; });
+    document.querySelectorAll('.tab').forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.page === p)); });
+    if (p === 'salti') RB.render(false); else { RA.stop(); RA.render(null); }
+  }
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () { try { history.replaceState(null, '', '#' + t.dataset.page); } catch (e) {} showPage(t.dataset.page); window.scrollTo(0, 0); });
+  });
+  window.addEventListener('hashchange', function () { showPage(location.hash.slice(1)); });
+
+  RA.load(); RB.newEx();
+  showPage(location.hash.slice(1));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { RA.render(null); RB.render(false); });
+})();
+</script>

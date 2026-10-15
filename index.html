@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lezioni interattive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --paper: #EFF2EF; --card: #FFFFFF; --ink: #18212B; --muted: #5A6570; --line: #D3D9D5;
+  --accent: #2346C8; --accent-soft: #E3E8FA;
+  --f-display: "Martian Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #11161B; --card: #192028; --ink: #E5EAEE; --muted: #98A3AE; --line: #2B343E; --accent: #8098FF; --accent-soft: #1F2848; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --paper: #11161B; --card: #192028; --ink: #E5EAEE; --muted: #98A3AE; --line: #2B343E; --accent: #8098FF; --accent-soft: #1F2848; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.topnav { background: var(--card); border-bottom: 1px solid var(--line); }
+.topnav-in { max-width: 1040px; margin: 0 auto; padding: 10px 20px; }
+.brand { font-family: var(--f-display); font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
+.brand i { font-style: normal; color: var(--accent); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 36px 20px 64px; display: grid; gap: 28px; }
+header { display: grid; gap: 8px; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw, 36px); letter-spacing: -0.02em; margin: 0; }
+.lede { margin: 0; color: var(--muted); max-width: 64ch; font-size: 16px; }
+.cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.card { display: grid; grid-template-rows: auto auto 1fr auto; gap: 10px; height: 100%; padding: 20px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; color: inherit; text-decoration: none; transition: border-color .15s, transform .15s; }
+.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--f-mono); font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.card h2 { margin: 0; font-family: var(--f-display); font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 6px; }
+.tags span { font-family: var(--f-mono); font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); }
+.go { font-weight: 600; font-size: 14px; color: var(--accent); }
+</style>
+</head>
+<body>
+<nav class="topnav"><div class="topnav-in"><span class="brand">Lezioni <i>interattive</i></span></div></nav>
+<main class="wrap">
+  <header>
+    <h1>Lezioni interattive</h1>
+    <p class="lede">Pagine da usare in classe: si esplorano passo per passo, con dati veri o con simulazioni della macchina.</p>
+  </header>
+  <ul class="cards">
+    <li><a class="card" href="rappresentazione.html">
+      <span class="num">01</span>
+      <h2>Rappresentazione delle informazioni</h2>
+      <p>Come diventano bit i caratteri, i numeri, le immagini, i video e l'audio, e quanto pesano.</p>
+      <div><div class="tags"><span>Caratteri</span><span>Conversioni</span><span>Immagini</span><span>Video</span><span>Audio</span></div></div>
+    </a></li>
+    <li><a class="card" href="architettura.html">
+      <span class="num">02</span>
+      <h2>Architettura degli elaboratori</h2>
+      <p>CPU e RAM al lavoro: il ciclo di esecuzione di un programma, istruzione per istruzione, e gli esercizi sui salti.</p>
+      <div><div class="tags"><span>Ciclo di esecuzione</span><span>Salti condizionali</span></div></div>
+    </a></li>
+    <li><a class="card" href="processi.html">
+      <span class="num">03</span>
+      <h2>Processi e memoria virtuale</h2>
+      <p>Tre programmi aperti si alternano su una sola CPU: cambi di contesto, page fault, area di swap e coda del disco.</p>
+      <div><div class="tags"><span>Processi</span><span>Scheduler</span><span>Memoria virtuale</span></div></div>
+    </a></li>
+  </ul>
+</main>
+</body>
+</html>
