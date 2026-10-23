@@ -11,6 +11,7 @@ Pagine HTML autonome, in [`intro-informatica/`](intro-informatica/): ognuna è u
 - **[Rappresentazione delle informazioni](intro-informatica/rappresentazione.html)**: come diventano bit le informazioni che usiamo ogni giorno. Mostra come un testo viene salvato su disco byte per byte, con la tabella ASCII, e converte i numeri tra binario, decimale ed esadecimale. Calcola quanto pesano un'immagine, un file audio e un video, con esempi pronti e con valori scelti da chi la usa.
 - **[Architettura degli elaboratori](intro-informatica/architettura.html)**: CPU e RAM eseguono un piccolo programma, un'istruzione alla volta, mentre registri, program counter e memoria si aggiornano a ogni passo. Una seconda parte introduce i salti condizionali, con un esercizio.
 - **[Processi e memoria virtuale](intro-informatica/processi.html)**: tre programmi aperti si dividono una sola CPU. Si vede il sistema operativo che salva e ripristina il contesto di ogni processo, gestisce i page fault, sposta pagine tra RAM e area di swap e mette in coda le richieste al disco.
+- **[Reti](intro-informatica/reti.html)**: visualizzazioni di protocolli e interazioni di rete.
 
 ## Altri Tools
 
