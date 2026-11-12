@@ -19,6 +19,8 @@
   /* Parti dei messaggi HTTP, con i colori delle slide */
   --arrow: #B3262D;
   --h-meth: #B0279F; --h-url: #A26A0E; --h-ver: #1F5BD8; --h-hdr: #23812F; --h-body: #4B3FC4;
+  /* Parti di un indirizzo IP, con i colori delle slide */
+  --n-pre: #B3203A; --n-sub: #1F5BD8; --n-host: #1C7D3A; --n-sub-soft: #E3EAFB;
   --f-display: "Martian Mono", "IBM Plex Mono", ui-monospace, monospace;
   --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -29,6 +31,7 @@
     --accent: #8098FF; --accent-soft: #1F2848; --ctrl: #4DC1B6; --ctrl-soft: #133330;
     --high: #F06E9F; --high-soft: #3A1A28; --g: #5FCB8C; --g-soft: #15301F; --k-soft: #262E37;
     --arrow: #F07A73; --h-meth: #F07FE4; --h-url: #E8B656; --h-ver: #86A8FF; --h-hdr: #6CCF7E; --h-body: #ABA4FF;
+    --n-pre: #F28390; --n-sub: #86A8FF; --n-host: #6CCF7E; --n-sub-soft: #1F2848;
     color-scheme: dark;
   }
 }
@@ -37,6 +40,7 @@
   --accent: #8098FF; --accent-soft: #1F2848; --ctrl: #4DC1B6; --ctrl-soft: #133330;
   --high: #F06E9F; --high-soft: #3A1A28; --g: #5FCB8C; --g-soft: #15301F; --k-soft: #262E37;
     --arrow: #F07A73; --h-meth: #F07FE4; --h-url: #E8B656; --h-ver: #86A8FF; --h-hdr: #6CCF7E; --h-body: #ABA4FF;
+    --n-pre: #F28390; --n-sub: #86A8FF; --n-host: #6CCF7E; --n-sub-soft: #1F2848;
   color-scheme: dark;
 }
 
@@ -319,6 +323,68 @@ svg text { font-family: var(--f-body); }
 .pg-img svg { display: block; width: 100%; height: 110px; }
 .pg-act { display: flex; justify-content: space-between; color: #8B98A5; padding: 0 4px; }
 .pg-like.on { color: #F91880; font-weight: 700; }
+/* ---- Sottoreti ---- */
+.np { color: var(--n-pre); }
+.ns { color: var(--n-sub); text-decoration: underline; text-underline-offset: 3px; }
+.nh { color: var(--n-host); }
+.sn-field { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
+.sn-in { font: 500 14px var(--f-mono); padding: 5px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); width: 19ch; }
+.sn-in.num { width: 9ch; }
+.sn-in:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sn-in.bad { border-color: var(--high); box-shadow: 0 0 0 1px var(--high); }
+.sn-warn { margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--high-soft); border-left: 3px solid var(--high); font-size: 14px; max-width: 100ch; }
+.sn-bits { display: grid; grid-template-columns: max-content max-content max-content; gap: 6px 22px; align-items: baseline; overflow-x: auto; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.sn-bits .lab { font-size: 13px; color: var(--muted); }
+.sn-bits .dec { font: 600 14.5px var(--f-mono); white-space: nowrap; }
+.sn-bits .bin { font: 500 14.5px var(--f-mono); white-space: nowrap; }
+.sn-legend { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--muted); padding-top: 6px; border-top: 1px solid var(--line); }
+.sn-legend span { display: inline-flex; gap: 6px; align-items: center; }
+.sn-legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.sn-bar svg { display: block; width: 100%; height: auto; }
+.sb-seg { cursor: pointer; }
+.sb-seg rect { stroke-width: 1.2; }
+.sb-seg.used rect { fill: var(--n-sub-soft); stroke: var(--n-sub); }
+.sb-seg.free rect { fill: url(#sn-hatch); stroke: var(--line); }
+.sb-seg.sel rect { fill: var(--n-sub); stroke: var(--n-sub); }
+.sb-seg text { font: 600 11.5px var(--f-body); fill: var(--ink); pointer-events: none; }
+.sb-seg.free text { fill: var(--muted); font-style: italic; font-weight: 500; }
+.sb-seg.sel text { fill: var(--card); font-style: normal; }
+.sb-seg text.bits { font: 600 10.5px var(--f-mono); }
+.sb-hatch { stroke: var(--line); stroke-width: 1.5; }
+.sb-hbg { fill: var(--card); }
+.sb-addr { font: 500 11px var(--f-mono); fill: var(--muted); }
+.sb-mk { fill: var(--arrow); }
+.sb-mkl { font: 600 11.5px var(--f-mono); fill: var(--arrow); }
+.sn-stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(290px, 380px); gap: 18px; align-items: start; }
+@media (max-width: 1150px) { .sn-stage { grid-template-columns: minmax(0, 1fr); } }
+.sn-tablewrap { overflow: auto; max-height: 560px; border: 1px solid var(--line); border-radius: 10px; }
+.sn-table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+.sn-table th { position: sticky; top: 0; z-index: 1; background: var(--paper); text-align: left; font-weight: 600; font-size: 12.5px; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.sn-table td { padding: 4px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; font: 500 13px var(--f-mono); }
+.sn-table tbody tr { cursor: pointer; }
+.sn-table tr.top td { background: var(--paper); font-weight: 600; border-bottom: 2px solid var(--ink); cursor: default; }
+.sn-table tr.sel td { background: var(--n-sub-soft); }
+.sn-chev { display: inline-block; width: 1.3em; color: var(--muted); }
+.sn-table tr.addrs td { padding: 0; background: var(--paper); cursor: default; }
+.sn-addrs { padding: 8px 12px 10px 30px; display: grid; gap: 6px; }
+.sn-addrs .hint { font-family: var(--f-body); white-space: normal; }
+.sn-alist { display: grid; grid-template-columns: max-content max-content max-content; gap: 1px 18px; max-height: 320px; overflow-y: auto; font: 500 13px var(--f-mono); }
+.sn-alist .nt { font: italic 12px var(--f-body); color: var(--muted); }
+.sn-alist .gap { grid-column: 1 / -1; font: italic 12.5px var(--f-body); color: var(--muted); padding: 4px 0; }
+.sn-table tr.more td { text-align: left; color: var(--muted); font: italic 13px var(--f-body); cursor: default; }
+.sn-look { min-height: 150px; align-content: start; }
+.sn-look .bin { font: 500 13.5px var(--f-mono); white-space: nowrap; overflow-x: auto; }
+.sn-cmp { display: grid; grid-template-columns: max-content max-content; gap: 2px 12px; align-items: baseline; overflow-x: auto; padding: 6px 0; }
+.sn-cmp .lab { font: 500 12px var(--f-mono); color: var(--muted); text-align: right; }
+.sn-cmp .bin { font: 500 14px var(--f-mono); white-space: pre; }
+.sn-cmp .dim { opacity: .35; }
+.sn-cmp .df { background: var(--high-soft); color: var(--high); font-weight: 700; border-radius: 2px; text-decoration: none; }
+.sn-cmp .mk { font-size: 13px; }
+.mk-eq { color: var(--g); } .mk-ne { color: var(--high); font-weight: 700; } .mk-x { color: var(--muted); opacity: .6; }
+.sn-look .ok { color: var(--g); font-weight: 600; }
+.sn-look .no { color: var(--high); font-weight: 600; }
+.sn-steps { margin: 0; padding: 10px 14px 10px 34px; display: grid; gap: 6px; font-size: 15px; max-width: 110ch; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+.sn-steps .warn { color: var(--high); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -330,6 +396,7 @@ svg text { font-family: var(--f-body); }
       <button class="tab" role="tab" type="button" data-page="http">HTTP persistente e non persistente</button>
       <button class="tab" role="tab" type="button" data-page="cookie">Cookie</button>
       <button class="tab" role="tab" type="button" data-page="cache">Web cache</button>
+      <button class="tab" role="tab" type="button" data-page="sottoreti">Sottoreti</button>
     </div>
   </div>
 </nav>
@@ -516,6 +583,45 @@ svg text { font-family: var(--f-body); }
       <li>anche il browser ha una sua cache: il 15 dicembre il client 1 ha ancora la versione 1 e farebbe lui stesso una GET condizionale. Qui ignoriamo la cache dei browser;</li>
       <li>il proxy di solito aggiunge alle risposte che inoltra header come <code>Via</code> e <code>Age</code>; li omettiamo;</li>
       <li>usiamo HTTP. Con HTTPS il contenuto è cifrato e un proxy qualsiasi non può leggerlo né metterlo in cache: oggi le cache condivise sono soprattutto quelle delle CDN, che lavorano per conto del sito.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="wrap" id="p-sottoreti" hidden>
+  <header>
+    <h1>Sottoreti e maschere</h1>
+    <p class="lede">Un'organizzazione riceve un <b>blocco</b> di indirizzi IP contigui con un prefisso comune, scritto <code>a.b.c.d/x</code>: i primi x bit sono fissi, i restanti 32 − x distinguono le interfacce. Prendendo in prestito alcuni di questi bit si divide il blocco in <b>sottoreti</b>, ognuna con la sua <b>maschera</b>. Si parte dal blocco <code>200.23.16.0/20</code>, diviso in 8 sottoreti come nelle slide.</p>
+  </header>
+
+  <section class="viz" aria-label="Suddivisione di un blocco di indirizzi">
+    <div class="setup">
+      <label class="sn-field">Blocco <input class="sn-in" id="sn-block" value="200.23.16.0/20" spellcheck="false" autocomplete="off"></label>
+      <label class="param" id="sn-k-wrap">Bit per le sottoreti <input type="range" id="sn-k" min="0" max="10" value="3"><output id="sn-k-out">3</output></label>
+      <button class="btn ghost" type="button" id="sn-reset">Ripristina</button>
+    </div>
+    <p class="sn-warn" id="sn-warn" hidden></p>
+    <div class="stats" id="sn-stats"></div>
+    <ol class="sn-steps" id="sn-desc" aria-live="polite"></ol>
+    <div class="sn-bits" id="sn-bits"></div>
+    <div class="sn-bar"><svg id="sn-bar" role="img" aria-label="Il blocco di indirizzi diviso in sottoreti"></svg></div>
+    <div class="sn-stage">
+      <div class="panel">
+        <p class="hint">Clicca su una sottorete per vedere tutti i suoi indirizzi.</p>
+        <div class="sn-tablewrap"><table class="sn-table" id="sn-table"></table></div>
+      </div>
+      <div class="panel">
+        <label class="sn-field">Dove si trova l'indirizzo <input class="sn-in" id="sn-ip" value="200.23.19.232" spellcheck="false" autocomplete="off"></label>
+        <div class="insp sn-look" id="sn-look" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footnote">
+    <p><b>Semplificazioni:</b></p>
+    <ul>
+      <li>come nelle slide, contiamo come host tutti gli indirizzi di una sottorete. In realtà il primo (bit di host tutti a 0) è l'indirizzo della sottorete stessa e l'ultimo (tutti a 1) è l'indirizzo di broadcast: nessuna interfaccia li usa, quindi una /23 ha 510 indirizzi assegnabili, non 512;</li>
+      <li>qui tutte le sottoreti di un blocco hanno la stessa dimensione, come nell'esempio delle slide. CIDR permette anche sottoreti di dimensioni diverse nello stesso blocco (per esempio una /21 e due /22), purché ognuna cominci da un indirizzo multiplo della sua dimensione;</li>
+      <li>alcuni blocchi sono riservati, per esempio gli indirizzi privati <code>10.0.0.0/8</code> e <code>192.168.0.0/16</code> usati con il NAT: qui non ne teniamo conto.</li>
     </ul>
   </div>
 </section>
@@ -1586,9 +1692,243 @@ function httpResp(status, headers, bodyHtml) {
 </script>
 
 <script>
+// Sottoreti: un blocco a.b.c.d/x diviso in 2^k sottoreti uguali, come nell'esempio delle slide.
+(function () {
+  function $(id) { return document.getElementById(id); }
+  function nameOf(i) { return 'Org. ' + (i + 1); }
+  var MAXK = 12;          // oltre 4096 sottoreti la barra non è più leggibile
+  var S = { ip: 0, net: 0, x: 20, k: 3, sel: -1, open: -1 };
+
+  function pow2(e) { return Math.pow(2, e); }
+  function fmt(n) { return n.toLocaleString('it-IT'); }
+  function p2(e) { return '2<sup>' + e + '</sup>'; }
+  function ipToInt(s) {
+    var m = /^\s*(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\s*$/.exec(s || '');
+    if (!m) return null;
+    var n = 0;
+    for (var i = 1; i <= 4; i++) { var o = +m[i]; if (o > 255) return null; n = n * 256 + o; }
+    return n;
+  }
+  function intToIp(n) { return [n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join('.'); }
+  function mask(len) { return len <= 0 ? 0 : (0xFFFFFFFF << (32 - len)) >>> 0; }
+  function bin(n) { return ('0000000000000000000000000000000' + (n >>> 0).toString(2)).slice(-32); }
+  // Indirizzo in binario con i colori delle slide: prefisso del blocco, bit di sottorete (sottolineati), host.
+  function binHtml(n, x, k) {
+    var b = bin(n), out = '', cur = null, buf = '';
+    function flush() { if (buf) out += '<span class="' + cur + '">' + buf + '</span>'; buf = ''; }
+    for (var i = 0; i < 32; i++) {
+      var c = i < x ? 'np' : i < x + k ? 'ns' : 'nh';
+      if (i && i % 8 === 0) { flush(); out += '.'; }
+      if (c !== cur) { flush(); cur = c; }
+      buf += b[i];
+    }
+    flush();
+    return out;
+  }
+  function maxK() { return Math.max(0, Math.min(MAXK, 30 - S.x)); }
+  function esc(v) { return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  function readBlock() {
+    var inp = $('sn-block'), m = /^\s*([\d.]+)\s*\/\s*(\d{1,2})\s*$/.exec(inp.value), ip = m ? ipToInt(m[1]) : null;
+    var ok = ip !== null && +m[2] >= 1 && +m[2] <= 30;
+    inp.classList.toggle('bad', !ok);
+    if (!ok) return false;
+    S.ip = ip; S.x = +m[2]; S.net = (ip & mask(S.x)) >>> 0;
+    var w = $('sn-warn');
+    w.hidden = S.ip === S.net;
+    if (!w.hidden) {
+      w.innerHTML = '<code>' + esc(intToIp(S.ip)) + '/' + S.x + '</code> non è l\'indirizzo di un blocco: con /' + S.x +
+        ' i bit dopo i primi ' + S.x + ' devono valere tutti 0. Il blocco che lo contiene è <code>' + intToIp(S.net) + '/' + S.x +
+        '</code>, ed è quello mostrato qui. Il numero di bit liberi, e quindi il conto delle sottoreti, non cambia.';
+    }
+    return true;
+  }
+
+  // I passaggi del ragionamento, come nelle slide.
+  function plan() {
+    var x = S.x, free = 32 - x, k = S.k = Math.min(S.k, maxK()), h = free - k, sm = x + k;
+    return [
+      'Il blocco <code>' + intToIp(S.net) + '/' + x + '</code> fissa i primi <b>' + x + ' bit</b>: restano 32 − ' + x + ' = <b>' + free + ' bit</b> liberi, cioè ' + p2(free) + ' = ' + fmt(pow2(free)) + ' indirizzi.',
+      'Con <b>' + k + ' bit</b> di sottorete si ottengono ' + p2(k) + ' = <b>' + fmt(pow2(k)) + ' sottoreti</b>, ognuna con maschera /' + x + ' + ' + k + ' = <b>/' + sm + '</b>.',
+      'A ogni sottorete restano ' + free + ' − ' + k + ' = ' + h + ' bit di host: ' + p2(h) + ' = <b>' + fmt(pow2(h)) + ' indirizzi</b>.'
+    ];
+  }
+
+  function lookupIndex() {
+    var ip = ipToInt($('sn-ip').value);
+    if (ip === null || ((ip & mask(S.x)) >>> 0) !== S.net) return -1;
+    return Math.floor((ip - S.net) / pow2(32 - S.x - S.k));
+  }
+
+  function renderAll(resetSel) {
+    if (!readBlock()) return;
+    var steps = plan();
+    var x = S.x, k = S.k, h = 32 - x - k, sm = x + k;
+    $('sn-k').max = maxK(); $('sn-k').value = k; $('sn-k-out').textContent = k;
+    if (resetSel) { S.sel = lookupIndex(); S.open = -1; }
+    $('sn-stats').innerHTML =
+      '<span class="stat">Indirizzi nel blocco <b>' + fmt(pow2(32 - x)) + '</b></span>' +
+      '<span class="stat">Sottoreti <b>' + fmt(pow2(k)) + '</b></span>' +
+      '<span class="stat">Maschera delle sottoreti <b>/' + sm + '</b></span>' +
+      '<span class="stat">Indirizzi per sottorete <b>' + fmt(pow2(h)) + '</b></span>';
+    $('sn-desc').innerHTML = steps.map(function (s) { return '<li>' + s + '</li>'; }).join('');
+    $('sn-bits').innerHTML =
+      '<span class="lab">Blocco</span><span class="dec">' + intToIp(S.net) + '/' + x + '</span><span class="bin">' + binHtml(S.net, x, k) + '</span>' +
+      '<div class="sn-legend"><span><i style="background:var(--n-pre)"></i>prefisso del blocco: ' + x + ' bit</span>' +
+      '<span><i style="background:var(--n-sub)"></i>bit di sottorete: ' + k + '</span>' +
+      '<span><i style="background:var(--n-host)"></i>bit di host: ' + h + '</span></div>';
+    renderBar(); renderTable(); renderLookup();
+  }
+
+  function renderBar() {
+    var x = S.x, k = S.k, n = pow2(k), size = pow2(32 - x - k), total = pow2(32 - x);
+    var W = 1000, X0 = 10, X1 = 990, Y = 30, BH = 44, w = (X1 - X0) / n, gap = n <= 64 ? 1.5 : 0;
+    var o = '<defs><pattern id="sn-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
+      '<rect class="sb-hbg" width="8" height="8"/><line class="sb-hatch" x1="0" y1="0" x2="0" y2="8"/></pattern></defs>';
+    for (var i = 0; i < n; i++) {
+      var sx = X0 + w * i;
+      o += '<g class="sb-seg used' + (i === S.sel ? ' sel' : '') + '" data-i="' + i + '">' +
+        '<rect x="' + (sx + gap).toFixed(2) + '" y="' + Y + '" width="' + Math.max(w - 2 * gap, 0.6).toFixed(2) + '" height="' + BH + '" rx="' + (n <= 64 ? 4 : 0) + '"' + (n > 64 ? ' style="stroke-width:0"' : '') + '/>';
+      if (n <= 8) {
+        var nm = nameOf(i);
+        o += '<text x="' + (sx + w / 2) + '" y="' + (Y + BH / 2 + 4) + '" text-anchor="middle">' + esc(nm) + '</text>';
+      } else if (n <= 16) {
+        o += '<text class="bits" x="' + (sx + w / 2) + '" y="' + (Y + BH / 2 + 4) + '" text-anchor="middle">' + bin(i).slice(32 - k) + '</text>';
+      }
+      o += '</g>';
+      if (n <= 8) o += '<text class="sb-addr" x="' + (sx + 3) + '" y="' + (Y + BH + 15) + '">' + intToIp(S.net + i * size) + '/' + (x + k) + '</text>';
+    }
+    if (n > 8) o += '<text class="sb-addr" x="' + X0 + '" y="' + (Y + BH + 15) + '">' + intToIp(S.net) + '</text>';
+    var ip = ipToInt($('sn-ip').value);
+    if (ip !== null && ip >= S.net && ip < S.net + total) {
+      var px = X0 + (X1 - X0) * (ip - S.net + 0.5) / total, lx = Math.min(Math.max(px, 60), W - 60);
+      o += '<path class="sb-mk" d="M' + (px - 6) + ',' + (Y - 9) + ' L' + (px + 6) + ',' + (Y - 9) + ' L' + px + ',' + (Y - 1) + ' Z"/>' +
+        '<text class="sb-mkl" x="' + lx + '" y="' + (Y - 14) + '" text-anchor="middle">' + intToIp(ip) + '</text>';
+    }
+    var svg = $('sn-bar');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + (Y + BH + 22));
+    svg.innerHTML = o;
+  }
+
+  function renderTable() {
+    var x = S.x, k = S.k, n = pow2(k), size = pow2(32 - x - k), sm = x + k, total = pow2(32 - x);
+    var idx = [];
+    if (n <= 64) { for (var i = 0; i < n; i++) idx.push(i); }
+    else {
+      for (var j = 0; j < 32; j++) idx.push(j);
+      if (S.sel >= 32 && S.sel < n - 2) idx.push(S.sel);
+      idx.push(n - 2, n - 1);
+    }
+    var o = '<thead><tr><th>Sottorete di…</th><th>Indirizzo sottorete</th><th>Indirizzo (binario)</th><th>Indirizzi, dal primo all\'ultimo</th></tr></thead><tbody>' +
+      '<tr class="top"><td style="font-family:var(--f-body)">Blocco intero</td><td>' + intToIp(S.net) + '/' + x + '</td><td>' + binHtml(S.net, x, k) + '</td><td>' + intToIp(S.net) + ' – ' + intToIp(S.net + total - 1) + '</td></tr>';
+    var prev = -1;
+    idx.forEach(function (i) {
+      if (i - prev > 1) o += '<tr class="more"><td colspan="4">… altre ' + fmt(i - prev - 1) + ' sottoreti …</td></tr>';
+      prev = i;
+      var st = S.net + i * size;
+      var op = i === S.open;
+      o += '<tr data-i="' + i + '"' + (i === S.sel ? ' class="sel"' : '') + ' aria-expanded="' + op + '"><td style="font-family:var(--f-body)"><span class="sn-chev">' + (op ? '▾' : '▸') + '</span>' + nameOf(i) + '</td>' +
+        '<td>' + intToIp(st) + '/' + sm + '</td><td>' + binHtml(st, x, k) + '</td><td>' + intToIp(st) + ' – ' + intToIp(st + size - 1) + '</td></tr>';
+      if (op) o += '<tr class="addrs"><td colspan="4">' + addrList(st, size, x, k) + '</td></tr>';
+    });
+    $('sn-table').innerHTML = o + '</tbody>';
+  }
+
+  // Tutti gli indirizzi di una sottorete, in decimale e in binario (se sono troppi, l'inizio e la fine).
+  function addrList(st, size, x, k) {
+    var LIM = 1024, EDGE = 128, o = '<div class="sn-addrs"><p class="hint">' + fmt(size) + ' indirizzi: cambiano solo i ' + (32 - x - k) + ' bit di host, in verde.</p><div class="sn-alist">';
+    function row(a) {
+      var note = size >= 4 && a === st ? 'indirizzo della sottorete' : size >= 4 && a === st + size - 1 ? 'broadcast' : '';
+      return '<span class="dec">' + intToIp(a) + '</span><span class="bin">' + binHtml(a, x, k) + '</span><span class="nt">' + note + '</span>';
+    }
+    if (size <= LIM) { for (var a = 0; a < size; a++) o += row(st + a); }
+    else {
+      for (var b = 0; b < EDGE; b++) o += row(st + b);
+      o += '<span class="gap">… altri ' + fmt(size - 2 * EDGE) + ' indirizzi …</span>';
+      for (var c = size - EDGE; c < size; c++) o += row(st + c);
+    }
+    return o + '</div></div>';
+  }
+
+  // Riga di confronto sotto due indirizzi: = se il bit coincide, ≠ se no; i bit dopo i primi n non contano.
+  function cmpMarks(a, b, n) {
+    var A = bin(a), B = bin(b), o = '';
+    for (var i = 0; i < 32; i++) {
+      if (i && i % 8 === 0) o += ' ';
+      if (i >= n) o += '<span class="mk-x">·</span>';
+      else o += A[i] === B[i] ? '<span class="mk-eq">=</span>' : '<span class="mk-ne">≠</span>';
+    }
+    return o;
+  }
+  // Due indirizzi uno sotto l'altro: nei primi n bit evidenzia quelli diversi, gli altri li attenua.
+  function cmpBin(a, b, n, x, k) {
+    var A = bin(a), B = bin(b), o = '';
+    for (var i = 0; i < 32; i++) {
+      if (i && i % 8 === 0) o += '.';
+      var c = i < x ? 'np' : i < x + k ? 'ns' : 'nh';
+      if (i >= n) c += ' dim'; else if (A[i] !== B[i]) c += ' df';
+      o += '<span class="' + c + '">' + A[i] + '</span>';
+    }
+    return o;
+  }
+  function cmpGrid(ip, ref, refLab, n, x, k) {
+    return '<div class="sn-cmp">' +
+      '<span class="lab">' + intToIp(ip) + '</span><span class="bin">' + cmpBin(ip, ref, n, x, k) + '</span>' +
+      '<span class="lab">' + refLab + '</span><span class="bin">' + cmpBin(ref, ip, n, x, k) + '</span>' +
+      '<span></span><span class="bin mk">' + cmpMarks(ip, ref, n) + '</span></div>';
+  }
+
+  function renderLookup() {
+    var box = $('sn-look'), ip = ipToInt($('sn-ip').value), x = S.x, k = S.k, h = 32 - x - k;
+    $('sn-ip').classList.toggle('bad', ip === null);
+    if (ip === null) { box.innerHTML = '<p>Scrivi un indirizzo nella forma <code>a.b.c.d</code>, per esempio <code>200.23.19.232</code>.</p>'; return; }
+    var o = '';
+    if (((ip & mask(x)) >>> 0) !== S.net) {
+      var nd = 0, A = bin(ip), B = bin(S.net);
+      for (var d = 0; d < x; d++) if (A[d] !== B[d]) nd++;
+      o += '<p>Confrontiamo l\'indirizzo con il blocco: contano solo i primi ' + x + ' bit, il prefisso.</p>' +
+        cmpGrid(ip, S.net, 'blocco /' + x, x, x, k) +
+        '<p><span class="no">Fuori dal blocco:</span> ' + nd + (nd === 1 ? ' bit del prefisso è diverso' : ' bit del prefisso sono diversi') + ' (≠).</p>';
+    } else {
+      var size = pow2(h), i = Math.floor((ip - S.net) / size), st = S.net + i * size, nm = nameOf(i);
+      o += '<p>Confrontiamo l\'indirizzo con la sua sottorete: contano i primi ' + (x + k) + ' bit, prefisso del blocco e bit di sottorete. Gli altri ' + h + ', quelli di host (·), possono valere qualsiasi cosa.</p>' +
+        cmpGrid(ip, st, intToIp(st) + '/' + (x + k), x + k, x, k) +
+        '<p><span class="ok">Nel blocco:</span> i primi ' + x + ' bit coincidono con quelli di <code>' + intToIp(S.net) + '/' + x + '</code>.</p>';
+      if (k > 0) o += '<p>I ' + k + ' bit di sottorete valgono <code class="ns">' + bin(ip).substr(x, k) + '</code>: l\'indirizzo è nella sottorete <b>' + intToIp(st) + '/' + (x + k) + '</b> (' + esc(nm) + ').</p>';
+      if (h >= 2 && ip === st) o += '<p>I bit di host sono tutti 0: è l\'indirizzo della sottorete stessa, che non si assegna a nessuna interfaccia.</p>';
+      if (h >= 2 && ip === st + size - 1) o += '<p>I bit di host sono tutti 1: è l\'indirizzo di broadcast della sottorete, che non si assegna a nessuna interfaccia.</p>';
+    }
+    box.innerHTML = o;
+  }
+
+  $('sn-block').addEventListener('input', function () { renderAll(true); });
+  $('sn-ip').addEventListener('input', function () { S.sel = lookupIndex(); renderBar(); renderTable(); renderLookup(); });
+  $('sn-k').addEventListener('input', function () { S.k = +this.value; renderAll(true); });
+  $('sn-reset').addEventListener('click', function () {
+    $('sn-block').value = '200.23.16.0/20'; $('sn-ip').value = '200.23.19.232';
+    S.k = 3;
+    renderAll(true);
+  });
+  $('sn-bar').addEventListener('click', function (e) {
+    var g = e.target.closest('.sb-seg'); if (!g) return;
+    S.sel = +g.dataset.i; renderBar(); renderTable();
+  });
+  $('sn-table').addEventListener('click', function (e) {
+    var tr = e.target.closest('tr[data-i]'); if (!tr) return;
+    var i = +tr.dataset.i; S.sel = i; S.open = S.open === i ? -1 : i; renderBar(); renderTable();
+  });
+
+  renderAll(true);
+  window.NET = window.NET || {};
+  window.NET.show = window.NET.show || {};
+  window.NET.show.sottoreti = function () { renderBar(); };
+})();
+</script>
+
+<script>
 // Schede in alto: mostra una sezione alla volta e ricorda quella aperta nell'indirizzo.
 (function () {
-  var PAGES = ['http', 'cookie', 'cache'];
+  var PAGES = ['http', 'cookie', 'cache', 'sottoreti'];
   function go(name, push) {
     if (PAGES.indexOf(name) === -1) name = 'http';
     PAGES.forEach(function (p) { document.getElementById('p-' + p).hidden = p !== name; });
