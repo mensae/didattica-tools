@@ -20,7 +20,7 @@
   --arrow: #B3262D;
   --h-meth: #B0279F; --h-url: #A26A0E; --h-ver: #1F5BD8; --h-hdr: #23812F; --h-body: #4B3FC4;
   /* Parti di un indirizzo IP, con i colori delle slide */
-  --n-pre: #B3203A; --n-sub: #1F5BD8; --n-host: #1C7D3A; --n-sub-soft: #E3EAFB;
+  --n-pre: #B3203A; --n-sub: #1F5BD8; --n-host: #1C7D3A; --n-sub-soft: #E3EAFB; --nat-priv-soft: #FBF0F1; --nat-pub-soft: #EDF6EF; --nat-key: #CCD8FB;
   --f-display: "Martian Mono", "IBM Plex Mono", ui-monospace, monospace;
   --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -31,7 +31,7 @@
     --accent: #8098FF; --accent-soft: #1F2848; --ctrl: #4DC1B6; --ctrl-soft: #133330;
     --high: #F06E9F; --high-soft: #3A1A28; --g: #5FCB8C; --g-soft: #15301F; --k-soft: #262E37;
     --arrow: #F07A73; --h-meth: #F07FE4; --h-url: #E8B656; --h-ver: #86A8FF; --h-hdr: #6CCF7E; --h-body: #ABA4FF;
-    --n-pre: #F28390; --n-sub: #86A8FF; --n-host: #6CCF7E; --n-sub-soft: #1F2848;
+    --n-pre: #F28390; --n-sub: #86A8FF; --n-host: #6CCF7E; --n-sub-soft: #1F2848; --nat-priv-soft: #24161A; --nat-pub-soft: #14241A; --nat-key: #2F3F80;
     color-scheme: dark;
   }
 }
@@ -40,7 +40,7 @@
   --accent: #8098FF; --accent-soft: #1F2848; --ctrl: #4DC1B6; --ctrl-soft: #133330;
   --high: #F06E9F; --high-soft: #3A1A28; --g: #5FCB8C; --g-soft: #15301F; --k-soft: #262E37;
     --arrow: #F07A73; --h-meth: #F07FE4; --h-url: #E8B656; --h-ver: #86A8FF; --h-hdr: #6CCF7E; --h-body: #ABA4FF;
-    --n-pre: #F28390; --n-sub: #86A8FF; --n-host: #6CCF7E; --n-sub-soft: #1F2848;
+    --n-pre: #F28390; --n-sub: #86A8FF; --n-host: #6CCF7E; --n-sub-soft: #1F2848; --nat-priv-soft: #24161A; --nat-pub-soft: #14241A; --nat-key: #2F3F80;
   color-scheme: dark;
 }
 
@@ -385,6 +385,66 @@ svg text { font-family: var(--f-body); }
 .sn-look .no { color: var(--high); font-weight: 600; }
 .sn-steps { margin: 0; padding: 10px 14px 10px 34px; display: grid; gap: 6px; font-size: 15px; max-width: 110ch; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
 .sn-steps .warn { color: var(--high); font-weight: 600; }
+/* ---- NAT ---- */
+.nat-zone.priv { fill: var(--nat-priv-soft); }
+.nat-zone.pub { fill: var(--nat-pub-soft); }
+.nat-zl { font: 600 12px var(--f-body); letter-spacing: .02em; }
+.nat-zl.priv, .nat-ip.priv { fill: var(--n-pre); }
+.nat-zl.pub, .nat-ip.pub { fill: var(--n-host); }
+.nat-ip { font: 600 12px var(--f-mono); }
+.nat-who { font: 600 13px var(--f-body); fill: var(--ink); }
+.nat-ln { stroke: var(--line); stroke-width: 2.4; }
+.nat-ar line { stroke: var(--arrow); stroke-width: 3; }
+.nat-ar polygon { fill: var(--arrow); }
+.nat-pk rect.bg { fill: var(--card); stroke: var(--ink); stroke-width: 1.2; }
+.nat-pk.dim { opacity: .4; }
+.nat-pk .kind.req { fill: var(--h-ver); }
+.nat-pk .kind.resp { fill: var(--h-meth); }
+.nat-pk text.kindt { font: 600 11.5px var(--f-mono); fill: var(--card); }
+.nat-pk text { font: 500 13px var(--f-mono); fill: var(--ink); }
+.nat-pk .priv { fill: var(--n-pre); }
+.nat-pk .pub { fill: var(--n-host); }
+.nat-pk .pt { font-weight: 700; }
+.nat-pk text.pt.on { fill: var(--accent); }
+.nat-pk text.lab { fill: var(--muted); }
+.nat-pk rect.chg { fill: var(--accent-soft); }
+.nat-pk rect.key { fill: var(--nat-key); }
+.nat-plink { fill: none; stroke: var(--accent); stroke-width: 1.8; }
+.nat-ahp { fill: var(--accent); }
+.nat-rtl { font: 600 12px var(--f-body); fill: var(--accent); }
+.nat-dropl { font: 600 12px var(--f-body); fill: var(--high); }
+.nat-halo { fill: var(--accent-soft); }
+.nat-halo.bad { fill: var(--high-soft); }
+.nt-bg { fill: var(--card); }
+.nt-frame { fill: none; stroke: var(--ink); stroke-width: 1.2; }
+.nt-cap { fill: var(--ink); }
+.nt-capt { font: 600 12.5px var(--f-body); fill: var(--card); }
+.nt-head { fill: var(--paper); }
+.nt-ht { font: 600 12px var(--f-body); fill: var(--ink); }
+.nt-sep { stroke: var(--line); }
+.nt-link { stroke: var(--muted); stroke-width: 1.6; stroke-dasharray: 2 4; }
+.nt-row { fill: var(--accent-soft); }
+.nt-row.miss { fill: var(--high-soft); }
+.nt-tx { font: 500 13px var(--f-mono); fill: var(--ink); }
+.nt-tx.priv { fill: var(--n-pre); }
+.nt-tx.pub { fill: var(--n-host); }
+.nt-tx.pt { font-weight: 700; }
+.nt-tx.pt.on { fill: var(--accent); }
+.nt-key { fill: var(--nat-key); }
+.nt-empty { font: italic 500 12.5px var(--f-body); fill: var(--muted); }
+.nt-miss { font: italic 600 12.5px var(--f-body); fill: var(--high); }
+.nat-insp { min-height: 0; align-content: start; }
+.nat-cards { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; }
+.nat-cards .to { font-size: 18px; color: var(--accent); }
+.nat-card { border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: 6px 8px; display: grid; gap: 2px; font: 500 12.5px var(--f-mono); white-space: nowrap; overflow-x: auto; }
+.nat-card small { font: 600 11px var(--f-body); color: var(--muted); }
+.nat-card .priv { color: var(--n-pre); }
+.nat-card .pub { color: var(--n-host); }
+.pt { font-weight: 700; padding: 0 2px; border-radius: 3px; }
+.chg { background: var(--accent-soft); border-radius: 3px; }
+.pt.key { color: var(--accent); background: var(--nat-key); }
+.nat-card .lab { color: var(--muted); display: inline-block; width: 12.5ch; }
+.nat-lg-pt { border: 2px solid var(--accent); background: transparent !important; }
 </style>
 </head>
 <body>
@@ -397,6 +457,7 @@ svg text { font-family: var(--f-body); }
       <button class="tab" role="tab" type="button" data-page="cookie">Cookie</button>
       <button class="tab" role="tab" type="button" data-page="cache">Web cache</button>
       <button class="tab" role="tab" type="button" data-page="sottoreti">Sottoreti</button>
+      <button class="tab" role="tab" type="button" data-page="nat">NAT</button>
     </div>
   </div>
 </nav>
@@ -622,6 +683,49 @@ svg text { font-family: var(--f-body); }
       <li>come nelle slide, contiamo come host tutti gli indirizzi di una sottorete. In realtà il primo (bit di host tutti a 0) è l'indirizzo della sottorete stessa e l'ultimo (tutti a 1) è l'indirizzo di broadcast: nessuna interfaccia li usa, quindi una /23 ha 510 indirizzi assegnabili, non 512;</li>
       <li>qui tutte le sottoreti di un blocco hanno la stessa dimensione, come nell'esempio delle slide. CIDR permette anche sottoreti di dimensioni diverse nello stesso blocco (per esempio una /21 e due /22), purché ognuna cominci da un indirizzo multiplo della sua dimensione;</li>
       <li>alcuni blocchi sono riservati, per esempio gli indirizzi privati <code>10.0.0.0/8</code> e <code>192.168.0.0/16</code> usati con il NAT: qui non ne teniamo conto.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="wrap" id="p-nat" hidden>
+  <header>
+    <h1>NAT: la tabella di traduzione</h1>
+    <p class="lede">I dispositivi di casa hanno indirizzi <b>privati</b>, che valgono solo nella rete di casa. Verso Internet il router casalingo ha un solo indirizzo <b>pubblico</b>, condiviso da tutti. Per farlo funzionare il router <b>riscrive</b> i pacchetti che lo attraversano e annota in una <b>tabella di traduzione</b> a quale dispositivo corrisponde ogni porta.</p>
+  </header>
+
+  <section class="viz" aria-label="Simulazione del NAT">
+    <div class="ca-days" id="nat-days" role="group" aria-label="Momenti della simulazione"></div>
+
+    <div class="stepbar">
+      <div class="stats">
+        <span class="stat">Passo <b id="nat-step">0/0</b></span>
+      </div>
+      <div class="nav">
+        <button class="btn ghost" type="button" id="nat-first">Ricomincia</button>
+        <button class="btn ghost" type="button" id="nat-prev">◀ Indietro</button>
+        <button class="btn" type="button" id="nat-next">Avanti ▶</button>
+      </div>
+    </div>
+
+    <p class="desc" id="nat-desc" aria-live="polite"></p>
+
+    <div class="ca-stage">
+      <div class="ca-net"><svg id="nat-svg" role="img" aria-label="Due PC di casa, il router casalingo con il NAT, un web server e un host esterno su Internet"></svg></div>
+      <div class="panel">
+        <div class="insp nat-insp" id="nat-insp" aria-live="polite"></div>
+        <div class="legend"><span><i style="background:var(--n-pre)"></i>indirizzi privati</span><span><i style="background:var(--n-host)"></i>indirizzi pubblici</span><span><i style="background:var(--nat-key)"></i>porta usata dal NAT</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footnote">
+    <p><b>Semplificazioni:</b></p>
+    <ul>
+      <li>le righe della tabella non restano per sempre: il router le cancella dopo un periodo di inattività, o quando la connessione TCP si chiude;</li>
+      <li>spesso il router annota anche indirizzo e porta del server e il protocollo (TCP o UDP). Molti router, quando possono, tengono la stessa porta scelta dal PC invece di sceglierne una nuova;</li>
+      <li>per rendere raggiungibile da Internet un dispositivo di casa (per esempio un server) si può aggiungere a mano una riga fissa nella tabella: si chiama <i>port forwarding</i>;</li>
+      <li>gli indirizzi privati sono quelli dei blocchi <code>10.0.0.0/8</code>, <code>172.16.0.0/12</code> e <code>192.168.0.0/16</code>. Anche molti operatori usano a loro volta un NAT, così più clienti condividono uno stesso indirizzo pubblico;</li>
+      <li>gli indirizzi pubblici usati qui sono solo esempi.</li>
     </ul>
   </div>
 </section>
@@ -1926,9 +2030,359 @@ function httpResp(status, headers, bodyHtml) {
 </script>
 
 <script>
+// NAT: il router casalingo riscrive indirizzo e porta dei pacchetti e tiene la tabella di traduzione.
+(function () {
+  function $(id) { return document.getElementById(id); }
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  var ICON_ROUTER = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAABaCAYAAAA/xl1SAAAj8ElEQVR42u19e3BdSXnn7+vuc+5Db1uyJVu2/JRkyZZtwrJJWGoGKgnsI0uKilUJWWACKUiyRYCECYRl61q7UMxkGCCZZFMDuwwLmbAr1ZJsalOEQGBmgUlqCdiSLVmy/JBlS7L1ft3HeXR/+8c55+pKlmYsW5KlGXWVyo97de/p7l9/z9/3NWGLDmamjo4O0V1VRQDQPDbGra2t+pV+79m//uvk/GSugmy/nBxdZRQqYKgSRDsEqJyBCoYuJ4giAEXMnCSiGDMSBEiAYyASAC/5ZAIADYbLgAYhS0AOQJaI5pl5noEZIkyxxgxJTBBjHIYnheRxIeW0PTc3/YEPfCDzSnNob2+XhfM+c+aMISLeivtIWw1srwS0zz/3l+UQuRqpaK82Zj8z6iC4Fow9YOwGsIOZy0GUlEJYUikQEYQQ0XcVfm/wb2YE/73w50rLSQSAKFhYIlD4k38HERgAGwM2DF/7YGNcBmcINM2MSRDuCNAQw9wi4AYrMUhaDSVjuP2B1taZVwLmVgLlZgQgpVIpAiAAoK2tzV/uTf/lq/9rl0feIUPcSIabmFBvjDlMwB4SYocdi0EqBQKBmWHYwGgNYwyMMQEAAjQZMIOXoIoitBQcglVNonDzuRDW0eug8FsEEYGEgIh+pIQQIv/s2vfhODkGMMngISJxjQi9IHFJQvSyhesfam0dW2EtZfh309bWxi9zel67AEylUgKAaG5uXla6Pf2Vr+wlK36MDJ8mwkkwmg2bg0qpMsuOgYgCgPk+tNbQWgNgA5ABM0AEZiYKARX+fTMdQGbmPGg5eECOnj08jEJKCakUpJQgEmA2cF0XRuspgAcIdBGEc8agE6Qv/e673jWyzFqr5uZm7u7u5ra2NvNaBSCdaW8XTVVV1PbmN+vCU9ne3i5HHDQYYV5PzD/LzK9n5gY7FitWlgU2gUTwfQ9aawZgCOFWEdEmBNcagzSwDKI5B8BUpCwFKRWIAM/z4LneLAn0AfQjNvQSxcU/TXd39xeCjpnp7AsvSDz6qGkLwM+vZgBSe3u76O7upqVq9Y+/2n7QKH4ja/0WIvw0MxriiYQgIvi+D9/zYIwxYDaRRCiUaK/1EUhMcIHEF0IIoSwLSikwM3LZrE+gPgAvQdB34YuXPvye1sHlpGNra6vZKDCu+wZG6rUQdKn2dnuHptez1m8F+OeZ+XQ8kYiDCL7nwXNdMLMmAoMhQut+G2yrBWUAIhNCUlqWhUiLOLlshoT4McDfFpDfmrjc/ZNFe5RKqdBuNFsOgJHXWuiJtbe32yOueSMTfgngtwqSDXYsBt8PAGeM0eF7Rfhc24Bb421BBEhmEkJIOxaDlApOLgfDpkeQ+KYE/dUuC/8Q2eLL7eWmBWAqlRLNzc1U6Ej80fPtPwXoVgbeLqVqsCwLruvCc10mQIfSTdzrs+RDI6GT+loXjMwGkYu9qvUIPPPIfpZ2LEaWZcN1HbDRFwH8FRN3fPid7+xaT6lI6wG8p9vbdyjPvAOgdzObN8UTSbiuswC6AHBiNd9hTDBnZVmwbBtEBO37kfR8TYExOoRCCNh2DEJJsGF4rgvf9wL1IcRqP9aA2eTBaNvIZTKaiF5kQ1/NZeivPv6BIAbZ3t4u18qLpgcFHs6eRRuRAYDPf/3rxyTL3zBGvzOWSFQbreHkcgCzfz+gY2PAAKRUsGM2AGB6cgL9Fy9gemIc9SdOomZ/HWKxeF6Vh+GMVx0YI9ARESzbhrIs5LJZDA1cw5Xui6jcXY0jTcdRWrEDDIbnONBa3+9aRA6fisXjEELAcZybRHje98V/+713t15ZKyDSmki8559/g0XqdwzzL8fjiZiTy8L3fR2qBXnfpzsWgxASc7PTGLzSj97O8xi43Ie5mSmwYVixGKr31qK+5SSONp9AVc0eKGXBcx34ngcOorxRLG0rog6GGQRA2TYsy4bnuRgdHkL/hS5cvtiFO8ND8F0XJATKKipwoKERjSdPY/+hIygqKYXWGp7r3K+WYGY2oeaRsXgcuWwmQyT+pzH0xx/5d63nIyDer4242p2hVColI28psO/Mx5jxy7F4jLLZLGCMz4BcTYik8HTbdgzSUshlMhgauI6+rvO40tONqfExMBtYdgxKqeCYMsNzHWjfRzxZhNoDB9HYcgqHjjWjoqoKBArA6Pv3q5YeDu5Cya+UgmXHwGwwMTqKqz0X0XehE0M3BuBkMovMEQDwfR+e44CEwM7du3Gk6TgaTpzEnroDiCUShRGGVYMx9Ko1CaHiySTcXM4H8D8czzz1+48FdmJ7e7u8l3z8fQEwlWLR1hao2s8899yBpJ34JIDH7FhMZjOZMGyyemeCiIKFDE/3nVs3cfliF/ovXsDo8BB83wtAZ1mgEHQoSGxFC2mMgesEJ72krAx1R+vR2HIKdUcbUFpeHrweZA02pYqO1kNKCcuOgQRhdmoS1/v60Nd1DoNX+jE/N5t/XQixyCErXAtmDsDmubAsG7v31qL+RAuOHm/Brpq9UJYV2Iueez9agtkYQ0LIRLIIrpNzGfjS/GzuM5/8rceGmJnOnj1L96qW6R5Vrmpra/NTqZQqr2/8iCDxB7FYrCKTTkfAk/d1umMxsDYYH72Nqz3d6Os6j+HBATjZ3KLTvXShV5yMECAA2vfhui4AoKKyEocam9DYcgq1Bw8hUVy8aZyXQnPDsm1IqZCZn8PgtSvo6zyPa32XMDM5AYAQhEzkva9FARgDsHmIJ5PYe+AgGlpO4fCxJuyo2gUSAp5zf1qCjdEkhEwWF8PJ5Uah+VMfetevPBNg5nuqre3N/gMBsBDNT3/l+TcoWz4TiyfekMtkYLT2QaRWs+BCCNjxOMCM6ckJXO/rRV/nOQxevYL0/BykVLBse9nTvdohhAAD0J4H13UhpURVTQ2ONp9A/YmTqN63H3YsBt914XnehjkvyzkTTi6HkcEbeXNj4s5taK1hh69H7Jn7NvSX0RLFpaWoO3IUjSdP48DRBpRW7AAAuE4uH3G45/gisxZSqXgiDtdxXzRu5nc+/NhjXfdiG6642ilmkfduv/r1jwkl/rNSysplsz5WaeNFi5BNpzFwuRdXe3tw89pVzExOAkB4+uUDg+4VJYHnwnc92PE4avbtR/2JkzjafByV1TWQUsJ1XejIeVlTe5FhTOhMWBYsOwjAj40Mo//iBVy+2Inbt27Bcx1YVgC61Uj+1a2HABHyzgmRQNmOndh/+AgOH2tC3dEGxBOJVX9vZCPGk0nle17G+OZjH373r/5J5LSupJKXBVFkTKaee668woo/l0gmfymdTge6f5VebXTqpVSYGL2Nl779LVzpuYj0/HxoZNsQIgLf+pIzCiWB57rQvo9kcTFqDx1GY8spHGxsQsXOnaEkiMIYCCNI9+9MSKVg2zEwM6bGx3D1UmBuDA1cRzadhrQCZ0OsE+iWN1UIxujQSdMoLi1F/fEW/MzP/QIqdlbmQzj3sddahPahk8v++eDwzd98+vHH0ys5KLSSvffkn335aKKs6Bt2LH48PT/nEyAfSD8xQ4Z23dzMNK739aL3fGBcz83OFIRdxMZsQgjGQBIE9mBZeQXq6hvQePIU9h85ipLSskVq615UdN6ukxK2bYOEwNz0NG7096G38zxuXLmMuZmHN1+jNVzXBRuDkvJyHDjaEKjh+gYUl5bBdXLQvv9AoatIGhaVlKhcNvejbHrmHR9///tvLQdCWk7yPfVfv3rcTsS+pSy1J5fN+rRKW++VNqcwvDA5tiARhgcGkM2k78sBeXCJEIYxQrW0o6oKh481o6HlFPYeOIh4MrliGOMuZ0IpZOfTuDVwFb2d53GttwdT4+MAADt8/UHtuvuV+IniYuw7eAgNLadwqLEJFZWVocR3EZj1a2cHM7OfSBYpz3Ov5XLpt33sve/tP9PeLjsKQJj/puiFJ770348li+N/L4SsyWWzWggh13xlCgOsBTbR6PBQaBN14c7QTXiuu+420ZIdC9QgEILNgbIs7KrZi6PHT6D+eAt21+7Lh4x8zwVACFgmQR719s1BXL7Qif7uixi7PQzt67yzQQUpxfUGXWDzevA9F3Yshura/Wg4cRJHmo+jqnoPpFpPm3cxCOOJhPJ9/4ZxMo9+5Nd/faDQJqTISDx79ix/9mtfq7KE/Y+WpQ5m1wt89+IVZrMYDr3Cqz3dmBi9DaMNrFgQhN5I6VEYxoglEtizvy4IYzQ1Y+fuaoAZ47dH0N99EZcvdGLk5iDcXA7KDmKbGyXFIwD5BV5/ZXUNjjYfD1KW+/bDjsfhu0F8cCNTloEkTCrXcbpzafnG7HD33NmzZ5mIWAGg5uZmAsCSxV/EEvGDmfl5XwihsAGjcBE814XrOBBCYP/hIzhY34j0/BxuXr2C3s5zuH65FzOTEyAQrFXGxe73YEReuh2LwRiDwatXcP1yL4qKS3CgvhHGaAxc7kM2k86HkZLFxfnfX0/g5eOeWiObCYrpyndW4kTjMTSePIXag4eRLCqG1kHcMzM/n1/vjYx9EpHKZtJ+UUlpszHzz328re0dzc3NEoCmyO777HN//vsl5aVPzs/NeQRYmyozEIuBEGYGLveiN4odzs5CqpUzA+vtvLiOAyLAstf3MLx8TE+juLQMdUfq0XjyFA7UN+YzP57rPgghYe33FPCKi4ut+dnZ3/y9x971bHt7uyRmps8+//x+i1QPmGNaa7HZqO53ZU+MwcSdO7gS5kaHbwzAyWYfivOCDTYHIrstyGocQmPLSRw61owdVVUgEps9922kUjDazPjsNX70Xe8aIwD43Ff/4k+Liot/Oz03u+rsxsOQikvzx6NDt3A5ZIeMDg/D992XzR9vhbFiXre2FvXHT+Lo8RPYtWfvlmP/MLNfXFqq0rNzn/nd9/zaJ+hzz36tBnHRLZQs176PrVLosyw/Ls+g6cTVS92YHBtdxKDZCOdlTUNCIbOlcnc1DjcFIaE9++semNnykPeNA1a8d1uy16QQp7fHEvGKXDZr6H5D/g9RQix1Xg42NOLwsWbMz87gxpV+9HWdw8DlPsxMTYFCh0JIuSnnpLWGl82CCCir2ImDr3s9Gk+exr5DR1BUUvLQnYk12jfyfd/E47Eax6W3KQi8FWGdKbboKNwIJ5cFcwC0ptOvw7FTpzE1Po6B/j5c6+3B0MD1/AZuKskARml5OfYeOIRDjcdQd7Qe5TsqwwPmIJNeAJ0QAlt5cFAVxTD8NsVMJ7T2iQHxaiCxB0I8KF7P+j6UbaOqZg927t6N3Xtr8f1v/g2u9fZAhPWym+ShwdqgZt9+/OzP/QL21B0AESGXyQbBbopIBK+OMgMiIqM1kUCLInBllOfc4sfq7uyK52F0ZAiXL3Shr+s8RoeHAADKsjcP+MJnF0Kgt/Mcers6UV27Dw0tJ1F/vAVV1TWQSm1I1mIDJSAFfQZQpYzm4pCutSURWBiiieXzy6O4eqkHfZ3nMXTjOnLZDJQKQjSRA7MZhxUyZkYGb+DWtat46dvfQm2Utz3WhIrKKhAQgHGLlRkskoCI7D2OKWajgU1qlb+CByylhJ1IhvT1qUCCdJ7DjSv9mJ+dgRASdiyGZFHxhsQF12JeAGDHYqB4HMZoXL3Ug/7uiygtLw+DzadRd7QeJWWrZ+psHnsXIR2MfeV5nrZse0tsTmG1nJQKmfQ8bnRfQG/nOVzru4TpiYn8BgagCwq3zSYPvaw0V4AQSyRAAJxsFhd//P/Q/ZMfoaKyCocam9AQlhkki6IyAycwQ7YAGIkAz3WNSqczKApzl5u1UIeIAlaMbcHN5XDr+rWQcXIB47cX6OuJZBIA8j0A19vrLuzQsG456dDEICGRSBaBAcxOT+NH//d7OPfSD1BVsycsM2hBde0+xGOxPHliU8cIiZCeS0PNzcyisqpyEz3kUvq6De37GLs9ElC1LnRh5NZgSJUKSAIRANZX0hGEWEzVsiwbjCBTYYeZl+gArNe6ILR3LcsCM2NsZBgjgzfwj9/7Dmr216Gh5SSONJ1A5e7d+TID3/M2lb0YEWNnZmag5ufTyKazSBYnH6qqKqSvJ+KBszA1PoarvZfQ13kOt65fW0RfjzZgwxgnvo9sLqq0q8KhxmNoOv1TMEaj5yc/xvXLvZieGMfiCjasS5nBSkydW9eu4kZ/H37wrW9iX77M4BjKd6xdmcFaPLuUEun5NDLpNJTRBuPj46grqdtwNVxo18USCQghMDczg/4LXejtPIeB/r4C+vpimpNZT9AVME6cbDZfa3z0REu+iixyAgDgSPMJzE5NYeByL3o7z2Pw6mInaD2ZOoWfG2iDOLTvo/9iFy53daK0ogIH6huDMoPDR1FcWhbS8h+u8zI+Nh70sP2Nj34iw8yJg4cPoqSsNGBSrOMD5UFHIadPKWTTaQxdv4berpC+PjYGBgddEjaavs5hXxXfR6KoaCEM0hiGQYjght0YKIwnLGXqTI6N4mpPN3q7zmP4xgByS7oYbHiZQZhT3lG1C4ebmtHYcgp76g68bJnBeu29UgrTU9N8c2CQABrKAzAWj+Fw/RGQWL+kHBFBKQvSUnAdJ+iCENHXR4bv7oJg1rdr7F2MEzegr++u3bdAX6/ZA6XUgmGPFRgniwLhNizbhu95uDN8K196OTo0lGe1KMsG0QYwdQrLDFwXnudCWRZ276nF0eMtqD/egl179+afV/v+uh2OiEd5pbeftdbEbIbofR/9REYQJXzfx46dO7D/YN26SUGtfUyNj2PwSj/6L3YFPU5y2XyQeKN5fIVF65W7q3GkOeilUr2/DrEHoK+vVGYwdGOgoMzgDtg85DID30M8WYS9dQdRf/wE9h85ivIdO9eNrCGEwI1rA5iemmbbtsnX/gIAGQzta1TvqUb13hr4nr+W1VGQSuHOrVv4+7/+Bq72dENrH8miYtixWN5zXFdnoqAg23UcAED5jp04GNLX9x08jGTxAuNkreyjxRVzgXMyPzeLm1eDbl/X+3oxOz0ZgnVjmNWFhAYnl0MmPQ/LtlF/vAVv+bfvQGV1dWhirN3+K6UwfGsIo7dHIaVkIQRpowsAGE5Ya409tXuxq2bXmoIwOgEMYGxkGH1d59F/oQtjt0fg+35QrrjGqndxWWLgARaXlmH/4aML9PWKirC5o7Pu9PW7ywyA6clJDPT1orfrHG6uQ4uSZVWx58JzA1W8a08tGk60oP7ESVTurgnDPWsriaWUuD08gjvDtwObnnllAEYgrN5Tg+o91dBar513HN57YVk2pBU4H7euXwsyGb2XMD0+BsaD1c6u2JSn7gDqW07hSFNz0JTnIdPXl5YZGK0xMXoHV8LquuHBG2tinixf87wLh4813VXz7HseokTZWhw2EgRBAiNDw4HkUzKfBH5ZAEYg3Fm1E3v31eaNx7UUyYXdA4LwyzQG+i8Hudz+1XUPWABdeLpDQ3/X3lrUHz+Bo8dPYveePVCW/SBtydY92xN5yp7j4PbQLfRf6EJ/d1Rm4C+uL34Z52Vx1wcHbBil5RU4UN+AhpOnUXckDMcYvS655EjKG2Nwa/AmpiamCsF3bwCM7ugoLilGbd0+xOPxdXFOVuqfcq03YLPcGggD0KGkKOyfslyoYeeu3Xn6+t41aMz4sMC40KgzjVsD19HXeR5XL/VganwUzHxXmcFKfW/2HToShpGOoXznxgSkpZTIZjK4eeMmMulM/q6Swqm+IgAL3WapFPbsrUHFzh35lNeab+JdfD4bvu9jbGQE/d1duHyhC7dv3YTnOHlavec4YGaU7dixKNi6Bq1pNw0YC7XA3MxM2Ko4CNLPTk/n24ForeG7btj5qw4NLS1BSq66elFKLrLF1yvDAQATYxO4PTwSYCd0qpa+/Z4AGIGQjYE2BuUV5ajeW4N4Ig7t63XLnNxFQrAsOE7QQ+/yhU70X7yA9PzconRTWb6/nbOpamHXVEsUNGufGh/Htb4wTTlwHSVl5Wg40YKjJ1pQXRv0PtwIUkLw2QJSCmQzWYwMjWB2ZgZSSJCglcymewfgUpWsLIWqXVXYWVUJpdTaOimvGMawoZSFuZlpZNNp7Ni1KzjdzgNdT7ClhjEGBEBaFuywp87k2CiKiktQXFoW3BbgrD8tK9pzKSV8z8f42BjGRsegfb2cyl0RgGo1X6iUAmvGyNAIpienUbm7ChUV5ZDrCMTCRXQdB04uB8u2EUsk4IYq+NVQqLOaUBYQkCMyngciQkVlFYzWSM/PLRQurTPwlFLQvsb42DjG74whl8tBSnkv4Fs01Gq/HBSEDpycg5sDg5gcm8DOXZUoKy+DUirPxVuPk7c0dfZavimpcO7RWqznIYy0kJQSvu9jYmwcE2PjyGSyEELkgbfaMJG671MgCIoUMpkM0tdvIJFMYmflDpRVlOepUlF2Y73AuD3Wdy0KtUtAwnAxPTWNqfFJZLNZCLp/4D0QAJeeCiJCLpvFrcFbGLszhrKKMpRXVCCRTORDA1F0fRs4m9/7jlR95MFmMhlMT05jZmoarus+kMRbUwAuB0TP8zB6exQTYxMoKi5C+Y4KFJcUw7YD9rDRZhGVfXtsLtBFRATPdTE3O4fpyWlk0mlordcUeGsKwOUMVGbG3MwcZmdmYds2SkpLUFpeimRREawC6nphyGV7bCzoIjsyit95nof0zAxmpmcxPzcPz3XzKnitgbcuAFx6oqQKJub7PibGJzA5MQk7ZqO4uBglpSUBGG1rUU3HtnRcXylXaNNF7d4y6TTmZuaQnk/DddzglvAIdCHjdr3YOWqjJh1NxnO9AIzjk7BsC4lkAkUlxSgqKkIsvnAPXL7IiIO+KdugvL91j1Rr4X1y6XQamfk05ufmkc1k4RVkSISSQeH4BtVRq4exKBHIfN/H7PQsZqYD4kEsFkOiKIFkURGSyUS+uIeIwGCw4WXvR9sG2+LQjJALINK+j0w2h2wmg/R8BtlsBq4T8h1BQTSj4NCDeUO7VKmHfUKFEvn/cxwH2WwWk+OTQUGPbSGeiCORTCCeSCAWD6rhpJIgLL4iYbkT+6pJxRWCLJjYXe3ZIgfPddxgHTNZZDMZODknuKQxjEJE0rAQdA+zKYGi4DLpYA4PoT/M0hNcuDCu6yKXy2F6ajpvLNu2jVg8hlg8HvwZC3LFSikIKRYBc+kCL0u4AD28rjgF5sVyz5MHGGHRvAybgAHkeXAdF7lsDk4uB8dx4LneQlYqlHBL13WltXgoAGSiCSFEiVnnari1ACQzI5vNIhN2hCcAQsrwClMLtm3Dtm1YMRu2bQXAlAEwgxDDAkCjE4dlNmSlzbnXTVtpHQv/P/r70vdGpoYxBtr34fsanufBc4P6Fdd14DlecAeIr2HMwsVDgkRAAi2w+TYb4MJnYRKCYMykAviSEKLOBBcTbromRUsXrnBxo9cjaZCeTy/a4CiYGuUolaXyf0qloKSCVEHsSwoBEiL/+YXqLf99VCCllhVoXIDsu6VwFJBnY6C1gTEa2tfwtYbv+fD98MfzA/BpH0abu+plCp8vOqD3eog2wyAiFkIwgIuKIL5DRP9yq9pESzdk6XuiTc3lcivaiIWgExEQiRZJk0WAjA5B9HkRSTa0swpt0gBwgdqMJFvhay83n6Vhk60GtJfZPwqzud9RUvrf8Fz+T0SU5Kgl06vAWF9O1S2n7gqllTEGWuvlP2sZe23FE76MXbmc+hVCLLLvXm4eWxFoK+2SlJJ8z5lUbP8f+eMf/nD6dT/zpmOxeOKk73l6KzUqXwfVsPxPqJpX80NLJOdWbSq+9vCDjicS0vO957709Kc6BACS4M94nqOFEAvNK7fHolXjVf6At5dxuZUUQgjHcbJK2k8BIHHmTLt49unP9Hie/lwsnpBc6FZtj+2xplEn9mPxhNC+/tSzT7YNPJJKSQIznWltFdXV/0JlY3f+wbLt067j6Pu5GX17bI+Xsc/9WDyhHCf3g9k3nHoUHUBHR6sRIOKmpiZ+5pkPOaxNq/b9SaWU5K3W13Z7bGbwacuylOd5QyT8X+1obTVNTd0MgBcurD5zRnZ0dOjHPvz4m+LxxN8a5qTxfY1tSbg9HhB8yrIkwDNOLveWr3zhqZ9EWAOAvMfb0dGhH0ml1Fe+8NT3nZz7diJKS8uSzOxvL+P2uF+1a1m2BPOkcZ1/9ZUvPPWTM+3tefAtAiAAvNjW5qdSKfXcF574jpd1fx7MI3Y8rpjNNgi3x33YfHFljBlwXfctX/rcH770SCqlOlpbFzm5d6nXF1980aRSKfWFJz89eOz0P/uGUvKfx+OJ/b7v65BFu03K2x4vBzwDgBPJpPRc77t+OvdvnvvjP7zySCqlXmxru0uQrQimM2faZUdHq37bBz8Y25coe0op9UGjNXzf92kT3ym8PR4m9lgry1IEQBv95PT1y/+ho6NDF9p89wxAAEilUqKtrc0AwG989BNvl1J+Xln2QSeXBZi3HZTtEUFPg0jGEgn4rtvrafOhL3/2038HgFKpFEUYWjUAo/ecaW8XHa2t+n0f+cgOoYrOkqDfVlJJx8kZAHgtp+9e48jTzKBYPC5833dg9B/5E96nvvzlp+bOtLfLjtZWg1fIrN2zPRepZAB43+9/4g2KZJsQ8m0A4LqOoeDGw22J+BoCnh2LCWaG1vp/C0Lq2Sc/1RlgZWWVe98AXCoNAeD9H/vELzKLP1BK/QwAuI7DBJiw6dy2s/IqQx2YDQPCjsWImWG0+S6MefKLgbrFvUq9BwFg3jYEgEi3v//xT/4SCB8WQjwipIyafPsAxLZ6flV4tUYIoSw7Bu17YMPfBvPnvvjZT//tcnhYlUR7kIdbKmrf//h/fDOIfwvMv2jF4nHf8+D7niGAQRAPvR/u9rhn1AEwDJCyLKGUBdd10gD9JZF59otPfvoH4duotbVV3Ku6XXMAFtqH7e1nIjsQ7338kw1K0K8xm19RyjpKJOB7LkzE9twG46YFHQAIKaWybRitoX3/EhF9XQr5/J890XYtkng9PT30IMBbUwAWSsSmpiaORPF73pOKJ3bpnzOCfpUNv9Wy7Z0Aw/M8sNEaDOZtNf3Q1SsRkRBCRrd9ep47SkzfNERfF9N3vvvFL37RW25/12KsixRKpVLiBUAURr5/8/dSu2DxW43R7zAGj9gxu4JA8H0Pvu8zAE1Bvwix3QJhHaUckWFmJiIppSJlBT0dfc8bI6IXiMVfKun+3Z8+8cRE9GuPpFLqUcCsJfDWFYCLvOYz7QLoQKG4ft/v/MFuFZdvYtC/ZtaPCCEPKssOq8R8aK3DkwkKs3/bEvK+4MYc1UsBkFJKksqCECK4gsyYK0TiBTD/TVb63/9aAejOnGmX4b6tyqvdbAAsXA1q7egQTd3di0T4e1KpuJ31X0eMRxl4lBmvU5baKaUCGxOWJmqAWTPARETMLLZz0nejjSLpBhCIpJQSUikQCehA04wRiR+D+HsC/IKdnet85plnnEITCmfOoOPMGYPQnl/vQQ9psai1o0MAwFJ2xL//+Md3eto6xTBvZOCnifkESNQGtwUhX7lmtEYYEOWwXUUEzIc2rw3CGYjIICphDCYsowL94FIfBBfUMAYJ3EVE/8AQP1TS6/qzJ56YWmS3t7dLABsKuocOwLvV9BnR1NREWMbOeH8qlTRp1LPwT5MxrwfTSRCOENHuAJQiLKnUQeF30JbCUBBGQAE4aWG/Ni1AQ1iBiYhRUCfLgCAhhBAivAJBLLoHj8EjBPQTUSez+Cchca7ITV/5/Oc/n11qnwMQPT09vN7qdasAcOkW0JnW1hUBCQAfTKVKM2n3ADEaGWgC0TECDhOolpmrLNsSQipEtePMCx0JzEIBeWgjLT71IVDz67NE09/reuVbJETNEQo+8K7vo7BeM+puv9ChQYRz4OAiGs/zwRgH0SCzuQqgVxB1a+Y+CP/Gl596am6FyAT19PRwR3v7Q5FyWwuAyzxjKpWiF0Ly7Atnz2paYRHf+/jjJULLGiGtvdp4BwCqE4L2s0Etg6tBVAHmcgBJqZRY6DiwUI0alFRGReuct+BxD90IFoGVgnJzCu+ji4rVF95DIUA5ktwajAwI02BMMfEIQQwBPMhsBoSwBojNrRIuv/3004+nXy76AACh18rY5GW2W9NWYqbU2bP0AiAeBfACgBfb2vQrLfYHU6nS9LxfIaArwaKShagC690kRAUMVzKhAuAygErAXAIgCUKcQDYzbCLYIRhjy3jmmgE3WFR2APKY4QDsECjNxPPENMuEWYAniTFhiCeVVLd97Y/D8Jiy4hO+yUwtJ8mWLAA9kjoro7lvFbAtN/4/F3Tid9Ryz0AAAAAASUVORK5CYII=';
+
+  var PUB = '138.76.29.7', SRV = '115.119.40.2', A = '192.168.1.25', B = '192.168.1.50', X = '61.40.8.33';
+  function isPriv(ip) { return ip.indexOf('192.168.') === 0; }
+  function pk(sip, sp, dip, dp) { return { s: [sip, sp], d: [dip, dp] }; }
+  var ROW_A = [A, 3345, PUB, 5001], ROW_B = [B, 3345, PUB, 5002];
+
+  // Posizioni nel disegno e collegamenti (il primo estremo è a sinistra).
+  var W = 1100, H = 560;
+  var P = { a: { x: 90, y: 200 }, b: { x: 90, y: 460 }, r: { x: 528, y: 330 }, s: { x: 1010, y: 200 }, x: { x: 1010, y: 460 } };
+  var LINKS = { ar: ['a', 'r'], br: ['b', 'r'], rs: ['r', 's'], xr: ['r', 'x'] };
+
+  var pk1 = pk(A, 3345, SRV, 80), pk2 = pk(PUB, 5001, SRV, 80), pk3 = pk(SRV, 80, PUB, 5001), pk4 = pk(SRV, 80, A, 3345);
+  var qk1 = pk(B, 3345, SRV, 80), qk2 = pk(PUB, 5002, SRV, 80), qk3 = pk(SRV, 80, PUB, 5002), qk4 = pk(SRV, 80, B, 3345);
+  var zk1 = pk(X, 4444, PUB, 8080);
+
+  // Ogni passo: un pacchetto in viaggio su un collegamento, oppure il router che lo riscrive (in/out) o lo scarta.
+  var MOMENTS = [
+    { title: 'Il PC .25 apre una pagina', sub: 'il router crea la prima riga', table: [], steps: [
+      { desc: 'In casa ci sono due PC con indirizzi <b>privati</b>, in rosso. Verso Internet il router ha un solo indirizzo <b>pubblico</b>, in verde: <span class="v">' + PUB + '</span>. Il PC <span class="v">' + A + '</span> vuole una pagina dal web server <span class="v">' + SRV + '</span>. Premi <b>Avanti</b>.' },
+      { link: 'ar', fwd: true, pkt: pk1, num: 1, desc: 'Il PC invia una <b>HTTP request</b>. Sorgente: il suo indirizzo privato e la porta <span class="v">3345</span>, scelta dal sistema operativo. Destinazione: il web server, porta 80.' },
+      { rewrite: 's', from: 'ar', to: 'rs', before: pk1, after: pk2, nb: 1, na: 2, add: ROW_A,
+        desc: '<b>Riscrittura.</b> Un indirizzo privato non può uscire su Internet. Il router sostituisce la sorgente: al posto di ' + A + ' mette il suo indirizzo pubblico, al posto della porta 3345 una porta libera scelta da lui, <span class="v">5001</span>. Poi annota la coppia nella tabella.' },
+      { link: 'rs', fwd: true, pkt: pk2, num: 2, desc: 'La request, riscritta, attraversa Internet. Il web server vede solo l\'indirizzo pubblico del router: non sa che dietro c\'è un PC.' },
+      { link: 'rs', fwd: false, pkt: pk3, num: 3, desc: 'Il server risponde con una <b>HTTP response</b>, indirizzata all\'indirizzo e alla porta che ha visto: <span class="v">' + PUB + '</span>, porta <span class="v">5001</span>.' },
+      { rewrite: 'd', from: 'rs', to: 'ar', before: pk3, after: pk4, nb: 3, na: 4, look: 5001,
+        desc: '<b>Riscrittura.</b> Il router guarda la <b>porta</b> di destinazione, 5001, e la cerca nella tabella: corrisponde a ' + A + ', porta 3345. Riscrive la destinazione con questi valori.' },
+      { link: 'ar', fwd: false, pkt: pk4, num: 4, desc: 'La response arriva al PC <span class="v">' + A + '</span>, sulla porta 3345 da cui era partita la richiesta.' }
+    ] },
+    { title: 'Anche il PC .50', sub: 'stesso indirizzo pubblico, porta diversa', table: [ROW_A], steps: [
+      { desc: 'La riga di prima è ancora nella tabella. Ora anche il PC <span class="v">' + B + '</span> contatta lo stesso web server, e il suo sistema operativo sceglie per caso la stessa porta, <span class="v">3345</span>.' },
+      { link: 'br', fwd: true, pkt: qk1, num: 1, desc: 'Il PC .50 invia la sua HTTP request: sorgente ' + B + ', porta 3345.' },
+      { rewrite: 's', from: 'br', to: 'rs', before: qk1, after: qk2, nb: 1, na: 2, add: ROW_B,
+        desc: '<b>Riscrittura.</b> Anche qui la sorgente diventa ' + PUB + ', ma la porta 5001 è già usata per il PC .25: il router sceglie <span class="v">5002</span>. Verso Internet i due PC hanno lo stesso indirizzo; a distinguerli è solo la <b>porta</b>.' },
+      { link: 'rs', fwd: true, pkt: qk2, num: 2, desc: 'Per il web server questa request viene dallo stesso indirizzo di prima, ma da un\'altra porta.' },
+      { link: 'rs', fwd: false, pkt: qk3, num: 3, desc: 'Il server risponde con una HTTP response a ' + PUB + ', porta <span class="v">5002</span>. L\'indirizzo di destinazione è identico a quello delle risposte per il PC .25: cambia solo la porta.' },
+      { rewrite: 'd', from: 'rs', to: 'br', before: qk3, after: qk4, nb: 3, na: 4, look: 5002,
+        desc: '<b>Riscrittura.</b> Il router cerca la porta 5002 nella tabella e trova ' + B + ', porta 3345. È la <b>porta</b>, non l\'indirizzo, a dire a quale PC consegnare il pacchetto.' },
+      { link: 'br', fwd: false, pkt: qk4, num: 4, desc: 'La response arriva al PC <span class="v">' + B + '</span>. Il PC .25 non vede nulla: la risposta non era per lui.' }
+    ] },
+    { title: 'Un pacchetto non richiesto', sub: 'nessuna riga: il router lo scarta', table: [ROW_A, ROW_B], steps: [
+      { desc: 'Un host esterno, <span class="v">' + X + '</span>, prova a contattare un dispositivo della rete di casa. Conosce solo l\'indirizzo pubblico del router.' },
+      { link: 'xr', fwd: false, pkt: zk1, num: 1, desc: 'Il pacchetto arriva al router: destinazione ' + PUB + ', porta <span class="v">8080</span>.' },
+      { drop: true, from: 'xr', before: zk1, nb: 1, look: 8080,
+        desc: 'Il router cerca la porta 8080 nella tabella: <b>nessuna riga</b>. Non sa a quale PC consegnare il pacchetto e lo <b>scarta</b>. Le righe nascono solo dai pacchetti in uscita: per questo da Internet non si raggiungono i dispositivi di casa, se non si configura il router apposta.' }
+    ] }
+  ];
+
+  var S = { m: 0, i: 0, anim: null };
+
+  function tableAt(m, i) {
+    var rows = MOMENTS[m].table.slice();
+    MOMENTS[m].steps.slice(0, i + 1).forEach(function (st) { if (st.add) rows.push(st.add); });
+    return rows;
+  }
+
+  function geom(lk) {
+    var a = P[LINKS[lk][0]], b = P[LINKS[lk][1]];
+    var dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+    var ra = LINKS[lk][0] === 'r' ? 66 : 48, rb = LINKS[lk][1] === 'r' ? 66 : 48;
+    return { x0: a.x + ux * ra, y0: a.y + uy * ra, x1: b.x - ux * rb, y1: b.y - uy * rb };
+  }
+  function setArrow(r, g, k) {
+    var t = Math.atan2(g.y1 - g.y0, g.x1 - g.x0), Lh = 13, Wh = 6.5;
+    var x = g.x0 + (g.x1 - g.x0) * k, y = g.y0 + (g.y1 - g.y0) * k;
+    var bx = x - Lh * Math.cos(t), by = y - Lh * Math.sin(t), px = -Math.sin(t) * Wh, py = Math.cos(t) * Wh;
+    r.line.setAttribute('x1', g.x0); r.line.setAttribute('y1', g.y0);
+    r.line.setAttribute('x2', bx); r.line.setAttribute('y2', by);
+    r.head.setAttribute('points', x + ',' + y + ' ' + (bx + px) + ',' + (by + py) + ' ' + (bx - px) + ',' + (by - py));
+  }
+
+  // Riquadro del pacchetto, come nella slide: source e destination con indirizzo e porta.
+  // chg = campo riscritto, key = porta usata per cercare nella tabella.
+  // Si disegna attorno a (0,0) e si sposta con transform, così può viaggiare lungo la freccia.
+  var CW = 7.8, LABW = 13, PAD = 12, PH = 52;   // CW: larghezza di un carattere del monospazio a 13 px
+  // Larghezza del riquadro: la riga più lunga più lo stesso margine a sinistra e a destra.
+  function pwOf(p) { return 2 * PAD + LABW * CW + Math.max(p.s[0].length + 2 + String(p.s[1]).length, p.d[0].length + 2 + String(p.d[1]).length) * CW; }
+  var FIELD = { s: 'source:', d: 'destination:' };
+  function kindOf(p) { return p.s[1] === 80 ? 'HTTP response' : 'HTTP request'; }
+  // Posizione della porta di un campo (s o d) dentro il riquadro centrato in c.
+  function pktPort(c, p, f) {
+    var j = f === 's' ? 0 : 1, ty = c.y - PH / 2 + 21 + j * 20, ip = p[f][0], port = String(p[f][1]);
+    var x0 = c.x - pwOf(p) / 2 + PAD + (LABW + ip.length + 2) * CW;
+    return { x0: x0, x1: x0 + port.length * CW, top: ty - 13, bot: ty + 4, mid: ty - 4.5 };
+  }
+  function packet(svg, p, num, opt) {
+    opt = opt || {};
+    var PW = pwOf(p), g = el('g', { 'class': 'nat-pk' + (opt.dim ? ' dim' : '') }, svg), x = -PW / 2, y = -PH / 2;
+    el('rect', { x: x, y: y, width: PW, height: PH, rx: 6, 'class': 'bg' }, g);
+    // Sopra il riquadro: che messaggio è. La riscrittura cambia indirizzi e porte, non il messaggio.
+    var kind = kindOf(p), kw = kind.length * 7 + 16;
+    el('rect', { x: x, y: y - 21, width: kw, height: 19, rx: 4, 'class': 'kind ' + (kind === 'HTTP request' ? 'req' : 'resp') }, g);
+    el('text', { x: x + 8, y: y - 7.5, 'class': 'kindt' }, g, kind);
+    ['s', 'd'].forEach(function (f, j) {
+      var ty = y + 21 + j * 20, ip = p[f][0], port = String(p[f][1]), tx = x + PAD;
+      var ipX = tx + LABW * CW, ptX = ipX + (ip.length + 2) * CW;
+      var isChg = opt.chg === f;
+      if (isChg) el('rect', { x: ipX - 2, y: ty - 13, width: ip.length * CW + 4, height: 17, rx: 3, 'class': 'chg' }, g);
+      if (isChg || opt.key === f) el('rect', { x: ptX - 2, y: ty - 13, width: port.length * CW + 4, height: 17, rx: 3, 'class': 'key' }, g);
+      el('text', { x: tx, y: ty, 'class': 'lab' }, g, FIELD[f]);
+      el('text', { x: ipX, y: ty, 'class': isPriv(ip) ? 'priv' : 'pub' }, g, ip);
+      el('text', { x: ipX + ip.length * CW, y: ty }, g, ',');
+      el('text', { x: ptX, y: ty, 'class': 'pt' + (isChg || opt.key === f ? ' on' : '') }, g, port);
+    });
+    return g;
+  }
+  // Freccia tra una porta del pacchetto e una della tabella: curva a S, verticale alle due estremità,
+  // con la punta disegnata nella stessa direzione. Sta sotto tabella, router e pacchetti.
+  function portLink(g, a, b) {
+    var dy = b.y - a.y, h = Math.sign(dy) || 1, L = 10, Wd = 5;
+    var tip = { x: b.x, y: b.y }, base = { x: b.x, y: b.y - h * L };
+    // Se la freccia passerebbe sugli indirizzi del router, fa un giro più largo passando di lato.
+    var R = P.r, ly = R.y - 56, ax = (a.x + b.x) / 2, d;
+    if ((a.y - ly) * (b.y - ly) < 0 && Math.abs(ax - R.x) < 150) {
+      var m = { x: ax < R.x ? R.x - 150 : R.x + 150, y: ly }, k1 = (m.y - a.y) * 0.5, k2 = (base.y - m.y) * 0.5;
+      d = 'M' + a.x + ',' + a.y + ' C' + a.x + ',' + (a.y + k1) + ' ' + m.x + ',' + (m.y - k1) + ' ' + m.x + ',' + m.y +
+        ' C' + m.x + ',' + (m.y + k2) + ' ' + base.x + ',' + (base.y - k2) + ' ' + base.x + ',' + base.y;
+    } else {
+      d = 'M' + a.x + ',' + a.y + ' C' + a.x + ',' + (a.y + dy * 0.5) + ' ' + b.x + ',' + (base.y - (base.y - a.y) * 0.5) + ' ' + base.x + ',' + base.y;
+    }
+    el('path', { d: d, 'class': 'nat-plink' }, g);
+    el('polygon', { points: tip.x + ',' + tip.y + ' ' + (base.x - Wd) + ',' + base.y + ' ' + (base.x + Wd) + ',' + base.y, 'class': 'nat-ahp' }, g);
+  }
+  // Estremo sul pacchetto: il bordo superiore del riquadro, sopra la porta del campo f.
+  function pktAnchor(c, p, f) {
+    var q = pktPort(c, p, f);
+    return { x: (q.x0 + q.x1) / 2, y: c.y - PH / 2 - 3 };
+  }
+  function place(g, pt) { g.setAttribute('transform', 'translate(' + pt.x.toFixed(1) + ' ' + pt.y.toFixed(1) + ')'); }
+  // Dove può stare il riquadro su ogni collegamento senza coprire dispositivi, router o tabella:
+  // u = 0 al router, 1 al dispositivo. Il riquadro sta sempre sopra la freccia.
+  var RANGE = { ar: [0.36, 0.56], rs: [0.36, 0.6], br: [0.56, 0.82], xr: [0.5, 0.8] };
+  var REW = { ar: 0.42, rs: 0.42, br: 0.6, xr: 0.55 };   // posizione durante la riscrittura
+  function at(lk, u) {
+    var g = geom(lk), rf = LINKS[lk][0] === 'r';
+    var a = rf ? { x: g.x0, y: g.y0 } : { x: g.x1, y: g.y1 }, b = rf ? { x: g.x1, y: g.y1 } : { x: g.x0, y: g.y0 };
+    return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u - 48 };
+  }
+  function dirGeom(lk, towardRouter) {
+    var g = geom(lk), rFirst = LINKS[lk][0] === 'r';
+    return rFirst === towardRouter ? { x0: g.x1, y0: g.y1, x1: g.x0, y1: g.y0 } : g;
+  }
+
+  // Tabella di traduzione disegnata sopra il router, collegata con una linea tratteggiata.
+  function natTable(svg, st, R) {
+    var rows = tableAt(S.m, S.i), w = 380, x0 = R.x - w / 2, y0 = 36, capH = 26, hdH = 22, rH = 24;
+    var n = Math.max(rows.length, 1) + (st.drop ? 1 : 0), h = capH + hdH + n * rH, xm = R.x;
+    el('line', { x1: R.x, y1: y0 + h, x2: R.x, y2: R.y - 52, 'class': 'nt-link' }, svg);
+    // Il contenuto è ritagliato sulla cornice arrotondata, così le righe colorate non escono dagli angoli.
+    var root = svg, cp = el('clipPath', { id: 'nt-clip' }, el('defs', {}, root));
+    el('rect', { x: x0, y: y0, width: w, height: h, rx: 6 }, cp);
+    svg = el('g', { 'clip-path': 'url(#nt-clip)' }, root);
+    el('rect', { x: x0, y: y0, width: w, height: h, 'class': 'nt-bg' }, svg);
+    // Intestazione scura: angoli arrotondati solo in alto, come la cornice.
+    el('path', { d: 'M' + x0 + ',' + (y0 + capH) + ' V' + (y0 + 6) + ' Q' + x0 + ',' + y0 + ' ' + (x0 + 6) + ',' + y0 + ' H' + (x0 + w - 6) + ' Q' + (x0 + w) + ',' + y0 + ' ' + (x0 + w) + ',' + (y0 + 6) + ' V' + (y0 + capH) + ' Z', 'class': 'nt-cap' }, svg);
+    el('text', { x: R.x, y: y0 + 17, 'text-anchor': 'middle', 'class': 'nt-capt' }, svg, 'Tabella di traduzione NAT');
+    el('rect', { x: x0 + 0.6, y: y0 + capH, width: w - 1.2, height: hdH, 'class': 'nt-head' }, svg);
+    el('text', { x: x0 + w / 4, y: y0 + capH + 15, 'text-anchor': 'middle', 'class': 'nt-ht' }, svg, 'Lato LAN');
+    el('text', { x: xm + w / 4, y: y0 + capH + 15, 'text-anchor': 'middle', 'class': 'nt-ht' }, svg, 'Lato WAN');
+    var y = y0 + capH + hdH;
+    var pos = { rows: [], miss: null };
+    function cell(x, ty, ip, port, key) {
+      var ptX = x + (ip.length + 2) * CW, pw = String(port).length * CW;
+      if (key) el('rect', { x: ptX - 2, y: ty - 13, width: pw + 4, height: 17, rx: 3, 'class': 'nt-key' }, svg);
+      el('text', { x: x, y: ty, 'class': 'nt-tx ' + (isPriv(ip) ? 'priv' : 'pub') }, svg, ip);
+      el('text', { x: x + ip.length * CW, y: ty, 'class': 'nt-tx' }, svg, ',');
+      el('text', { x: ptX, y: ty, 'class': 'nt-tx pt' + (key ? ' on' : '') }, svg, port);
+      return { x: ptX + pw / 2, y: y0 + h + 3 };
+    }
+    if (!rows.length) el('text', { x: R.x, y: y + 16, 'text-anchor': 'middle', 'class': 'nt-empty' }, svg, 'vuota');
+    rows.forEach(function (r, j) {
+      var cls = st.add === r ? 'new' : st.look === r[3] ? 'hl' : '', ry = y + j * rH;
+      if (cls) el('rect', { x: x0 + 0.6, y: ry, width: w - 1.2, height: rH, 'class': 'nt-row' }, svg);
+      pos.rows.push({ r: r, lan: cell(x0 + 10, ry + 16, r[0], r[1], !!cls), wan: cell(xm + 10, ry + 16, r[2], r[3], !!cls) });
+    });
+    if (st.drop) {
+      var my = y + Math.max(rows.length, 1) * rH;
+      el('rect', { x: x0 + 0.6, y: my, width: w - 1.2, height: rH, 'class': 'nt-row miss' }, svg);
+      el('text', { x: R.x, y: my + 16, 'text-anchor': 'middle', 'class': 'nt-miss' }, svg, 'nessuna riga con porta ' + st.look);
+      pos.miss = { x: R.x + 150, y: y0 + h + 3 };
+    }
+    el('line', { x1: xm, y1: y0 + capH, x2: xm, y2: y + rows.length * rH, 'class': 'nt-sep' }, svg);
+    el('rect', { x: x0, y: y0, width: w, height: h, rx: 6, 'class': 'nt-frame' }, root);
+    return pos;
+  }
+
+  function draw(animate) {
+    var svg = $('nat-svg'), st = MOMENTS[S.m].steps[S.i];
+    if (S.anim) { cancelAnimationFrame(S.anim); S.anim = null; }
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+
+    // Le due zone: rete di casa e Internet; il confine passa per il router.
+    el('rect', { x: 0, y: 0, width: P.r.x, height: H, rx: 8, 'class': 'nat-zone priv' }, svg);
+    el('rect', { x: P.r.x, y: 0, width: W - P.r.x, height: H, rx: 8, 'class': 'nat-zone pub' }, svg);
+    el('text', { x: 12, y: 20, 'class': 'nat-zl priv' }, svg, 'Rete di casa · indirizzi privati');
+    el('text', { x: W - 12, y: 20, 'text-anchor': 'end', 'class': 'nat-zl pub' }, svg, 'Internet · indirizzi pubblici');
+
+    Object.keys(LINKS).forEach(function (lk) {
+      var g = geom(lk);
+      el('line', { x1: g.x0, y1: g.y0, x2: g.x1, y2: g.y1, 'class': 'nat-ln' }, svg);
+    });
+
+    function host(p, icon, name, ip) {
+      el('image', { href: icon, x: p.x - 30, y: p.y - 38, width: 60, height: 60 }, svg);
+      el('text', { x: p.x, y: p.y + 38, 'text-anchor': 'middle', 'class': 'nat-who' }, svg, name);
+      el('text', { x: p.x, y: p.y + 54, 'text-anchor': 'middle', 'class': 'nat-ip ' + (isPriv(ip) ? 'priv' : 'pub') }, svg, ip);
+    }
+    host(P.a, ICON_PC, 'PC', A);
+    host(P.b, ICON_PC, 'PC', B);
+    host(P.s, ICON_SERVER, 'web server', SRV);
+    host(P.x, ICON_PC, 'host esterno', X);
+
+    var R = P.r;
+    var gl = el('g', {}, svg), tpos = natTable(svg, st, R);
+    function rowOf(test) { return tpos.rows.filter(function (x) { return test(x.r); })[0]; }
+    // Il router al lavoro: sfondo colorato dietro l'icona e una scritta sotto.
+    if (st.rewrite || st.drop) el('rect', { x: R.x - 74, y: R.y - 40, width: 148, height: 80, rx: 16, 'class': 'nat-halo' + (st.drop ? ' bad' : '') }, svg);
+    el('image', { href: ICON_ROUTER, x: R.x - 55, y: R.y - 31, width: 110, height: 62 }, svg);
+    el('text', { x: R.x, y: R.y + 58, 'text-anchor': 'middle', 'class': 'nat-who' }, svg, 'router casalingo (NAT)');
+    el('text', { x: R.x - 14, y: R.y - 50, 'text-anchor': 'end', 'class': 'nat-ip priv' }, svg, '192.168.1.1');
+    el('text', { x: R.x + 14, y: R.y - 50, 'class': 'nat-ip pub' }, svg, PUB);
+
+    if (st.rewrite) {
+      el('text', { x: R.x, y: R.y + 76, 'text-anchor': 'middle', 'class': 'nat-rtl' }, svg, st.rewrite === 's' ? 'riscrive la sorgente' : 'riscrive la destinazione');
+      var cb = at(st.from, REW[st.from]), ca = at(st.to, REW[st.to]), f = st.rewrite;
+      place(packet(svg, st.before, st.nb, { dim: true, key: f }), cb);
+      place(packet(svg, st.after, st.na, { chg: f }), ca);
+      // Il ragionamento del NAT: in uscita la porta LAN porta alla nuova porta WAN; in entrata la porta WAN riporta a quella LAN.
+      var row = f === 's' ? rowOf(function (r) { return r === st.add; }) : rowOf(function (r) { return r[3] === st.look; });
+      if (row) {
+        portLink(gl, pktAnchor(cb, st.before, f), f === 's' ? row.lan : row.wan);
+        portLink(gl, f === 's' ? row.wan : row.lan, pktAnchor(ca, st.after, f));
+      }
+    } else if (st.drop) {
+      el('text', { x: R.x, y: R.y + 76, 'text-anchor': 'middle', 'class': 'nat-dropl' }, svg, 'pacchetto scartato');
+      var cd = at(st.from, REW[st.from]);
+      place(packet(svg, st.before, st.nb, { dim: true, key: 'd' }), cd);
+      if (tpos.miss) portLink(gl, pktAnchor(cd, st.before, 'd'), tpos.miss);
+    } else if (st.link) {
+      var toR = LINKS[st.link][0] === 'r' ? !st.fwd : st.fwd, gg = dirGeom(st.link, toR), rg = RANGE[st.link];
+      var ag = el('g', { 'class': 'nat-ar' }, svg), ar = { line: el('line', {}, ag), head: el('polygon', {}, ag) };
+      var box = packet(svg, st.pkt, st.num);
+      // Il pacchetto viaggia con la punta della freccia.
+      var go = function (k) { setArrow(ar, gg, 0.08 + 0.92 * k); place(box, at(st.link, toR ? rg[1] - (rg[1] - rg[0]) * k : rg[0] + (rg[1] - rg[0]) * k)); };
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!animate || reduce) go(1);
+      else {
+        var t0 = null;
+        var tick = function (t) {
+          if (t0 === null) t0 = t;
+          var k = Math.min(1, (t - t0) / 900);
+          go(1 - Math.pow(1 - k, 3));
+          S.anim = k < 1 ? requestAnimationFrame(tick) : null;
+        };
+        go(0);
+        S.anim = requestAnimationFrame(tick);
+      }
+    }
+  }
+
+  function addrHtml(ip, port, cls) {
+    return '<span class="' + (isPriv(ip) ? 'priv' : 'pub') + '">' + ip + '</span>, <span class="pt' + (cls ? ' ' + cls : '') + '">' + port + '</span>';
+  }
+  function cardHtml(label, p, chg, key) {
+    function line(f) {
+      var v = p[f], c = chg === f;
+      return '<span><span class="lab">' + FIELD[f] + '</span> <span class="' + (isPriv(v[0]) ? 'priv' : 'pub') + (c ? ' chg' : '') + '">' + v[0] + '</span>, <span class="pt' + (c || key === f ? ' key' : '') + '">' + v[1] + '</span></span>';
+    }
+    return '<div class="nat-card"><small>' + label + '</small>' + line('s') + line('d') + '</div>';
+  }
+
+  function panel() {
+    var st = MOMENTS[S.m].steps[S.i], o;
+    if (st.rewrite) {
+      o = '<h3>Nel router: ' + (st.rewrite === 's' ? 'pacchetto in uscita' : 'pacchetto in entrata') + '</h3>' +
+        '<div class="nat-cards">' + cardHtml('arriva: ' + kindOf(st.before), st.before, null, st.rewrite === 'd' ? 'd' : null) + '<span class="to">→</span>' + cardHtml('esce: ' + kindOf(st.after), st.after, st.rewrite) + '</div>' +
+        '<p>' + (st.rewrite === 's'
+          ? 'Cambiano indirizzo e porta di <b>sorgente</b>. La nuova porta, ' + st.after.s[1] + ', è la chiave della nuova riga della tabella.'
+          : 'La porta di destinazione, ' + st.look + ', è la chiave: il router la cerca nel lato WAN della tabella e rimette indirizzo e porta del lato LAN.') + '</p>';
+    } else if (st.drop) {
+      o = '<h3>Nel router: pacchetto in entrata</h3><div class="nat-cards">' + cardHtml('arriva: ' + kindOf(st.before), st.before, null, 'd') + '<span class="to">→</span><div class="nat-card"><small>esce</small><span class="no" style="color:var(--high);font-family:var(--f-body)">niente: scartato</span></div></div>' +
+        '<p>Nella tabella non c\'è nessuna riga con la porta ' + st.look + '.</p>';
+    } else if (st.link) {
+      o = '<h3>' + kindOf(st.pkt) + ' in viaggio</h3><div class="nat-cards" style="grid-template-columns:minmax(0,1fr)">' + cardHtml(st.link === 'rs' || st.link === 'xr' ? 'su Internet' : 'nella rete di casa', st.pkt) + '</div>';
+    } else {
+      o = '<h3>Il router casalingo</h3><p>Lato LAN ha l\'indirizzo privato 192.168.1.1, lato WAN l\'indirizzo pubblico ' + PUB + '. Nei passi che seguono, qui vedi ogni pacchetto e come il router lo riscrive; la tabella di traduzione è disegnata sopra il router.</p>';
+    }
+    $('nat-insp').innerHTML = o;
+
+  }
+
+  function render(animate) {
+    var steps = MOMENTS[S.m].steps;
+    $('nat-days').querySelectorAll('button').forEach(function (b, j) { b.setAttribute('aria-current', j === S.m ? 'true' : 'false'); });
+    $('nat-step').textContent = S.i + '/' + (steps.length - 1);
+    $('nat-desc').innerHTML = steps[S.i].desc;
+    $('nat-first').disabled = S.m === 0 && S.i === 0;
+    $('nat-prev').disabled = S.m === 0 && S.i === 0;
+    $('nat-next').disabled = S.m === MOMENTS.length - 1 && S.i === steps.length - 1;
+    draw(animate); panel();
+  }
+  function next() {
+    if (S.i < MOMENTS[S.m].steps.length - 1) S.i++;
+    else if (S.m < MOMENTS.length - 1) { S.m++; S.i = 0; }
+    else return;
+    render(true);
+  }
+  function prev() {
+    if (S.i > 0) S.i--;
+    else if (S.m > 0) { S.m--; S.i = MOMENTS[S.m].steps.length - 1; }
+    else return;
+    render(false);
+  }
+
+  $('nat-days').innerHTML = MOMENTS.map(function (m, j) {
+    return '<button type="button" class="ca-day" data-m="' + j + '"><b>' + (j + 1) + '. ' + m.title + '</b><span>' + m.sub + '</span></button>';
+  }).join('');
+  $('nat-days').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    S.m = +b.dataset.m; S.i = 0; render(false);
+  });
+  $('nat-next').addEventListener('click', next);
+  $('nat-prev').addEventListener('click', prev);
+  $('nat-first').addEventListener('click', function () { S.m = 0; S.i = 0; render(false); });
+  document.addEventListener('keydown', function (e) {
+    if ($('p-nat').hidden || e.target.closest('input, textarea, select')) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+
+  render(false);
+  window.NET = window.NET || {};
+  window.NET.show = window.NET.show || {};
+  window.NET.show.nat = function () { render(false); };
+})();
+</script>
+
+<script>
 // Schede in alto: mostra una sezione alla volta e ricorda quella aperta nell'indirizzo.
 (function () {
-  var PAGES = ['http', 'cookie', 'cache', 'sottoreti'];
+  var PAGES = ['http', 'cookie', 'cache', 'sottoreti', 'nat'];
   function go(name, push) {
     if (PAGES.indexOf(name) === -1) name = 'http';
     PAGES.forEach(function (p) { document.getElementById('p-' + p).hidden = p !== name; });
