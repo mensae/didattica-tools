@@ -8,6 +8,16 @@
 /* Nella barra in alto: sempre a destra, anche quando le schede vanno a capo o scorrono */
 .topnav .topnav-in { position: relative; padding-right: 66px; }
 .topnav-in > .theme-tg { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); }
+/* Schede che non ci stanno nella barra: frecce ai lati e sfumatura */
+.tabs-wrap { position: relative; display: flex; flex: 1 1 auto; min-width: 0; }
+.tabs-wrap > .tabs { flex: 1 1 auto; }
+.tabs-arr { position: absolute; top: 0; bottom: 0; z-index: 2; width: 46px; padding: 0 2px; border: 0; display: none; align-items: center; cursor: pointer; color: var(--ink); }
+.tabs-arr svg { width: 18px; height: 18px; display: block; }
+.tabs-arr.l { left: 0; justify-content: flex-start; background: linear-gradient(to right, var(--card) 50%, transparent); }
+.tabs-arr.r { right: 0; justify-content: flex-end; background: linear-gradient(to left, var(--card) 50%, transparent); }
+.tabs-arr.on { display: flex; }
+.tabs-arr:hover { color: var(--accent); }
+.tabs-arr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 :root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script>
 // Tema scelto con l'interruttore in alto a destra (vale per tutte le pagine): applicato subito, prima di disegnare.
 try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light') document.documentElement.setAttribute('data-theme', tm); } catch (e) {}
@@ -2740,6 +2750,51 @@ body { background: var(--paper); color: var(--ink); font-family: var(--f-body); 
   });
   if (mq && mq.addEventListener) mq.addEventListener('change', sync);
   sync();
+})();
+</script>
+<script>
+// Barra delle schede: se non ci stanno tutte compaiono le frecce ai lati, e la scheda aperta resta sempre in vista.
+(function () {
+  var t = document.querySelector('.topnav .tabs');
+  if (!t) return;
+  var w = document.createElement('div');
+  w.className = 'tabs-wrap';
+  t.parentNode.insertBefore(w, t);
+  w.appendChild(t);
+  var CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+  function arrow(cls, label, dir) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'tabs-arr ' + cls; b.setAttribute('aria-label', label); b.title = label;
+    b.innerHTML = dir < 0 ? CHEV : CHEV.replace('M15 5l-7 7 7 7', 'M9 5l7 7-7 7');
+    b.addEventListener('click', function () { t.scrollBy({ left: dir * t.clientWidth * 0.7, behavior: 'smooth' }); });
+    w.appendChild(b);
+    return b;
+  }
+  var L = arrow('l', 'Schede precedenti', -1), Rr = arrow('r', 'Schede successive', 1);
+  function update() {
+    var max = t.scrollWidth - t.clientWidth;
+    L.classList.toggle('on', t.scrollLeft > 2);
+    Rr.classList.toggle('on', t.scrollLeft < max - 2);
+  }
+  function reveal() {
+    var a = t.querySelector('.tab[aria-selected="true"]');
+    if (!a) return;
+    var tr = t.getBoundingClientRect(), ar = a.getBoundingClientRect(), pad = 48;
+    if (ar.left < tr.left + pad) t.scrollLeft += ar.left - tr.left - pad;
+    else if (ar.right > tr.right - pad) t.scrollLeft += ar.right - tr.right + pad;
+    update();
+  }
+  t.addEventListener('scroll', update, { passive: true });
+  // Rotellina verticale sulla barra: scorre le schede in orizzontale.
+  t.addEventListener('wheel', function (e) {
+    if (t.scrollWidth <= t.clientWidth || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+    t.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }, { passive: false });
+  window.addEventListener('resize', reveal);
+  if (window.ResizeObserver) new ResizeObserver(update).observe(t);
+  new MutationObserver(reveal).observe(t, { subtree: true, attributes: true, attributeFilter: ['aria-selected'] });
+  reveal();
 })();
 </script>
 </body></html>

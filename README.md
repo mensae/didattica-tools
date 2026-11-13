@@ -12,7 +12,7 @@ Pagine HTML autonome, in [`intro-informatica/`](intro-informatica/): ognuna è u
 - **[Architettura degli elaboratori](intro-informatica/architettura.html)**: CPU e RAM eseguono un piccolo programma, un'istruzione alla volta, mentre registri, program counter e memoria si aggiornano a ogni passo. Una seconda parte introduce i salti condizionali, con un esercizio.
 - **[Processi e memoria virtuale](intro-informatica/processi.html)**: tre programmi aperti si dividono una sola CPU. Si vede il sistema operativo che salva e ripristina il contesto di ogni processo, gestisce i page fault, sposta pagine tra RAM e area di swap e mette in coda le richieste al disco.
 - **[Reti](intro-informatica/reti.html)**: visualizzazioni di protocolli e interazioni di rete: HTTP persistente e non persistente, cookie, web cache, sottoreti e maschere, NAT.
-- **[Sicurezza](intro-informatica/sicurezza.html)**: cifrario di Cesare con l'alfabeto da ruotare, cifratura simmetrica, asimmetrica e la loro combinazione, firma digitale con e senza hash, passo per passo tra Alice e Bob, e l'handshake TLS di HTTPS.
+- **[Sicurezza](intro-informatica/sicurezza.html)**: cifrario di Cesare con l'alfabeto da ruotare, cifratura simmetrica, asimmetrica e la loro combinazione, firma digitale con e senza hash, certificati digitali, passo per passo tra Alice e Bob, e l'handshake TLS di HTTPS.
 
 ## Altri Tools
 
