@@ -530,7 +530,7 @@ var SEC = (function () {
   var ACT = {
     A: { id: 'A', name: 'Alice', img: IMG.alice, key: 'blue' },
     B: { id: 'B', name: 'Bob', img: IMG.bob, key: 'grey' },
-    E: { id: 'E', name: 'Attaccante', img: IMG.eve },
+    E: { id: 'E', name: 'Attaccante', img: IMG.eve, dark: true },
     C: { id: 'C', name: 'Client', img: IMG.pc },
     S: { id: 'S', name: 'Server', img: IMG.server, key: 'grey', dark: true }
   };
@@ -566,8 +566,8 @@ var SEC = (function () {
     ow.forEach(function (w, j) { badge(kg, w, bx - j * 15, by); });
     var ly = (o.ring ? 30 : h / 2) + 24;
     (o.label || []).forEach(function (l, j) {
-      if (o.head) el('text', { x: 30, y: -3 + j * 14, 'class': 'sc-klab', 'text-anchor': 'start' }, g, l);
-      else el('text', { x: 0, y: ly + j * 14, 'class': 'sc-klab', 'text-anchor': 'middle' }, g, l);
+      if (o.head) el('text', { x: 30, y: -3 + j * 14, 'class': 'sc-klab pkl', 'text-anchor': 'start' }, g, l);
+      else el('text', { x: 0, y: ly + j * 14, 'class': 'sc-klab pkl', 'text-anchor': 'middle' }, g, l);
     });
     return g;
   }
@@ -578,7 +578,7 @@ var SEC = (function () {
     el('rect', { x: -w / 2, y: -h / 2, width: w, height: h, rx: 8 }, g);
     if (icon) el('image', { href: IMG.kYellow, x: -w / 2 + 10, y: -10, width: 21, height: 20 }, g);
     el('text', { x: icon / 2, y: 5, 'text-anchor': 'middle', 'class': 'tx' }, g, o.text);
-    if (o.label) el('text', { x: 0, y: -h / 2 - 9, 'text-anchor': 'middle', 'class': 'sc-clab' }, g, o.label);
+    if (o.label) el('text', { x: 0, y: -h / 2 - 9, 'text-anchor': 'middle', 'class': 'sc-clab pkl', style: o.chan ? 'opacity:0' : '' }, g, o.label);
     return g;
   }
   function pkgObj(p, o) {
@@ -601,7 +601,7 @@ var SEC = (function () {
     el('text', { x: -w / 2 + 10, y: 23, 'class': 'cd' }, g, 'firma: ' + o.ca);
     el('circle', { cx: w / 2 - 22, cy: -8, r: 15, 'class': 'sc-ring pub' }, g);
     el('image', { href: KEYIMG[o.color], x: w / 2 - 33, y: -19, width: 22, height: 21 }, g);
-    if (o.label) el('text', { x: 0, y: -h / 2 - 9, 'text-anchor': 'middle', 'class': 'sc-clab' }, g, o.label);
+    if (o.label) el('text', { x: 0, y: -h / 2 - 9, 'text-anchor': 'middle', 'class': 'sc-clab pkl', style: o.chan ? 'opacity:0' : '' }, g, o.label);
     return g;
   }
   function drawObj(p, o) {
@@ -637,7 +637,7 @@ var SEC = (function () {
     el('text', { x: (x1 + x2) / 2, y: y + h / 2 + 18, 'text-anchor': 'middle', 'class': 'sc-chanl' }, p, 'Canale non sicuro');
   }
   function attacker(p, x, y) {
-    el('image', { href: IMG.eve, x: x - 48, y: y - 50, width: 96, height: 99 }, p);
+    el('image', { href: IMG.eve, x: x - 48, y: y - 50, width: 96, height: 99, 'class': 'dk' }, p);
     el('text', { x: x, y: y + 68, 'text-anchor': 'middle', 'class': 'sc-eve' }, p, 'Attaccante');
   }
   function bubble(p, x, yb, lines) {
@@ -777,8 +777,14 @@ var SEC = (function () {
         var p = pidx[o.id], start = null;
         if (p && (p.x !== o.x || p.y !== o.y)) start = [p.x, p.y];
         else if (!p && o.from) start = o.from;
+        // Etichette: nascoste mentre l'oggetto attraversa il canale (o viaggia lungo un percorso con tappe).
+        function lab(o, p) {
+          if (o.via && o.via.length) return [false, true];
+          if (p && (o.chan || p.chan || o.t === 'pkg')) return [!p.chan, !o.chan];
+          return null;
+        }
         if (start || !p) tw.push({ k: 'move', g: g, a: start, b: [o.x, o.y], via: o.via || [], fade: !p, delay: o.delay || 0, dur: o.dur,
-          lab: o.t === 'pkg' && p ? [!p.chan, !o.chan] : null });
+          lab: lab(o, p) });
       });
       if (st.peek) {
         var pk = el('line', { x1: st.peek[0], y1: st.peek[1], x2: st.peek[2], y2: st.peek[3], 'class': 'sc-peek' }, L.top);
@@ -806,12 +812,12 @@ var SEC = (function () {
         // Sui percorsi lunghi (con tappe) velocità quasi costante, così si vede bene il passaggio sul canale.
         var ev = t.via.length ? (1 - Math.cos(Math.PI * u)) / 2 : e;
         if (t.a) { var q = along([t.a].concat(t.via, [t.b]), ev); place(t.g, q[0], q[1]); }
-        // Nel canale il messaggio finale non ha l'etichetta (si sovrapporrebbe al canale): sparisce entrando, ricompare uscendo.
-        var pl = t.lab && t.g.querySelector('.pkl');
-        if (pl) {
+        // Nel canale gli oggetti non hanno l'etichetta (si sovrapporrebbe al canale): sparisce entrando, ricompare uscendo.
+        if (t.lab) {
           var cl = function (v) { return Math.max(0, Math.min(1, v)); };
-          pl.style.opacity = t.lab[0] && t.lab[1] ? cl((Math.abs(2 * ev - 1) - 0.82) / 0.12)
+          var op = t.lab[0] && t.lab[1] ? cl((Math.abs(2 * ev - 1) - 0.82) / 0.12)
             : t.lab[0] ? cl(1 - ev / 0.15) : t.lab[1] ? cl((ev - 0.85) / 0.15) : 0;
+          t.g.querySelectorAll('.pkl').forEach(function (l) { l.style.opacity = op; });
         }
         t.g.style.opacity = t.fade ? (u <= 0 ? 0 : Math.min(1, u * 3)) : '';
       } else if (t.k === 'grow') {
@@ -924,7 +930,7 @@ function at(o, extra) { var c = {}; for (var k in o) c[k] = o[k]; delete c.from;
       { t: 'Cifratura', d: sN + ' passa all\'algoritmo di cifratura il testo in chiaro e la chiave, e ottiene il <b>testo cifrato</b>: una sequenza di simboli senza senso per chi non ha la chiave.',
         objs: [kS, kR, dimmed(p1), c1], on: ['enc'], flow: ['g1', 'g2', 'g3'], know: K(r, ['k', 'P', 'C'], ['k'], []) },
       { t: 'Sul canale non sicuro', d: 'Il testo cifrato viaggia su un <b>canale non sicuro</b>, per esempio Internet. Un attaccante può leggerlo, ma senza la chiave non riesce a ricavare il testo in chiaro.',
-        objs: [kS, kR, dimmed(p1), at(c1, { x: m(550) })], flow: ['g4'], peek: [550, 328, 550, 392], bubble: ['Vedo il testo cifrato,', 'ma senza la chiave', 'non riesco a leggerlo'],
+        objs: [kS, kR, dimmed(p1), at(c1, { x: m(550), chan: true })], flow: ['g4'], peek: [550, 328, 550, 392], bubble: ['Vedo il testo cifrato,', 'ma senza la chiave', 'non posso decifrarlo'],
         know: K(r, ['k', 'P', 'C'], ['k'], ['C']) },
       { t: rN + ' decifra', d: rN + ' riceve il testo cifrato, lo decifra con <b>la stessa chiave</b> e ottiene di nuovo il messaggio originale.',
         objs: [kS, kR, dimmed(p1), at(c1, { x: m(850) }), p2], on: ['dec'], flow: ['g5', 'g6', 'g7'], flowDelay: 850,
@@ -978,15 +984,15 @@ function at(o, extra) { var c = {}; for (var k in o) c[k] = o[k]; delete c.from;
       { t: 'Le chiavi di ' + rN, d: rN + ' ha una <b>coppia di chiavi</b>, generate insieme: una <b>pubblica</b> (cerchio verde), che può dare a chiunque, e una <b>privata</b> (cerchio rosso), che tiene solo per sé. Quello che si cifra con la pubblica si decifra solo con la privata.',
         objs: [pubR, priv], know: K(r, [], ['pub', 'priv'], []) },
       { t: rN + ' dà la chiave pubblica', d: rN + ' manda ' + ad(sN) + ' una copia della sua chiave pubblica, direttamente sul canale non sicuro: l\'attaccante la vede, ma non è un problema, perché con la chiave pubblica si può solo cifrare.',
-        objs: [pubR, priv, pubSgo], peek: [550, 328, 550, 392], bubble: ['Ho anche io la chiave', 'pubblica di ' + rN + ':', 'serve solo a cifrare'], bubbleDelay: 500,
+        objs: [pubR, priv, pubSgo], peek: [550, 328, 550, 392], bubble: ['Ho anche io la chiave', 'pubblica di ' + rN + ', ma', 'con questa posso solo', 'cifrare, non decifrare'], bubbleDelay: 500,
         know: K(r, ['pub'], ['pub', 'priv'], ['pub']) },
       { t: sN + ' scrive il messaggio', d: sN + ' vuole mandare ' + ad(rN) + ' il messaggio «' + P + '»: è il <b>testo in chiaro</b>.',
         objs: [pubR, priv, pubS, p1], know: K(r, ['pub', 'P'], ['pub', 'priv'], ['pub']) },
       { t: 'Cifratura con la pubblica', d: sN + ' cifra il testo in chiaro con la <b>chiave pubblica di ' + rN + '</b> e ottiene il testo cifrato. Da questo momento nemmeno ' + sN + ' potrebbe decifrarlo: serve la chiave privata di ' + rN + '.',
         objs: [pubR, priv, pubS, dimmed(p1), c1], on: ['enc'], flow: ['g1', 'g2', 'g3'], know: K(r, ['pub', 'P', 'C'], ['pub', 'priv'], ['pub']) },
       { t: 'Sul canale non sicuro', d: 'Il testo cifrato viaggia sul <b>canale non sicuro</b>. L\'attaccante ha il testo cifrato e la chiave pubblica di ' + rN + ', ma per decifrare servirebbe la chiave privata, che non ha mai lasciato ' + rN + '.',
-        objs: [pubR, priv, pubS, dimmed(p1), at(c1, { x: m(550) })], flow: ['g4'], peek: [550, 328, 550, 392],
-        bubble: ['Ho il testo cifrato e la', 'chiave pubblica, ma serve', 'quella privata'], know: K(r, ['pub', 'P', 'C'], ['pub', 'priv'], ['pub', 'C']) },
+        objs: [pubR, priv, pubS, dimmed(p1), at(c1, { x: m(550), chan: true })], flow: ['g4'], peek: [550, 328, 550, 392],
+        bubble: ['Ho il testo cifrato e la', 'chiave pubblica, ma per', 'decifrare serve quella', 'privata di ' + rN], know: K(r, ['pub', 'P', 'C'], ['pub', 'priv'], ['pub', 'C']) },
       { t: rN + ' decifra con la privata', d: rN + ' decifra il testo cifrato con la sua <b>chiave privata</b> e ritrova il messaggio. È l\'unico che può farlo.',
         objs: [pubR, priv, pubS, dimmed(p1), at(c1, { x: m(850) }), p2], on: ['dec'], flow: ['g5', 'g6', 'g7'], flowDelay: 850,
         know: K(r, ['pub', 'P', 'C'], ['pub', 'priv', 'C', 'P'], ['pub', 'C']) }
@@ -1063,7 +1069,7 @@ function at(o, extra) { var c = {}; for (var k in o) c[k] = o[k]; delete c.from;
       { t: 'Le chiavi di ' + rN, d: 'Come nella cifratura asimmetrica, ' + rN + ' ha una <b>coppia di chiavi</b>: la <b>pubblica</b> (cerchio verde), che può dare a chiunque, e la <b>privata</b> (cerchio rosso), che tiene solo per sé.',
         objs: base, know: K(r, [], ['pub', 'priv'], []) },
       { t: rN + ' dà la chiave pubblica', d: rN + ' manda ' + ad(sN) + ' una copia della sua chiave pubblica, direttamente sul canale non sicuro. Anche l\'attaccante la vede: non è un problema.',
-        objs: base.concat([pubSgo]), peek: [620, 408, 620, 520], bubble: ['Ho la chiave pubblica,', 'ma serve solo a cifrare'], bubbleDelay: 600,
+        objs: base.concat([pubSgo]), peek: [620, 408, 620, 520], bubble: ['Ho la chiave pubblica,', 'ma con questa posso solo', 'cifrare, non decifrare'], bubbleDelay: 600,
         know: K(r, ['pub'], ['pub', 'priv'], ['pub']) },
       { t: 'Una chiave nuova', d: sN + ' scrive il testo in chiaro e <b>genera una chiave simmetrica segreta</b> (gialla), nuova, solo per questo messaggio. Per ora ce l\'ha solo ' + sN + '.',
         objs: base.concat([pubS, p1, ys]), know: K(r, ['pub', 'ks', 'P'], ['pub', 'priv'], ['pub']) },
@@ -1073,9 +1079,9 @@ function at(o, extra) { var c = {}; for (var k in o) c[k] = o[k]; delete c.from;
         objs: base.concat([pubS, dimmed(p1), ys, cT, cK]), on: ['ae'], flow: ['h3', 'h4', 'h6'], know: K(r, ['pub', 'ks', 'P', 'C', 'kc'], ['pub', 'priv'], ['pub']) },
       { t: 'Il messaggio finale', d: 'Chiave cifrata e testo cifrato vengono messi insieme nel <b>messaggio finale</b>: è l\'unica cosa che viene spedita.',
         objs: base.concat([pubS, dimmed(p1), ys, dimmed(cT), dimmed(cK), pk]), flow: [['h7', 'h8']], know: K(r, ['pub', 'ks', 'P', 'C', 'kc'], ['pub', 'priv'], ['pub']) },
-      { t: 'Sul canale non sicuro', d: 'Il messaggio finale viaggia sul <b>canale non sicuro</b>. L\'attaccante vede la chiave cifrata e il testo cifrato, ma senza la chiave privata di ' + rN + ' non può aprire nessuno dei due.',
+      { t: 'Sul canale non sicuro', d: 'Il messaggio finale viaggia sul <b>canale non sicuro</b>. L\'attaccante vede la chiave cifrata e il testo cifrato, ma senza la chiave privata di ' + rN + ' non può decifrare la chiave simmetrica, e senza quella non può decifrare nemmeno il testo.',
         objs: base.concat([pubS, dimmed(p1), ys, dimmed(cT), dimmed(cK), at(pk, { x: m(620), chan: true })]), flow: ['h9'], peek: [620, 408, 620, 506],
-        bubble: ['Vedo chiave cifrata e', 'testo cifrato: senza la', 'privata di ' + rN + ' non leggo', 'né l\'una né l\'altro'],
+        bubble: ['Vedo chiave e testo cifrati,', 'ma per decifrare la chiave', 'serve la privata di ' + rN + ',', 'e senza la chiave simmetrica', 'non decifro il testo'],
         know: K(r, ['pub', 'ks', 'P', 'C', 'kc'], ['pub', 'priv'], ['pub', 'C', 'kc']) },
       { t: rN + ' separa le parti', d: rN + ' riceve il messaggio finale e lo separa nelle due parti: la chiave cifrata e il testo cifrato.',
         objs: base.concat([pubS, dimmed(p1), ys, dimmed(cT), dimmed(cK), pkR, cK2, cT2].map(function (o) { return o.id === 'cK2' || o.id === 'cT2' ? at(o, { from: o.from, delay: 850 }) : o; })),
@@ -1182,7 +1188,7 @@ function at(o, extra) { var c = {}; for (var k in o) c[k] = o[k]; delete c.from;
       { t: 'Le chiavi di ' + sN, d: 'Per firmare, ' + sN + ' usa la sua <b>coppia di chiavi</b>, ma al contrario rispetto alla cifratura: la <b>privata</b> (cerchio rosso) serve a firmare, la <b>pubblica</b> (cerchio verde) serve a chi vuole controllare la firma.',
         objs: keys, add: { S: ['pub', 'priv'] } },
       { t: sN + ' dà la chiave pubblica', d: sN + ' manda ' + ad(rN) + ' una copia della sua chiave pubblica, direttamente sul canale non sicuro. L\'attaccante la vede: non è un problema, con la chiave pubblica non si può firmare.',
-        objs: keys.concat([pubRgo]), peek: [620, 408, 620, 590], bubble: ['Ho anche io la chiave', 'pubblica di ' + sN], bubbleDelay: 500, add: { R: ['pub'], E: ['pub'] } },
+        objs: keys.concat([pubRgo]), peek: [620, 408, 620, 590], bubble: ['Ho anche io la chiave', 'pubblica di ' + sN + ': posso', 'verificare, non firmare'], bubbleDelay: 500, add: { R: ['pub'], E: ['pub'] } },
       { t: sN + ' scrive il messaggio', d: sN + ' scrive «' + P + '». Il messaggio non è segreto: viaggerà in chiaro. La firma serve a dimostrare che l\'ha scritto proprio ' + sN + ' e che nessuno l\'ha cambiato.',
         objs: keys.concat([pubR, p1]), add: { S: ['P'] } }
     ];
@@ -1195,7 +1201,7 @@ function at(o, extra) { var c = {}; for (var k in o) c[k] = o[k]; delete c.from;
         objs: keys.concat([pubR, dimmed(p1)], H ? [dimmed(hS)] : [], [dimmed(fS), pk]), flow: [['s6', 's7']] },
       { t: 'Sul canale non sicuro', d: 'Il messaggio finale viaggia sul <b>canale non sicuro</b>. L\'attaccante può leggere il messaggio, ma senza la chiave privata di ' + sN + ' non può fare una firma al posto suo.',
         objs: keys.concat([pubR, dimmed(p1)], H ? [dimmed(hS)] : [], [dimmed(fS), at(pk, { x: m(620), chan: true })]), flow: ['s8'], peek: [620, 408, 620, 546],
-        bubble: ['Leggo il messaggio, ma', 'senza la chiave privata', 'di ' + sN + ' non so firmare'], add: { E: ['P', 'F'] } },
+        bubble: ['Leggo il messaggio, ma', 'senza la chiave privata', 'di ' + sN + ' non posso', 'firmare al posto suo'], add: { E: ['P', 'F'] } },
       { t: rN + ' separa le parti', d: rN + ' riceve il messaggio finale e lo separa: da una parte il messaggio, dall\'altra la firma.',
         objs: keys.concat([pubR, dimmed(p1)], H ? [dimmed(hS)] : [], [dimmed(fS), pkR, pR, fR]), flow: [['r1', 'r2']], flowDelay: 850, add: { R: ['P', 'F'] } }
     );

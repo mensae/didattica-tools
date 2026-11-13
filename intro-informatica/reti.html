@@ -8,6 +8,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
+/* Icone scure (il server): in tema scuro un alone chiaro le fa staccare dallo sfondo. */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .dk { filter: drop-shadow(0 0 1.5px rgba(229, 234, 238, .75)); } }
+:root[data-theme="dark"] .dk { filter: drop-shadow(0 0 1.5px rgba(229, 234, 238, .75)); }
 /* Interruttore tema chiaro / scuro */
 .theme-tg { flex: none; margin-left: auto; width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); cursor: pointer; }
 .theme-tg:hover { border-color: var(--accent); color: var(--accent); }
@@ -900,7 +903,7 @@ function httpResp(status, headers, bodyHtml) {
     var c = el('g', {}, svg);
     el('image', { href: ICON_PC, x: XC - 28, y: 0, width: 56, height: 56 }, c);
     el('text', { x: XC, y: 64, 'text-anchor': 'middle', 'class': 's-who' }, c, 'Client (browser)');
-    el('image', { href: ICON_SERVER, x: XS - 28, y: 0, width: 56, height: 56 }, c);
+    el('image', { href: ICON_SERVER, x: XS - 28, y: 0, width: 56, height: 56, 'class': 'dk' }, c);
     el('text', { x: XS, y: 64, 'text-anchor': 'middle', 'class': 's-who' }, c, 'Server');
     el('text', { x: XS, y: 78, 'text-anchor': 'middle', 'class': 's-sub' }, c, 'unito.it:80');
     el('line', { x1: XC, y1: TOP - 6, x2: XC, y2: H - 16, 'class': 's-axis' }, svg);
@@ -1399,14 +1402,14 @@ function httpResp(status, headers, bodyHtml) {
 
     // Proxy e la sua cache
     var px = P.px;
-    el('image', { href: ICON_SERVER, x: px.x - 34, y: px.y - 40, width: 68, height: 68 }, svg);
+    el('image', { href: ICON_SERVER, x: px.x - 34, y: px.y - 40, width: 68, height: 68, 'class': 'dk' }, svg);
     el('text', { x: px.x, y: px.y + 42, 'text-anchor': 'middle', 'class': 'ca-who' }, svg, 'proxy server');
     box(svg, px.x - 92, px.y + 58, 184, 92, 'Cache del proxy', st.cache,
       st.cache ? ['kiwi.gif · v' + st.cache, 'Last-Modified', V[st.cache].day] : [], s.badge, s.set && s.set.cache);
 
     // Origin server
     var or = P.or;
-    el('image', { href: ICON_SERVER, x: or.x - 34, y: or.y - 40, width: 68, height: 68 }, svg);
+    el('image', { href: ICON_SERVER, x: or.x - 34, y: or.y - 40, width: 68, height: 68, 'class': 'dk' }, svg);
     el('text', { x: or.x, y: or.y + 42, 'text-anchor': 'middle', 'class': 'ca-who' }, svg, 'origin server');
     el('text', { x: or.x, y: or.y + 56, 'text-anchor': 'middle', 'class': 'ca-sub' }, svg, 'recipes.com');
     box(svg, or.x - 90, or.y + 68, 180, 92, 'File sul server', st.origin,
@@ -1679,7 +1682,8 @@ function httpResp(status, headers, bodyHtml) {
 
     Object.keys(C.lanes).forEach(function (k) {
       var ln = C.lanes[k];
-      el('image', { href: ln.icon === 'pc' ? ICON_PC : ln.icon === 'db' ? ICON_DB : ICON_SERVER, x: ln.x - 24, y: 2, width: 48, height: 48 }, svg);
+      var ic = ln.icon === 'pc' ? ICON_PC : ln.icon === 'db' ? ICON_DB : ICON_SERVER;
+      el('image', { href: ic, x: ln.x - 24, y: 2, width: 48, height: 48, 'class': ic === ICON_SERVER ? 'dk' : '' }, svg);
       el('text', { x: ln.x, y: 64, 'text-anchor': 'middle', 'class': 'ck-who' }, svg, ln.name);
       if (ln.sub) el('text', { x: ln.x, y: 78, 'text-anchor': 'middle', 'class': 'ck-sub' }, svg, ln.sub);
       el('line', { x1: ln.x, y1: TOP - 8, x2: ln.x, y2: L.H - 10, 'class': 'ck-axis' }, svg);
@@ -2260,7 +2264,7 @@ function httpResp(status, headers, bodyHtml) {
     });
 
     function host(p, icon, name, ip) {
-      el('image', { href: icon, x: p.x - 37, y: p.y - 48, width: 74, height: 74 }, svg);
+      el('image', { href: icon, x: p.x - 37, y: p.y - 48, width: 74, height: 74, 'class': icon === ICON_SERVER ? 'dk' : '' }, svg);
       el('text', { x: p.x, y: p.y + 44, 'text-anchor': 'middle', 'class': 'nat-who' }, svg, name);
       el('text', { x: p.x, y: p.y + 60, 'text-anchor': 'middle', 'class': 'nat-ip ' + (isPriv(ip) ? 'priv' : 'pub') }, svg, ip);
     }
