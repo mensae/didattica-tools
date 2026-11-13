@@ -17,6 +17,8 @@
   /* Chiavi: cerchio verde = pubblica, cerchio rosso = privata (come nelle slide) */
   --k-pub: #93D6A3; --k-priv: #F2A3A3; --k-sym: #F2C230;
   --chan: #F7CADC; --chan-ink: #9E2A5E;
+  /* Tinte leggere dei box: simmetrica, asimmetrica, hash */
+  --st-sym: #FCF7E6; --st-asym: #F3F0FB; --st-hash: #FCEBE1;
   --f-display: "Martian Mono", "IBM Plex Mono", ui-monospace, monospace;
   --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -28,6 +30,7 @@
     --high: #F06E9F; --high-soft: #3A1A28; --g: #5FCB8C; --g-soft: #15301F;
     --k-pub: #2F6B42; --k-priv: #7C3038; --k-sym: #E0B020;
     --chan: #4A2036; --chan-ink: #F5A3C7;
+  --st-sym: #24231A; --st-asym: #211F30; --st-hash: #2E211A;
     color-scheme: dark;
   }
 }
@@ -37,6 +40,7 @@
   --high: #F06E9F; --high-soft: #3A1A28; --g: #5FCB8C; --g-soft: #15301F;
   --k-pub: #2F6B42; --k-priv: #7C3038; --k-sym: #E0B020;
   --chan: #4A2036; --chan-ink: #F5A3C7;
+  --st-sym: #24231A; --st-asym: #211F30; --st-hash: #2E211A;
   color-scheme: dark;
 }
 
@@ -124,6 +128,21 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
 .sc-st .l2 { font: 500 12px var(--f-body); fill: var(--muted); }
 .sc-st.on rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.4; }
 .sc-st.on .l1 { fill: var(--accent); }
+.sc-st polygon { fill: var(--card); stroke: var(--ink); stroke-width: 1.4; }
+.sc-st.on polygon { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.4; }
+.sc-st.sym rect { fill: var(--st-sym); }
+.sc-st.asym rect { fill: var(--st-asym); }
+.sc-st.hash rect { fill: var(--st-hash); }
+.sc-st .eq { font: 700 22px var(--f-mono); fill: var(--ink); }
+.sc-st.on .eq { fill: var(--accent); }
+.sc-card.hs rect { fill: var(--accent-soft); stroke: var(--accent); }
+.sc-card.hs .tx { font: 600 13.5px var(--f-mono); fill: var(--accent); }
+.sc-card.ok rect { fill: var(--g-soft); stroke: var(--g); stroke-width: 2; }
+.sc-card.ok .tx { font: 700 14px var(--f-body); fill: var(--g); }
+.chk { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; cursor: pointer; padding: 6px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.chk input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+.sw-hs { border-radius: 2px; background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.sw-fi { border-radius: 2px; background: var(--ink); box-shadow: inset 0 0 0 2px var(--high); }
 .sc-chan { fill: var(--chan); }
 .sc-chanl { font: 600 13px var(--f-body); fill: var(--chan-ink); }
 .sc-done path { fill: none; stroke: var(--muted); stroke-width: 2.2; }
@@ -207,6 +226,7 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
       <button class="tab" role="tab" type="button" data-page="simmetrica">Cifratura simmetrica</button>
       <button class="tab" role="tab" type="button" data-page="asimmetrica">Cifratura asimmetrica</button>
       <button class="tab" role="tab" type="button" data-page="ibrida">Simmetrica + asimmetrica</button>
+      <button class="tab" role="tab" type="button" data-page="firma">Firma digitale</button>
     </div>
   </div>
 </nav>
@@ -372,6 +392,44 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
     </ul>
   </div>
 </section>
+
+<section class="wrap" id="p-firma" hidden>
+  <header>
+    <h1>Firma digitale</h1>
+    <p class="lede">La firma non nasconde il messaggio, che viaggia in chiaro: serve a dimostrare <b>chi l'ha scritto</b> e che <b>nessuno l'ha modificato</b>. Si usano le chiavi al contrario rispetto alla cifratura: chi scrive firma con la sua chiave <b>privata</b>, chiunque può verificare con la sua chiave <b>pubblica</b>.</p>
+  </header>
+  <section class="viz" aria-label="Simulazione della firma digitale">
+    <div class="stepbar">
+      <div class="stats">
+        <div class="seg" role="radiogroup" aria-label="Direzione" id="sig-dir"></div>
+        <label class="chk"><input type="checkbox" id="sig-hash"> Con funzione di hash</label>
+        <span class="stat">Passo <b id="sig-step">0/0</b></span>
+      </div>
+      <div class="nav">
+        <button class="btn ghost" type="button" id="sig-first">Ricomincia</button>
+        <button class="btn ghost" type="button" id="sig-prev">◀ Indietro</button>
+        <button class="btn" type="button" id="sig-next">Avanti ▶</button>
+      </div>
+    </div>
+    <p class="desc" id="sig-desc" aria-live="polite"></p>
+    <div class="sc-stage">
+      <div class="sc-net"><svg id="sig-svg" role="img" aria-label="Alice firma un messaggio con la sua chiave privata e Bob verifica la firma con la chiave pubblica di Alice"></svg></div>
+      <div class="panel">
+        <div class="insp"><h3>Chi ha cosa</h3><div id="sig-know"></div></div>
+      </div>
+    </div>
+  </section>
+  <div class="footnote">
+    <p><b>Note:</b></p>
+    <ul>
+      <li>senza hash la firma è lunga quanto il messaggio, e la cifratura asimmetrica è lenta: per questo nella realtà si firma sempre l'<b>hash</b> del messaggio, che è corto e di lunghezza fissa (per esempio 256 bit con SHA-256);</li>
+      <li>una buona funzione di hash rende praticamente impossibile trovare due messaggi diversi con lo stesso hash: per questo firmare l'hash vale quanto firmare il messaggio intero;</li>
+      <li>se l'attaccante modificasse il messaggio sul canale, l'hash calcolato da chi riceve non coinciderebbe più con la firma decifrata: il messaggio risulterebbe non integro. Non può nemmeno rifare la firma, perché non ha la chiave privata di chi scrive;</li>
+      <li>la firma si può combinare con la cifratura: prima si firma, poi si cifra tutto con la chiave pubblica del destinatario, così il messaggio è anche segreto;</li>
+      <li>gli hash e le firme mostrati qui sono solo esempi.</li>
+    </ul>
+  </div>
+</section>
 </main>
 
 <script>
@@ -434,7 +492,7 @@ var SEC = (function () {
     return g;
   }
   function cardObj(p, o) {
-    var g = el('g', { 'class': 'sc-card ' + (o.t === 'plain' ? 'pl' : 'ci') }, p);
+    var g = el('g', { 'class': 'sc-card ' + ({ plain: 'pl', hash: 'hs', res: 'ok' }[o.t] || 'ci') }, p);
     var icon = o.icon ? 24 : 0;
     var w = o.w || Math.max(140, Math.round(o.text.length * 8) + 30 + icon), h = o.h || 42;
     el('rect', { x: -w / 2, y: -h / 2, width: w, height: h, rx: 8 }, g);
@@ -444,14 +502,14 @@ var SEC = (function () {
     return g;
   }
   function pkgObj(p, o) {
+    // Le due parti stanno sotto le due colonne del box (distanti 2*gap); flip le scambia sul lato specchiato.
     var g = el('g', { 'class': 'sc-pkg' }, p);
-    var w = 250, h = 62;
+    var gap = o.gap || 60, w = 2 * gap + 130, h = 62;
     el('rect', { x: -w / 2, y: -h / 2, width: w, height: h, rx: 12, 'class': 'fr' }, g);
-    el('text', { x: 0, y: -h / 2 - 9, 'text-anchor': 'middle', 'class': 'sc-clab' }, g, 'messaggio finale');
-    var a = cardObj(g, { t: 'ci', text: o.parts[0], icon: true, w: 112, h: 36 });
-    place(a, -60, 0);
-    var b = cardObj(g, { t: 'ci', text: o.parts[1], w: 112, h: 36 });
-    place(b, 60, 0);
+    el('text', { x: 0, y: -h / 2 - 9, 'text-anchor': 'middle', 'class': 'sc-clab pkl', style: o.chan ? 'opacity:0' : '' }, g, 'messaggio finale');
+    o.parts.forEach(function (q, j) {
+      place(cardObj(g, { t: q.t, text: q.text, icon: q.icon, w: 112, h: 36 }), ((j ? 1 : -1) * (o.flip ? -1 : 1)) * gap, 0);
+    });
     return g;
   }
   function drawObj(p, o) {
@@ -466,15 +524,24 @@ var SEC = (function () {
     el('text', { x: x + 76, y: y + 54, 'class': 'sc-role' }, p, role);
   }
   function station(p, s, on) {
-    var g = el('g', { 'class': 'sc-st' + (on ? ' on' : '') }, p);
+    // Tinta del box secondo il tipo: cifratura simmetrica, asimmetrica o funzione di hash.
+    var kind = s.l1 === 'Hash' ? ' hash' : s.l2 === '(simmetrica)' ? ' sym' : s.l2 === '(asimmetrica)' ? ' asym' : '';
+    var g = el('g', { 'class': 'sc-st' + kind + (on ? ' on' : '') }, p);
+    if (s.diamond) {
+      el('polygon', { points: s.x + ',' + (s.y - 26) + ' ' + (s.x + 26) + ',' + s.y + ' ' + s.x + ',' + (s.y + 26) + ' ' + (s.x - 26) + ',' + s.y }, g);
+      el('text', { x: s.x, y: s.y + 7, 'text-anchor': 'middle', 'class': 'eq' }, g, '=');
+      return g;
+    }
     el('rect', { x: s.x - s.w / 2, y: s.y - 28, width: s.w, height: 56, rx: 10 }, g);
-    el('text', { x: s.x, y: s.y - 3, 'text-anchor': 'middle', 'class': 'l1' }, g, s.l1);
+    el('text', { x: s.x, y: s.l2 ? s.y - 3 : s.y + 5, 'text-anchor': 'middle', 'class': 'l1' }, g, s.l1);
     el('text', { x: s.x, y: s.y + 15, 'text-anchor': 'middle', 'class': 'l2' }, g, s.l2);
     return g;
   }
-  function channel(p, x1, x2, y, ly) {
-    el('rect', { x: x1, y: y - 22, width: x2 - x1, height: 44, rx: 22, 'class': 'sc-chan' }, p);
-    el('text', { x: (x1 + x2) / 2, y: y + (ly || 44), 'text-anchor': 'middle', 'class': 'sc-chanl' }, p, 'Canale non sicuro');
+  // h: altezza del canale, abbastanza da contenere quello che ci viaggia sopra.
+  function channel(p, x1, x2, y, h) {
+    h = h || 58;
+    el('rect', { x: x1, y: y - h / 2, width: x2 - x1, height: h, rx: h / 2, 'class': 'sc-chan' }, p);
+    el('text', { x: (x1 + x2) / 2, y: y + h / 2 + 18, 'text-anchor': 'middle', 'class': 'sc-chanl' }, p, 'Canale non sicuro');
   }
   function attacker(p, x, y) {
     el('image', { href: IMG.eve, x: x - 48, y: y - 50, width: 96, height: 99 }, p);
@@ -538,9 +605,17 @@ var SEC = (function () {
 
   // ---- motore a passi ----
   function flow(cfg) {
-    var pre = cfg.id, S = { dir: 'AB', i: 0, raf: 0 }, cache = {};
+    var pre = cfg.id, S = { dir: 'AB', i: 0, raf: 0, opt: false }, cache = {};
     var svg = $(pre + '-svg');
-    function model() { return cache[S.dir] || (cache[S.dir] = cfg.build(S.dir)); }
+    function model() { var k = S.dir + S.opt; return cache[k] || (cache[k] = cfg.build(S.dir, S.opt)); }
+    // Interruttore facoltativo (per esempio "con funzione di hash"): resta sullo stesso passo se esiste ancora.
+    if (cfg.toggle) $(cfg.toggle).addEventListener('change', function () {
+      var t = model().steps[S.i].t;
+      S.opt = this.checked;
+      var j = model().steps.map(function (x) { return x.t; }).indexOf(t);
+      S.i = j < 0 ? 0 : j;
+      render(false);
+    });
 
     $(pre + '-dir').innerHTML = [['AB', 'A', 'B'], ['BA', 'B', 'A']].map(function (d) {
       return '<button type="button" role="radio" data-dir="' + d[0] + '" aria-checked="' + (d[0] === S.dir) + '"><img src="' + ACT[d[1]].img + '" alt="">' +
@@ -548,7 +623,9 @@ var SEC = (function () {
     }).join('');
     $(pre + '-dir').querySelectorAll('button').forEach(function (b) {
       b.addEventListener('click', function () {
+        if (S.dir === b.dataset.dir) return;
         S.dir = b.dataset.dir;
+        S.i = 0; // cambiando verso si ricomincia dal primo passo
         $(pre + '-dir').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-checked', x === b ? 'true' : 'false'); });
         render(false);
       });
@@ -606,7 +683,8 @@ var SEC = (function () {
         var p = pidx[o.id], start = null;
         if (p && (p.x !== o.x || p.y !== o.y)) start = [p.x, p.y];
         else if (!p && o.from) start = o.from;
-        if (start || !p) tw.push({ k: 'move', g: g, a: start, b: [o.x, o.y], via: o.via || [], fade: !p, delay: o.delay || 0, dur: o.dur });
+        if (start || !p) tw.push({ k: 'move', g: g, a: start, b: [o.x, o.y], via: o.via || [], fade: !p, delay: o.delay || 0, dur: o.dur,
+          lab: o.t === 'pkg' && p ? [!p.chan, !o.chan] : null });
       });
       if (st.peek) {
         var pk = el('line', { x1: st.peek[0], y1: st.peek[1], x2: st.peek[2], y2: st.peek[3], 'class': 'sc-peek' }, L.top);
@@ -632,6 +710,13 @@ var SEC = (function () {
         // Sui percorsi lunghi (con tappe) velocità quasi costante, così si vede bene il passaggio sul canale.
         var ev = t.via.length ? (1 - Math.cos(Math.PI * u)) / 2 : e;
         if (t.a) { var q = along([t.a].concat(t.via, [t.b]), ev); place(t.g, q[0], q[1]); }
+        // Nel canale il messaggio finale non ha l'etichetta (si sovrapporrebbe al canale): sparisce entrando, ricompare uscendo.
+        var pl = t.lab && t.g.querySelector('.pkl');
+        if (pl) {
+          var cl = function (v) { return Math.max(0, Math.min(1, v)); };
+          pl.style.opacity = t.lab[0] && t.lab[1] ? cl((Math.abs(2 * ev - 1) - 0.82) / 0.12)
+            : t.lab[0] ? cl(1 - ev / 0.15) : t.lab[1] ? cl((ev - 0.85) / 0.15) : 0;
+        }
         t.g.style.opacity = t.fade ? (u <= 0 ? 0 : Math.min(1, u * 3)) : '';
       } else if (t.k === 'grow') {
         t.r.path.style.strokeDasharray = t.r.len;
@@ -836,27 +921,27 @@ function at(o, extra) { var c = {}; for (var k in o) c[k] = o[k]; delete c.from;
     };
     var arrows = {
       h1: [pt(125, 152), pt(125, 260)],
-      h2: [pt(312, 200), pt(206, 266)],
+      h2: [pt(270, 182), pt(165, 182), pt(165, 260)],
       h3: [pt(330, 224), pt(330, 260)],
       h4: [pt(423, 290), pt(402, 290)],
       h5: [pt(125, 320), pt(125, 384)],
       h6: [pt(330, 320), pt(330, 384)],
-      h7: [pt(125, 452), pt(160, 527)],
-      h8: [pt(330, 452), pt(355, 527)],
-      h9: [pt(387, 560), pt(853, 560)],
-      h10: [pt(885, 527), pt(902, 453)],
-      h11: [pt(1080, 527), pt(1115, 452)],
+      h7: [pt(125, 452), pt(125, 527)],
+      h8: [pt(330, 452), pt(330, 527)],
+      h9: [pt(397, 560), pt(843, 560)],
+      h10: [pt(910, 527), pt(910, 453)],
+      h11: [pt(1115, 527), pt(1115, 453)],
       h12: [pt(910, 384), pt(910, 322)],
       h13: [pt(817, 290), pt(838, 290)],
       h14: [pt(910, 260), pt(910, 226)],
-      h15: [pt(928, 200), pt(1034, 266)],
+      h15: [pt(970, 182), pt(1075, 182), pt(1075, 260)],
       h16: [pt(1115, 384), pt(1115, 322)],
       h17: [pt(1115, 260), pt(1115, 152)]
     };
     function scene(L, st) {
       SEC.box(L.base, 20, 20, 480, 610, 'A', r.fl ? 'riceve il messaggio' : 'invia il messaggio');
       SEC.box(L.base, 740, 20, 480, 610, 'B', r.fl ? 'invia il messaggio' : 'riceve il messaggio');
-      SEC.channel(L.base, 470, 770, 560, 54);
+      SEC.channel(L.base, 470, 770, 560, 80);
       SEC.attacker(L.base, 620, 330);
     }
     var pub = { t: 'key', color: r.R.key, ring: 'pub', owners: [r.R.id], label: ['Chiave pubblica', 'di ' + rN] };
@@ -872,9 +957,10 @@ function at(o, extra) { var c = {}; for (var k in o) c[k] = o[k]; delete c.from;
     var p1 = { id: 'p1', t: 'plain', text: P, label: 'testo in chiaro', x: m(125), y: 130 };
     var cT = { id: 'cT', t: 'ci', text: C, label: 'testo cifrato', x: m(125), y: 430, from: pt(125, 290), delay: 2 * SEC.STG };
     var cK = { id: 'cK', t: 'ci', text: CK, icon: true, label: 'chiave cifrata', x: m(330), y: 430, from: pt(330, 290), delay: 2 * SEC.STG };
-    var pk = { id: 'pk', t: 'pkg', parts: [CK.slice(0, 6), C.slice(0, 10)], x: m(260), y: 560, delay: 450 };
-    var cK2 = at(cK, { id: 'cK2', x: m(910), from: pt(980, 560) });
-    var cT2 = at(cT, { id: 'cT2', x: m(1115), from: pt(980, 560) });
+    var pk = { id: 'pk', t: 'pkg', parts: [{ t: 'ci', text: C.slice(0, 10) }, { t: 'ci', text: CK.slice(0, 6), icon: true }], gap: 102.5, flip: r.fl, x: m(227.5), y: 560, delay: 450 };
+    var pkR = at(pk, { x: m(1012.5), flip: !r.fl });
+    var cK2 = at(cK, { id: 'cK2', x: m(910), from: pt(910, 560) });
+    var cT2 = at(cT, { id: 'cT2', x: m(1115), from: pt(1115, 560) });
     var p2 = { id: 'p2', t: 'plain', text: P, label: 'testo in chiaro', x: m(1115), y: 130, from: pt(1115, 290), delay: 2 * SEC.STG };
     var base = [pubR, priv];
     var steps = [
@@ -892,17 +978,17 @@ function at(o, extra) { var c = {}; for (var k in o) c[k] = o[k]; delete c.from;
       { t: 'Il messaggio finale', d: 'Chiave cifrata e testo cifrato vengono messi insieme nel <b>messaggio finale</b>: è l\'unica cosa che viene spedita.',
         objs: base.concat([pubS, dimmed(p1), ys, dimmed(cT), dimmed(cK), pk]), flow: [['h7', 'h8']], know: K(r, ['pub', 'ks', 'P', 'C', 'kc'], ['pub', 'priv'], ['pub']) },
       { t: 'Sul canale non sicuro', d: 'Il messaggio finale viaggia sul <b>canale non sicuro</b>. L\'attaccante vede la chiave cifrata e il testo cifrato, ma senza la chiave privata di ' + rN + ' non può aprire nessuno dei due.',
-        objs: base.concat([pubS, dimmed(p1), ys, dimmed(cT), dimmed(cK), at(pk, { x: m(620) })]), flow: ['h9'], peek: [620, 408, 620, 506],
+        objs: base.concat([pubS, dimmed(p1), ys, dimmed(cT), dimmed(cK), at(pk, { x: m(620), chan: true })]), flow: ['h9'], peek: [620, 408, 620, 506],
         bubble: ['Vedo chiave cifrata e', 'testo cifrato: senza la', 'privata di ' + rN + ' non leggo', 'né l\'una né l\'altro'],
         know: K(r, ['pub', 'ks', 'P', 'C', 'kc'], ['pub', 'priv'], ['pub', 'C', 'kc']) },
       { t: rN + ' separa le parti', d: rN + ' riceve il messaggio finale e lo separa nelle due parti: la chiave cifrata e il testo cifrato.',
-        objs: base.concat([pubS, dimmed(p1), ys, dimmed(cT), dimmed(cK), at(pk, { x: m(980) }), cK2, cT2].map(function (o) { return o.id === 'cK2' || o.id === 'cT2' ? at(o, { from: o.from, delay: 850 }) : o; })),
+        objs: base.concat([pubS, dimmed(p1), ys, dimmed(cT), dimmed(cK), pkR, cK2, cT2].map(function (o) { return o.id === 'cK2' || o.id === 'cT2' ? at(o, { from: o.from, delay: 850 }) : o; })),
         flow: [['h10', 'h11']], flowDelay: 850, know: K(r, ['pub', 'ks', 'P', 'C', 'kc'], ['pub', 'priv', 'C', 'kc'], ['pub', 'C', 'kc']) },
       { t: rN + ' decifra la chiave', d: 'Con la sua <b>chiave privata</b> ' + rN + ' decifra la chiave cifrata. Ora anche ' + rN + ' ha la chiave simmetrica gialla.',
-        objs: base.concat([pubS, dimmed(p1), ys2, dimmed(cT), dimmed(cK), dimmed(at(pk, { x: m(980) })), at(cK2, {}), at(cT2, {}), yR]), on: ['ad'], flow: ['h12', 'h13', 'h14'],
+        objs: base.concat([pubS, dimmed(p1), ys2, dimmed(cT), dimmed(cK), dimmed(pkR), at(cK2, {}), at(cT2, {}), yR]), on: ['ad'], flow: ['h12', 'h13', 'h14'],
         know: K(r, ['pub', 'ks', 'P', 'C', 'kc'], ['pub', 'priv', 'C', 'kc', 'ks'], ['pub', 'C', 'kc']) },
       { t: rN + ' decifra il testo', d: 'Con la chiave simmetrica ' + rN + ' decifra il testo cifrato e ritrova il messaggio. Il messaggio è arrivato, e la chiave simmetrica non ha mai viaggiato in chiaro.',
-        objs: base.concat([pubS, dimmed(p1), ys2, dimmed(cT), dimmed(cK), dimmed(at(pk, { x: m(980) })), dimmed(cK2), at(cT2, {}), at(yR, {}), p2]), on: ['sd'], flow: ['h16', 'h15', 'h17'],
+        objs: base.concat([pubS, dimmed(p1), ys2, dimmed(cT), dimmed(cK), dimmed(pkR), dimmed(cK2), at(cT2, {}), at(yR, {}), p2]), on: ['sd'], flow: ['h16', 'h15', 'h17'],
         know: K(r, ['pub', 'ks', 'P', 'C', 'kc'], ['pub', 'priv', 'C', 'kc', 'ks', 'P'], ['pub', 'C', 'kc']) }
     ];
     var cols = [
@@ -910,10 +996,132 @@ function at(o, extra) { var c = {}; for (var k in o) c[k] = o[k]; delete c.from;
       { id: 'ks', l: 'chiave simmetrica', sw: 'ky' }, { id: 'kc', l: 'chiave cifrata', sw: 'kc' },
       { id: 'P', l: 'testo in chiaro', sw: 'pl' }, { id: 'C', l: 'testo cifrato', sw: 'ci' }
     ];
-    steps.unshift(overview([pubR, priv, pubS, p1, ys2, cT, cK, pk, at(pk, { id: 'pkR', x: m(980) }), cK2, cT2, yR, p2], steps));
+    steps.unshift(overview([pubR, priv, pubS, p1, ys2, cT, cK, pk, at(pkR, { id: 'pkR' }), cK2, cT2, yR, p2], steps));
     return { W: W, H: H, scene: scene, st: ST, arrows: arrows, steps: steps, cols: cols, eve: [620, 280] };
   }
   SEC.flow({ id: 'hyb', page: 'ibrida', build: build });
+})();
+</script>
+
+<script>
+// ---- Firma digitale (con o senza hash) ----
+(function () {
+  var MSGF = { AB: 'Confermo l\'ordine 42', BA: 'Ricevuto, grazie!' };
+  function hex(t) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return ('00000000' + (h >>> 0).toString(16)).slice(-8);
+  }
+  function build(dir, H) {
+    var W = 1240, H_ = 700, r = roles(dir), m = function (x) { return r.fl ? W - x : x; }, G = SEC.STG;
+    function pt(x, y) { return [m(x), y]; }
+    var sN = r.S.name, rN = r.R.name, P = MSGF[dir], HX = hex(P);
+    var F = H ? SEC.scramble(HX, 3) : SEC.scramble(P, 9);
+    var ST = {
+      enc: { x: m(330), y: 350, w: 150, l1: 'Cifratura', l2: '(asimmetrica)' },
+      dec: { x: m(910), y: 350, w: 150, l1: 'Decifratura', l2: '(asimmetrica)' },
+      cmp: { x: m(1012), y: 155, diamond: true }
+    };
+    if (H) {
+      ST.hs = { x: m(330), y: 155, w: 110, l1: 'Hash', l2: '' };
+      ST.hr = { x: m(1115), y: 350, w: 110, l1: 'Hash', l2: '' };
+    }
+    var arrows = {
+      s4: [pt(423, 350), pt(407, 350)],
+      s5: [pt(330, 378), pt(330, 421)],
+      s6: [pt(125, 177), pt(125, 567)],
+      s7: [pt(330, 487), pt(330, 567)],
+      s8: [pt(397, 600), pt(843, 600)],
+      r1: [pt(1115, 567), pt(1115, 487)],
+      r2: [pt(910, 567), pt(910, 487)],
+      r5: [pt(910, 421), pt(910, 378)],
+      r6: [pt(817, 350), pt(833, 350)],
+      r7: [pt(910, 322), pt(910, 272)],
+      r8: [pt(910, 206), pt(910, 155), pt(986, 155)],
+      r10: [pt(1012, 129), pt(1012, 113)]
+    };
+    if (H) {
+      arrows.s1 = [pt(217, 155), pt(273, 155)];
+      arrows.s2 = [pt(330, 183), pt(330, 207)];
+      arrows.s3 = [pt(330, 272), pt(330, 322)];
+      arrows.r3 = [pt(1115, 421), pt(1115, 378)];
+      arrows.r4 = [pt(1115, 322), pt(1115, 272)];
+      arrows.r9 = [pt(1115, 206), pt(1115, 155), pt(1038, 155)];
+    } else {
+      arrows.s1 = [pt(217, 155), pt(330, 155), pt(330, 322)];
+      arrows.r9 = [pt(1115, 421), pt(1115, 155), pt(1038, 155)];
+    }
+    function scene(L) {
+      SEC.box(L.base, 20, 20, 480, 660, 'A', r.fl ? 'riceve il messaggio' : 'firma il messaggio');
+      SEC.box(L.base, 740, 20, 480, 660, 'B', r.fl ? 'firma il messaggio' : 'riceve il messaggio');
+      SEC.channel(L.base, 470, 770, 600, 80);
+      SEC.attacker(L.base, 620, 330);
+    }
+    var pub = { t: 'key', color: r.S.key, ring: 'pub', owners: [r.S.id], label: ['Chiave pubblica', 'di ' + sN] };
+    // La chiave pubblica di chi firma non serve a chi firma: sta in alto, accanto al nome.
+    var pubH = at(pub, { id: 'pubH', x: (r.fl ? 740 : 20) + 250, y: 56, head: true });
+    var pubR = at(pub, { id: 'pubR', x: m(785), y: 350 });
+    var pubRgo = at(pubR, { from: [pubH.x, pubH.y], via: [pt(220, 200), pt(220, 600), pt(760, 600)], dur: 2200 });
+    var priv = { id: 'priv', t: 'key', color: r.S.key, ring: 'priv', owners: [r.S.id], label: ['Chiave privata', 'di ' + sN], x: m(455), y: 350 };
+    var p1 = { id: 'p1', t: 'plain', text: P, label: 'messaggio', x: m(125), y: 155 };
+    var hS = { id: 'hS', t: 'hash', text: HX, label: 'hash del testo', x: m(330), y: 250, from: pt(330, 155), delay: G };
+    var fS = { id: 'fS', t: 'ci', text: F, label: H ? 'firma (hash cifrato)' : 'firma (testo cifrato)', x: m(330), y: 465, from: pt(330, 350), delay: 2 * G };
+    var pk = { id: 'pk', t: 'pkg', parts: [{ t: 'plain', text: P.slice(0, 9) + '…' }, { t: 'ci', text: F.slice(0, 8) }], gap: 102.5, flip: r.fl, x: m(227.5), y: 600, delay: 450 };
+    var pR = at(p1, { id: 'pR', x: m(1115), y: 465, from: pt(1115, 600), delay: 850 });
+    var fR = at(fS, { id: 'fR', label: 'firma', x: m(910), from: pt(910, 600), delay: 850 });
+    var hR = { id: 'hR', t: 'hash', text: HX, label: 'hash del testo', x: m(1115), y: 250, from: pt(1115, 350), delay: G };
+    var dR = { id: 'dR', t: H ? 'hash' : 'plain', text: H ? HX : P, label: 'firma decifrata', x: m(910), y: 250, from: pt(910, 350), delay: 2 * G };
+    var res = { id: 'res', t: 'res', text: 'Uguali: integro ✓', w: 170, h: 34, x: m(1012), y: 95, from: pt(1012, 155), delay: G };
+    var pkR = at(pk, { x: m(1012.5), flip: !r.fl });
+    var keys = [pubH, priv];
+    var cols = [
+      { id: 'pub', l: 'chiave pubblica di ' + sN, sw: 'kpub' }, { id: 'priv', l: 'chiave privata di ' + sN, sw: 'kpriv' },
+      { id: 'P', l: 'messaggio', sw: 'pl' }
+    ];
+    if (H) cols.push({ id: 'h', l: 'hash del testo', sw: 'hs' });
+    cols.push({ id: 'F', l: 'firma', sw: 'fi' });
+
+    // Passi: ogni passo dice cosa si aggiunge a chi (S chi firma, R chi riceve, E l'attaccante).
+    var steps = [
+      { t: 'Le chiavi di ' + sN, d: 'Per firmare, ' + sN + ' usa la sua <b>coppia di chiavi</b>, ma al contrario rispetto alla cifratura: la <b>privata</b> (cerchio rosso) serve a firmare, la <b>pubblica</b> (cerchio verde) serve a chi vuole controllare la firma.',
+        objs: keys, add: { S: ['pub', 'priv'] } },
+      { t: sN + ' dà la chiave pubblica', d: sN + ' manda ' + ad(rN) + ' una copia della sua chiave pubblica, direttamente sul canale non sicuro. L\'attaccante la vede: non è un problema, con la chiave pubblica non si può firmare.',
+        objs: keys.concat([pubRgo]), peek: [620, 408, 620, 590], bubble: ['Ho anche io la chiave', 'pubblica di ' + sN], bubbleDelay: 500, add: { R: ['pub'], E: ['pub'] } },
+      { t: sN + ' scrive il messaggio', d: sN + ' scrive «' + P + '». Il messaggio non è segreto: viaggerà in chiaro. La firma serve a dimostrare che l\'ha scritto proprio ' + sN + ' e che nessuno l\'ha cambiato.',
+        objs: keys.concat([pubR, p1]), add: { S: ['P'] } }
+    ];
+    if (H) steps.push({ t: 'L\'hash del testo', d: sN + ' calcola l\'<b>hash</b> del messaggio: una funzione che riassume un testo di qualsiasi lunghezza in una sequenza corta e di lunghezza fissa, una specie di impronta. Basta cambiare una sola lettera del testo perché l\'hash cambi completamente.',
+      objs: keys.concat([pubR, p1, hS]), on: ['hs'], flow: ['s1', 's2'], add: { S: ['h'] } });
+    steps.push(
+      { t: sN + ' firma', d: sN + ' cifra ' + (H ? 'l\'hash del testo' : 'il messaggio') + ' con la sua <b>chiave privata</b>: il risultato è la <b>firma</b>. Solo ' + sN + ' può produrla, perché solo ' + sN + ' ha quella chiave.' + (H ? '' : ' Senza hash la firma è lunga quanto il messaggio.'),
+        objs: keys.concat([pubR, p1], H ? [dimmed(hS)] : [], [fS]), on: ['enc'], flow: H ? ['s3', 's4', 's5'] : ['s1', 's4', 's5'], add: { S: ['F'] } },
+      { t: 'Il messaggio finale', d: 'Il messaggio in chiaro e la firma vengono spediti insieme nel <b>messaggio finale</b>.',
+        objs: keys.concat([pubR, dimmed(p1)], H ? [dimmed(hS)] : [], [dimmed(fS), pk]), flow: [['s6', 's7']] },
+      { t: 'Sul canale non sicuro', d: 'Il messaggio finale viaggia sul <b>canale non sicuro</b>. L\'attaccante può leggere il messaggio, ma senza la chiave privata di ' + sN + ' non può fare una firma al posto suo.',
+        objs: keys.concat([pubR, dimmed(p1)], H ? [dimmed(hS)] : [], [dimmed(fS), at(pk, { x: m(620), chan: true })]), flow: ['s8'], peek: [620, 408, 620, 546],
+        bubble: ['Leggo il messaggio, ma', 'senza la chiave privata', 'di ' + sN + ' non so firmare'], add: { E: ['P', 'F'] } },
+      { t: rN + ' separa le parti', d: rN + ' riceve il messaggio finale e lo separa: da una parte il messaggio, dall\'altra la firma.',
+        objs: keys.concat([pubR, dimmed(p1)], H ? [dimmed(hS)] : [], [dimmed(fS), pkR, pR, fR]), flow: [['r1', 'r2']], flowDelay: 850, add: { R: ['P', 'F'] } }
+    );
+    var recv = [pubR, dimmed(p1)].concat(H ? [dimmed(hS)] : [], [dimmed(fS), dimmed(pkR)]);
+    if (H) steps.push({ t: rN + ' calcola l\'hash', d: rN + ' calcola a sua volta l\'hash del messaggio ricevuto, con la stessa funzione di hash usata da ' + sN + '.',
+      objs: keys.concat(recv, [at(pR, {}), at(fR, {}), hR]), on: ['hr'], flow: ['r3', 'r4'], add: { R: ['h'] } });
+    steps.push(
+      { t: rN + ' decifra la firma', d: rN + ' decifra la firma con la <b>chiave pubblica di ' + sN + '</b> e ottiene ' + (H ? 'l\'hash calcolato da ' + sN : 'il messaggio che ' + sN + ' ha firmato') + '.',
+        objs: keys.concat(recv, [at(pR, {}), dimmed(fR)], H ? [at(hR, {})] : [], [dR]), on: ['dec'], flow: ['r5', 'r6', 'r7'] },
+      { t: 'Il confronto', d: rN + ' confronta ' + (H ? 'l\'hash calcolato con la firma decifrata' : 'il messaggio ricevuto con la firma decifrata') + ': sono <b>uguali</b>. Quindi il messaggio è <b>integro</b> (nessuno l\'ha modificato) e l\'ha firmato davvero ' + sN + ', l\'unico che ha la chiave privata giusta.',
+        objs: keys.concat(recv, [at(pR, {}), dimmed(fR)], H ? [at(hR, {})] : [], [at(dR, {}), res]), on: ['cmp'], flow: [['r8', 'r9'], 'r10'] }
+    );
+    // "Chi ha cosa": somma di quello che si aggiunge passo dopo passo.
+    var has = { S: [], R: [], E: [] };
+    steps.forEach(function (st) {
+      Object.keys(st.add || {}).forEach(function (w) { st.add[w].forEach(function (x) { if (has[w].indexOf(x) < 0) has[w].push(x); }); });
+      st.know = K(r, has.S.slice(), has.R.slice(), has.E.slice());
+    });
+    steps.unshift(overview([pubH, priv, pubR, p1].concat(H ? [hS] : [], [fS, pk, at(pkR, { id: 'pkR' }), pR, fR], H ? [hR] : [], [dR, res]), steps));
+    return { W: W, H: H_, scene: scene, st: ST, arrows: arrows, steps: steps, cols: cols, eve: [620, 280] };
+  }
+  SEC.flow({ id: 'sig', page: 'firma', build: build, toggle: 'sig-hash' });
 })();
 </script>
 
@@ -1123,7 +1331,7 @@ function at(o, extra) { var c = {}; for (var k in o) c[k] = o[k]; delete c.from;
 <script>
 // Schede in alto: mostra una sezione alla volta e ricorda quella aperta nell'indirizzo.
 (function () {
-  var PAGES = ['cesare', 'simmetrica', 'asimmetrica', 'ibrida'];
+  var PAGES = ['cesare', 'simmetrica', 'asimmetrica', 'ibrida', 'firma'];
   function go(name, push) {
     if (PAGES.indexOf(name) === -1) name = 'cesare';
     PAGES.forEach(function (p) { document.getElementById('p-' + p).hidden = p !== name; });
