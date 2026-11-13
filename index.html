@@ -8,6 +8,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
+/* Interruttore tema chiaro / scuro */
+.theme-tg { flex: none; margin-left: auto; width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); cursor: pointer; }
+.theme-tg:hover { border-color: var(--accent); color: var(--accent); }
+.theme-tg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.theme-tg svg { width: 18px; height: 18px; display: block; }
+.theme-tg.float { position: fixed; top: 14px; right: 16px; z-index: 50; }
+
 :root {
   --paper: #EFF2EF; --card: #FFFFFF; --ink: #18212B; --muted: #5A6570; --line: #D3D9D5;
   --accent: #2346C8; --accent-soft: #E3E8FA;
@@ -41,8 +48,13 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
 .byline a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .byline a:hover { text-decoration: underline; }
 </style>
+<script>
+// Tema scelto con l'interruttore in alto a destra (vale per tutte le pagine): applicato subito, prima di disegnare.
+try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light') document.documentElement.setAttribute('data-theme', tm); } catch (e) {}
+</script>
 </head>
 <body>
+<button class="theme-tg float" type="button" id="theme-tg" aria-label="Tema scuro" aria-pressed="false"></button>
 <main class="wrap">
   <header>
     <h1>Tools per la Didattica</h1>
@@ -79,8 +91,8 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
     <li><a class="card" href="intro-informatica/sicurezza.html">
       <span class="num">05</span>
       <h2>Sicurezza</h2>
-      <p>Cifrario di Cesare con l'alfabeto da ruotare, cifratura simmetrica, asimmetrica e la loro combinazione, firma digitale con e senza hash, passo per passo tra Alice e Bob.</p>
-      <div><div class="tags"><span>Cesare</span><span>Simmetrica</span><span>Asimmetrica</span><span>Firma digitale</span></div></div>
+      <p>Cifrario di Cesare con l'alfabeto da ruotare, cifratura simmetrica, asimmetrica e la loro combinazione, firma digitale con e senza hash, passo per passo tra Alice e Bob, e l'handshake TLS di HTTPS.</p>
+      <div><div class="tags"><span>Cesare</span><span>Simmetrica</span><span>Asimmetrica</span><span>Firma digitale</span><span>HTTPS</span></div></div>
     </a></li>
   </ul>
   </section>
@@ -96,5 +108,30 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
   </ul>
   </section>
 </main>
+<script>
+// Interruttore tema chiaro / scuro: la scelta resta salvata per tutte le pagine.
+(function () {
+  var b = document.getElementById('theme-tg'), root = document.documentElement;
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  var MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  var SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>';
+  function dark() { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : !!(mq && mq.matches); }
+  function sync() {
+    var d = dark();
+    b.innerHTML = d ? SUN : MOON;
+    b.setAttribute('aria-pressed', d ? 'true' : 'false');
+    b.setAttribute('aria-label', 'Tema scuro');
+    b.title = d ? 'Passa al tema chiaro' : 'Passa al tema scuro';
+  }
+  b.addEventListener('click', function () {
+    var t = dark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', t);
+    try { localStorage.setItem('theme', t); } catch (e) {}
+    sync();
+  });
+  if (mq && mq.addEventListener) mq.addEventListener('change', sync);
+  sync();
+})();
+</script>
 </body>
 </html>
