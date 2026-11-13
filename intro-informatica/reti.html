@@ -434,8 +434,8 @@ svg text { font-family: var(--f-body); }
 .nt-empty { font: italic 500 12.5px var(--f-body); fill: var(--muted); }
 .nt-miss { font: italic 600 12.5px var(--f-body); fill: var(--high); }
 .nat-insp { min-height: 0; align-content: start; }
-.nat-cards { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; }
-.nat-cards .to { font-size: 18px; color: var(--accent); }
+.nat-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.nat-cards .to { font-size: 18px; line-height: 1; color: var(--accent); text-align: center; }
 .nat-card { border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: 6px 8px; display: grid; gap: 2px; font: 500 12.5px var(--f-mono); white-space: nowrap; overflow-x: auto; }
 .nat-card small { font: 600 11px var(--f-body); color: var(--muted); }
 .nat-card .priv { color: var(--n-pre); }
@@ -2245,9 +2245,9 @@ function httpResp(status, headers, bodyHtml) {
     });
 
     function host(p, icon, name, ip) {
-      el('image', { href: icon, x: p.x - 30, y: p.y - 38, width: 60, height: 60 }, svg);
-      el('text', { x: p.x, y: p.y + 38, 'text-anchor': 'middle', 'class': 'nat-who' }, svg, name);
-      el('text', { x: p.x, y: p.y + 54, 'text-anchor': 'middle', 'class': 'nat-ip ' + (isPriv(ip) ? 'priv' : 'pub') }, svg, ip);
+      el('image', { href: icon, x: p.x - 37, y: p.y - 48, width: 74, height: 74 }, svg);
+      el('text', { x: p.x, y: p.y + 44, 'text-anchor': 'middle', 'class': 'nat-who' }, svg, name);
+      el('text', { x: p.x, y: p.y + 60, 'text-anchor': 'middle', 'class': 'nat-ip ' + (isPriv(ip) ? 'priv' : 'pub') }, svg, ip);
     }
     host(P.a, ICON_PC, 'PC', A);
     host(P.b, ICON_PC, 'PC', B);
@@ -2317,15 +2317,15 @@ function httpResp(status, headers, bodyHtml) {
     var st = MOMENTS[S.m].steps[S.i], o;
     if (st.rewrite) {
       o = '<h3>Nel router: ' + (st.rewrite === 's' ? 'pacchetto in uscita' : 'pacchetto in entrata') + '</h3>' +
-        '<div class="nat-cards">' + cardHtml('arriva: ' + kindOf(st.before), st.before, null, st.rewrite === 'd' ? 'd' : null) + '<span class="to">→</span>' + cardHtml('esce: ' + kindOf(st.after), st.after, st.rewrite) + '</div>' +
+        '<div class="nat-cards">' + cardHtml('arriva: ' + kindOf(st.before), st.before, null, st.rewrite === 'd' ? 'd' : null) + '<span class="to">↓</span>' + cardHtml('esce: ' + kindOf(st.after), st.after, st.rewrite) + '</div>' +
         '<p>' + (st.rewrite === 's'
           ? 'Cambiano indirizzo e porta di <b>sorgente</b>. La nuova porta, ' + st.after.s[1] + ', è la chiave della nuova riga della tabella.'
           : 'La porta di destinazione, ' + st.look + ', è la chiave: il router la cerca nel lato WAN della tabella e rimette indirizzo e porta del lato LAN.') + '</p>';
     } else if (st.drop) {
-      o = '<h3>Nel router: pacchetto in entrata</h3><div class="nat-cards">' + cardHtml('arriva: ' + kindOf(st.before), st.before, null, 'd') + '<span class="to">→</span><div class="nat-card"><small>esce</small><span class="no" style="color:var(--high);font-family:var(--f-body)">niente: scartato</span></div></div>' +
+      o = '<h3>Nel router: pacchetto in entrata</h3><div class="nat-cards">' + cardHtml('arriva: ' + kindOf(st.before), st.before, null, 'd') + '<span class="to">↓</span><div class="nat-card"><small>esce</small><span class="no" style="color:var(--high);font-family:var(--f-body)">niente: scartato</span></div></div>' +
         '<p>Nella tabella non c\'è nessuna riga con la porta ' + st.look + '.</p>';
     } else if (st.link) {
-      o = '<h3>' + kindOf(st.pkt) + ' in viaggio</h3><div class="nat-cards" style="grid-template-columns:minmax(0,1fr)">' + cardHtml(st.link === 'rs' || st.link === 'xr' ? 'su Internet' : 'nella rete di casa', st.pkt) + '</div>';
+      o = '<h3>' + kindOf(st.pkt) + ' in viaggio</h3><div class="nat-cards">' + cardHtml(st.link === 'rs' || st.link === 'xr' ? 'su Internet' : 'nella rete di casa', st.pkt) + '</div>';
     } else {
       o = '<h3>Il router casalingo</h3><p>Lato LAN ha l\'indirizzo privato 192.168.1.1, lato WAN l\'indirizzo pubblico ' + PUB + '. Nei passi che seguono, qui vedi ogni pacchetto e come il router lo riscrive; la tabella di traduzione è disegnata sopra il router.</p>';
     }
