@@ -2096,3 +2096,6 @@
         flex-wrap: wrap;
       }
     }
+
+    /* Copyright in fondo a destra, sotto i pulsanti */
+    .copy { position: fixed; right: 20px; bottom: 1px; z-index: 5; margin: 0; font-size: 10px; line-height: 13px; color: rgba(224, 228, 240, 0.45); pointer-events: none; }

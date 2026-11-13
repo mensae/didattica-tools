@@ -567,6 +567,7 @@ $guestAction = htmlspecialchars(current_request_uri_with_guest(), ENT_QUOTES, 'U
       border-color: #4d5878;
       color: #eef3ff;
     }
+    .copy { position: fixed; right: 20px; bottom: 1px; z-index: 5; margin: 0; font-size: 10px; line-height: 13px; color: rgba(224, 228, 240, 0.45); pointer-events: none; }
   </style>
 </head>
 <body>
@@ -583,5 +584,6 @@ $guestAction = htmlspecialchars(current_request_uri_with_guest(), ENT_QUOTES, 'U
       </div>
     </form>
   </main>
+  <footer class="copy">© 2026 Enrico Mensa</footer>
 </body>
 </html>

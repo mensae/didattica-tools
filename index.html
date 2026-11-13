@@ -14,6 +14,8 @@
 .theme-tg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .theme-tg svg { width: 18px; height: 18px; display: block; }
 .theme-tg.float { position: fixed; top: 14px; right: 16px; z-index: 50; }
+/* Copyright in fondo a destra */
+.copy { margin: 0; padding: 0 20px 16px; text-align: right; font-size: 12px; color: var(--muted); }
 
 :root {
   --paper: #EFF2EF; --card: #FFFFFF; --ink: #18212B; --muted: #5A6570; --line: #D3D9D5;
@@ -133,5 +135,6 @@ try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light
   sync();
 })();
 </script>
+<footer class="copy">© 2026 Enrico Mensa</footer>
 </body>
 </html>

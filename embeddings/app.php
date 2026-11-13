@@ -370,5 +370,6 @@ $authActionLabel = $isGuestMode ? 'Leave guest mode' : 'Logout';
     }
   </script>
   <script type="module" src="app.js"></script>
+  <footer class="copy">© 2026 Enrico Mensa</footer>
 </body>
 </html>
