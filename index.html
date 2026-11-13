@@ -14,6 +14,10 @@
 .theme-tg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .theme-tg svg { width: 18px; height: 18px; display: block; }
 .theme-tg.float { position: fixed; top: 14px; right: 16px; z-index: 50; }
+/* Pulsante della lingua, accanto a quello del tema */
+.lang-tg { font: 700 12px/1 var(--f-mono, ui-monospace, monospace); letter-spacing: .04em; }
+.topnav-in > .theme-tg.lang-tg { position: absolute; right: 62px; top: 50%; transform: translateY(-50%); }
+.lang-tg.float { position: fixed; top: 14px; right: 58px; z-index: 50; }
 /* Copyright in fondo a destra */
 .copy { margin: 0; padding: 0 20px 16px; text-align: right; font-size: 12px; color: var(--muted); }
 
@@ -54,9 +58,48 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 4vw
 // Tema scelto con l'interruttore in alto a destra (vale per tutte le pagine): applicato subito, prima di disegnare.
 try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light') document.documentElement.setAttribute('data-theme', tm); } catch (e) {}
 </script>
+<script>
+// Lingua dei testi (italiano o inglese): si sceglie con il pulsante in alto a destra e vale per tutte le pagine.
+// ?lang=en (o ?lang=it) nell'indirizzo la impone, per esempio in un link.
+var LANG = (function () {
+  var q = /[?&]lang=(it|en)(&|$)/.exec(location.search);
+  if (q) return q[1];
+  try { var v = localStorage.getItem('lang'); if (v === 'it' || v === 'en') return v; } catch (e) {}
+  return 'it';
+})();
+document.documentElement.lang = LANG;
+// TX('testo italiano', 'English text'): il testo nella lingua attiva (usato dagli script delle pagine).
+function TX(it, en) { return LANG === 'en' && en != null ? en : it; }
+// Testi fissi dell'HTML: ogni pagina mette in I18N le traduzioni, cercate per contenuto italiano dell'elemento
+// (spazi normalizzati), e chiama i18nApply() subito dopo l'HTML, prima dei suoi script; quello che non ha
+// traduzione resta in italiano.
+var I18N = {};
+function i18nApply() {
+  if (LANG !== 'en') return;
+  var ATTR = ['title', 'aria-label', 'placeholder', 'alt', 'value'], SKIP = { SCRIPT: 1, STYLE: 1, svg: 1, TEXTAREA: 1 };
+  function norm(s) { return s.replace(/\s+/g, ' ').trim(); }
+  (function walk(e) {
+    for (var n = e.firstChild; n; n = n.nextSibling) {
+      // Testo sciolto accanto ad altri elementi (per esempio l'etichetta di un campo): si traduce da solo.
+      if (n.nodeType === 3) {
+        var k = norm(n.nodeValue), tt = k && I18N[k];
+        if (tt != null) n.nodeValue = n.nodeValue.replace(/^(\s*)[\s\S]*?(\s*)$/, function (m, a, b) { return a + tt + b; });
+        continue;
+      }
+      if (n.nodeType !== 1) continue;
+      var c = n;
+      ATTR.forEach(function (a) { var v = c.getAttribute(a), t = v && I18N[norm(v)]; if (t != null) c.setAttribute(a, t); });
+      if (SKIP[c.tagName]) continue;
+      var h = c.innerHTML;
+      if (h.length < 6000) { var t = I18N[norm(h)]; if (t != null) { c.innerHTML = t; continue; } }
+      walk(c);
+    }
+  })(document.documentElement);
+}
+</script>
 </head>
 <body>
-<button class="theme-tg float" type="button" id="theme-tg" aria-label="Tema scuro" aria-pressed="false"></button>
+<button class="theme-tg lang-tg float" type="button" id="lang-tg"></button><button class="theme-tg float" type="button" id="theme-tg" aria-label="Tema scuro" aria-pressed="false"></button>
 <main class="wrap">
   <header>
     <h1>Tools per la Didattica</h1>
@@ -111,6 +154,35 @@ try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light
   </section>
 </main>
 <script>
+// Traduzioni inglesi dei testi fissi qui sopra (chiave: il testo italiano, come nell'HTML).
+Object.assign(I18N, {
+"Tools per la Didattica": "Teaching Tools",
+"Una serie di strumenti per l'ausilio alla didattica dell'informatica.": "A collection of tools to help teach computer science.",
+"— <a href=\"https://mensae.github.io/\">Enrico Mensa<\/a>, Dipartimento di Informatica, Università di Torino.": "— <a href=\"https://mensae.github.io/\">Enrico Mensa<\/a>, Department of Computer Science, University of Turin.",
+"Introduzione all'Informatica": "Introduction to Computer Science",
+"Rappresentazione delle informazioni": "Representing information",
+"Come diventano bit i caratteri, i numeri, le immagini, i video e l'audio, e quanto pesano.": "How characters, numbers, images, video and audio become bits, and how much space they take.",
+"<span>Caratteri<\/span><span>Conversioni<\/span><span>Immagini<\/span><span>Video<\/span><span>Audio<\/span>": "<span>Characters<\/span><span>Conversions<\/span><span>Images<\/span><span>Video<\/span><span>Audio<\/span>",
+"Architettura degli elaboratori": "Computer architecture",
+"CPU e RAM al lavoro: il ciclo di esecuzione di un programma, istruzione per istruzione, e gli esercizi sui salti.": "CPU and RAM at work: the execution cycle of a program, one instruction at a time, and exercises on jumps.",
+"<span>Ciclo di esecuzione<\/span><span>Salti condizionali<\/span>": "<span>Execution cycle<\/span><span>Conditional jumps<\/span>",
+"Processi e memoria virtuale": "Processes and virtual memory",
+"Tre programmi aperti si alternano su una sola CPU: cambi di contesto, page fault, area di swap e coda del disco.": "Three open programs take turns on a single CPU: context switches, page faults, swap area and disk queue.",
+"<span>Processi<\/span><span>Scheduler<\/span><span>Memoria virtuale<\/span>": "<span>Processes<\/span><span>Scheduler<\/span><span>Virtual memory<\/span>",
+"Reti": "Networks",
+"Visualizzazioni di protocolli e interazioni di rete: HTTP persistente e non persistente, cookie, web cache, sottoreti e maschere, NAT.": "Visualisations of network protocols and interactions: persistent and non-persistent HTTP, cookies, web caches, subnets and masks, NAT.",
+"<span>HTTP<\/span><span>Cookie<\/span><span>Web cache<\/span><span>Sottoreti<\/span><span>NAT<\/span>": "<span>HTTP<\/span><span>Cookies<\/span><span>Web cache<\/span><span>Subnets<\/span><span>NAT<\/span>",
+"Sicurezza": "Security",
+"Cifrario di Cesare con l'alfabeto da ruotare, cifratura simmetrica, asimmetrica e la loro combinazione, firma digitale con e senza hash, certificati digitali, passo per passo tra Alice e Bob, e l'handshake TLS di HTTPS.": "The Caesar cipher with a rotating alphabet, symmetric and asymmetric encryption and their combination, digital signatures with and without hashing, digital certificates, step by step between Alice and Bob, and the TLS handshake of HTTPS.",
+"<span>Cesare<\/span><span>Simmetrica<\/span><span>Asimmetrica<\/span><span>Firma digitale<\/span><span>Certificati<\/span><span>HTTPS<\/span>": "<span>Caesar<\/span><span>Symmetric<\/span><span>Asymmetric<\/span><span>Digital signature<\/span><span>Certificates<\/span><span>HTTPS<\/span>",
+"Altri Tools": "Other tools",
+"Visualizzatore di embedding": "Embedding viewer",
+"Esplora in 3D come i modelli linguistici rappresentano le parole: termini dal significato simile finiscono vicini nello spazio.": "Explore in 3D how language models represent words: terms with similar meanings end up close together in space.",
+"Tema scuro": "Dark theme"
+});
+i18nApply();
+</script>
+<script>
 // Interruttore tema chiaro / scuro: la scelta resta salvata per tutte le pagine.
 (function () {
   var b = document.getElementById('theme-tg'), root = document.documentElement;
@@ -122,8 +194,8 @@ try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light
     var d = dark();
     b.innerHTML = d ? SUN : MOON;
     b.setAttribute('aria-pressed', d ? 'true' : 'false');
-    b.setAttribute('aria-label', 'Tema scuro');
-    b.title = d ? 'Passa al tema chiaro' : 'Passa al tema scuro';
+    b.setAttribute('aria-label', TX('Tema scuro', 'Dark theme'));
+    b.title = d ? TX('Passa al tema chiaro', 'Switch to light theme') : TX('Passa al tema scuro', 'Switch to dark theme');
   }
   b.addEventListener('click', function () {
     var t = dark() ? 'light' : 'dark';
@@ -136,5 +208,22 @@ try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light
 })();
 </script>
 <footer class="copy">© 2026 Enrico Mensa</footer>
+<script>
+// Pulsante della lingua: mostra la lingua in cui si passa; la scelta resta salvata e la pagina si ricarica (stessa scheda).
+(function () {
+  var b = document.getElementById('lang-tg');
+  if (!b) return;
+  var to = LANG === 'en' ? 'it' : 'en';
+  b.textContent = to.toUpperCase();
+  b.title = LANG === 'en' ? 'Passa all\'italiano' : 'Switch to English';
+  b.setAttribute('aria-label', b.title);
+  b.setAttribute('lang', to);
+  b.addEventListener('click', function () {
+    try { localStorage.setItem('lang', to); } catch (e) {}
+    var s = location.search.replace(/([?&])lang=(it|en)(&|$)/, function (m, a, x, c) { return c ? a : ''; }).replace(/[?&]$/, '');
+    if (s !== location.search) location.search = s; else location.reload();
+  });
+})();
+</script>
 </body>
 </html>

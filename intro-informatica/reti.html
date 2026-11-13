@@ -17,10 +17,14 @@
 .theme-tg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .theme-tg svg { width: 18px; height: 18px; display: block; }
 .theme-tg.float { position: fixed; top: 14px; right: 16px; z-index: 50; }
+/* Pulsante della lingua, accanto a quello del tema */
+.lang-tg { font: 700 12px/1 var(--f-mono, ui-monospace, monospace); letter-spacing: .04em; }
+.topnav-in > .theme-tg.lang-tg { position: absolute; right: 62px; top: 50%; transform: translateY(-50%); }
+.lang-tg.float { position: fixed; top: 14px; right: 58px; z-index: 50; }
 /* Copyright in fondo a destra */
 .copy { margin: 0; padding: 0 20px 16px; text-align: right; font-size: 12px; color: var(--muted); }
 /* Nella barra in alto: sempre a destra, anche quando le schede vanno a capo o scorrono */
-.topnav .topnav-in { position: relative; padding-right: 66px; }
+.topnav .topnav-in { position: relative; padding-right: 108px; }
 .topnav-in > .theme-tg { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); }
 /* Schede che non ci stanno nella barra: frecce ai lati e sfumatura */
 .tabs-wrap { position: relative; display: flex; flex: 1 1 auto; min-width: 0; }
@@ -475,6 +479,45 @@ svg text { font-family: var(--f-body); }
 // Tema scelto con l'interruttore in alto a destra (vale per tutte le pagine): applicato subito, prima di disegnare.
 try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light') document.documentElement.setAttribute('data-theme', tm); } catch (e) {}
 </script>
+<script>
+// Lingua dei testi (italiano o inglese): si sceglie con il pulsante in alto a destra e vale per tutte le pagine.
+// ?lang=en (o ?lang=it) nell'indirizzo la impone, per esempio in un link.
+var LANG = (function () {
+  var q = /[?&]lang=(it|en)(&|$)/.exec(location.search);
+  if (q) return q[1];
+  try { var v = localStorage.getItem('lang'); if (v === 'it' || v === 'en') return v; } catch (e) {}
+  return 'it';
+})();
+document.documentElement.lang = LANG;
+// TX('testo italiano', 'English text'): il testo nella lingua attiva (usato dagli script delle pagine).
+function TX(it, en) { return LANG === 'en' && en != null ? en : it; }
+// Testi fissi dell'HTML: ogni pagina mette in I18N le traduzioni, cercate per contenuto italiano dell'elemento
+// (spazi normalizzati), e chiama i18nApply() subito dopo l'HTML, prima dei suoi script; quello che non ha
+// traduzione resta in italiano.
+var I18N = {};
+function i18nApply() {
+  if (LANG !== 'en') return;
+  var ATTR = ['title', 'aria-label', 'placeholder', 'alt', 'value'], SKIP = { SCRIPT: 1, STYLE: 1, svg: 1, TEXTAREA: 1 };
+  function norm(s) { return s.replace(/\s+/g, ' ').trim(); }
+  (function walk(e) {
+    for (var n = e.firstChild; n; n = n.nextSibling) {
+      // Testo sciolto accanto ad altri elementi (per esempio l'etichetta di un campo): si traduce da solo.
+      if (n.nodeType === 3) {
+        var k = norm(n.nodeValue), tt = k && I18N[k];
+        if (tt != null) n.nodeValue = n.nodeValue.replace(/^(\s*)[\s\S]*?(\s*)$/, function (m, a, b) { return a + tt + b; });
+        continue;
+      }
+      if (n.nodeType !== 1) continue;
+      var c = n;
+      ATTR.forEach(function (a) { var v = c.getAttribute(a), t = v && I18N[norm(v)]; if (t != null) c.setAttribute(a, t); });
+      if (SKIP[c.tagName]) continue;
+      var h = c.innerHTML;
+      if (h.length < 6000) { var t = I18N[norm(h)]; if (t != null) { c.innerHTML = t; continue; } }
+      walk(c);
+    }
+  })(document.documentElement);
+}
+</script>
 </head>
 <body>
 
@@ -488,7 +531,7 @@ try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light
       <button class="tab" role="tab" type="button" data-page="sottoreti">Sottoreti</button>
       <button class="tab" role="tab" type="button" data-page="nat">NAT</button>
     </div>
-  <button class="theme-tg" type="button" id="theme-tg" aria-label="Tema scuro" aria-pressed="false"></button>
+  <button class="theme-tg lang-tg" type="button" id="lang-tg"></button><button class="theme-tg" type="button" id="theme-tg" aria-label="Tema scuro" aria-pressed="false"></button>
   </div>
 </nav>
 
@@ -760,6 +803,97 @@ try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light
   </div>
 </section>
 </main>
+<script>
+// Traduzioni inglesi dei testi fissi qui sopra (chiave: il testo italiano, come nell'HTML).
+Object.assign(I18N, {
+"Reti": "Networks",
+"HTTP persistente e non persistente": "Persistent and non-persistent HTTP",
+"Cookie": "Cookies",
+"Web cache": "Web cache",
+"Sottoreti": "Subnets",
+"NAT": "NAT",
+"Il browser deve caricare <code>unito.it/info/home.html<\/code>, una pagina che contiene i riferimenti a 10 immagini jpeg. Con l'HTTP <b>non persistente<\/b>, il comportamento predefinito di <b>HTTP/1.0<\/b>, ogni oggetto richiede una nuova connessione TCP. Con l'HTTP <b>persistente<\/b>, il comportamento predefinito di <b>HTTP/1.1<\/b>, tutti gli oggetti viaggiano sulla stessa connessione.": "The browser has to load <code>unito.it/info/home.html<\/code>, a page that references 10 jpeg images. With <b>non-persistent<\/b> HTTP, the default behaviour of <b>HTTP/1.0<\/b>, each object needs a new TCP connection. With <b>persistent<\/b> HTTP, the default behaviour of <b>HTTP/1.1<\/b>, all the objects travel over the same connection.",
+"Non persistente": "Non-persistent",
+"Persistente": "Persistent",
+"<span class=\"stat\">Tempo <b id=\"st-time\">0 ms<\/b><\/span> <span class=\"stat\">Connessioni TCP aperte <b id=\"st-conn\">0<\/b><\/span> <span class=\"stat\">Oggetti ricevuti <b id=\"st-obj\">0/11<\/b><\/span> <span class=\"stat\">Passo <b id=\"st-step\">0/0<\/b><\/span>": "<span class=\"stat\">Time <b id=\"st-time\">0 ms<\/b><\/span> <span class=\"stat\">TCP connections opened <b id=\"st-conn\">0<\/b><\/span> <span class=\"stat\">Objects received <b id=\"st-obj\">0/11<\/b><\/span> <span class=\"stat\">Step <b id=\"st-step\">0/0<\/b><\/span>",
+"Ricomincia": "Restart",
+"◀ Indietro": "◀ Back",
+"Avanti ▶": "Next ▶",
+"Riproduci": "Play",
+"Vai alla fine": "Go to the end",
+"La pagina home.html": "The page home.html",
+"Client e server nel tempo": "Client and server over time",
+"Il browser": "The browser",
+"Dove va il tempo, oggetto per oggetto": "Where the time goes, object by object",
+"<span><i style=\"background:var(--ctrl)\"><\/i>apertura connessione TCP (1 RTT)<\/span> <span><i style=\"background:var(--accent)\"><\/i>richiesta e attesa della risposta (1 RTT)<\/span> <span><i style=\"background:var(--high)\"><\/i>trasmissione dell'oggetto (T)<\/span>": "<span><i style=\"background:var(--ctrl)\"><\/i>opening the TCP connection (1 RTT)<\/span> <span><i style=\"background:var(--accent)\"><\/i>request and wait for the response (1 RTT)<\/span> <span><i style=\"background:var(--high)\"><\/i>transmission of the object (T)<\/span>",
+"<b>Semplificazioni:<\/b>": "<b>Simplifications:<\/b>",
+"non consideriamo la risoluzione del nome <code>unito.it<\/code> (DNS), che il client deve fare prima di aprire la connessione;": "we don't consider resolving the name <code>unito.it<\/code> (DNS), which the client has to do before opening the connection;",
+"il sito usa HTTP sulla porta 80. Oggi quasi tutti i siti usano HTTPS (porta 443), che aggiunge almeno un RTT per stabilire la cifratura;": "the site uses HTTP on port 80. Today almost every site uses HTTPS (port 443), which adds at least one RTT to set up encryption;",
+"tutti gli oggetti hanno lo stesso tempo di trasmissione T; trascuriamo il tempo per trasmettere le richieste e quello che il server impiega per prepararle, e ignoriamo il meccanismo di TCP che all'inizio di ogni connessione invia i dati più lentamente (slow start);": "all objects have the same transmission time T; we neglect the time to transmit the requests and the time the server takes to prepare the responses, and we ignore the TCP mechanism that sends data more slowly at the start of each connection (slow start);",
+"la chiusura di una connessione TCP è uno scambio di più segmenti (FIN e ACK in entrambe le direzioni): qui ne mostriamo uno solo, e non pesa sul response time;": "closing a TCP connection is an exchange of several segments (FIN and ACK in both directions): here we show just one, and it doesn't count towards the response time;",
+"<b>connessioni parallele:<\/b> i browser reali, con l'HTTP non persistente, non scaricano gli oggetti uno alla volta ma aprono più connessioni contemporaneamente (di solito fino a 6 verso lo stesso server), riducendo il tempo totale;": "<b>parallel connections:<\/b> with non-persistent HTTP, real browsers don't download the objects one at a time but open several connections at once (usually up to 6 to the same server), reducing the total time;",
+"<b>pipelining:<\/b> HTTP/1.1 permette anche di inviare più richieste sulla stessa connessione senza aspettare le risposte, pagando un solo RTT per tutte le immagini. I browser però non lo usano: il problema è risolto da HTTP/2, che sulla stessa connessione intreccia più richieste e risposte.": "<b>pipelining:<\/b> HTTP/1.1 also lets you send several requests on the same connection without waiting for the responses, paying a single RTT for all the images. Browsers don't use it, though: the problem is solved by HTTP/2, which interleaves several requests and responses on the same connection.",
+"HTTP non ricorda nulla tra una richiesta e l'altra. Con un <b>cookie<\/b> il server dà al browser un identificativo (<code>Set-Cookie<\/code>), e il browser lo rimanda nelle richieste successive allo stesso dominio (<code>Cookie<\/code>): così il server riconosce l'utente. Lo stesso meccanismo, usato da un sito terzo incluso in tante pagine, permette di seguire l'utente da un sito all'altro.": "HTTP remembers nothing from one request to the next. With a <b>cookie<\/b> the server gives the browser an identifier (<code>Set-Cookie<\/code>), and the browser sends it back in later requests to the same domain (<code>Cookie<\/code>): this way the server recognises the user. The same mechanism, used by a third-party site included in many pages, makes it possible to follow the user from one site to another.",
+"Cookie di prima parte": "First-party cookies",
+"Cookie di terze parti": "Third-party cookies",
+"<span class=\"stat\">Data <b id=\"ck-date\">—<\/b><\/span> <span class=\"stat\">Passo <b id=\"ck-step\">0/0<\/b><\/span>": "<span class=\"stat\">Date <b id=\"ck-date\">—<\/b><\/span> <span class=\"stat\">Step <b id=\"ck-step\">0/0<\/b><\/span>",
+"<span><i style=\"background:var(--h-ver)\"><\/i>messaggio HTTP<\/span> <span><i style=\"background:var(--arrow)\"><\/i>messaggio HTTP con un cookie<\/span> <span><i style=\"background:var(--muted)\"><\/i>il server usa il suo database<\/span>": "<span><i style=\"background:var(--h-ver)\"><\/i>HTTP message<\/span> <span><i style=\"background:var(--arrow)\"><\/i>HTTP message with a cookie<\/span> <span><i style=\"background:var(--muted)\"><\/i>the server uses its database<\/span>",
+"Database": "Database",
+"i siti reali impostano molti cookie, non uno solo: per la sessione, le preferenze, le statistiche, la pubblicità;": "real sites set many cookies, not just one: for the session, preferences, statistics, advertising;",
+"oltre al nome e al valore, un cookie ha degli attributi: per quanto resta valido (<code>Max-Age<\/code> o <code>Expires<\/code>), a quali domini e percorsi va inviato (<code>Domain<\/code>, <code>Path<\/code>), se va inviato solo su HTTPS (<code>Secure<\/code>), se gli script della pagina possono leggerlo (<code>HttpOnly<\/code>) e se va inviato anche dentro pagine di altri siti (<code>SameSite<\/code>);": "besides the name and value, a cookie has attributes: how long it stays valid (<code>Max-Age<\/code> or <code>Expires<\/code>), which domains and paths it is sent to (<code>Domain<\/code>, <code>Path<\/code>), whether it is sent only over HTTPS (<code>Secure<\/code>), whether the page's scripts can read it (<code>HttpOnly<\/code>) and whether it is also sent inside pages of other sites (<code>SameSite<\/code>);",
+"per un cookie di terze parti servono <code>SameSite=None<\/code> e <code>Secure<\/code>, quindi una connessione HTTPS. Safari e Firefox bloccano i cookie di terze parti per impostazione predefinita; i tracker usano anche altre tecniche, come gli script che raccolgono dati sul browser;": "a third-party cookie needs <code>SameSite=None<\/code> and <code>Secure<\/code>, hence an HTTPS connection. Safari and Firefox block third-party cookies by default; trackers also use other techniques, such as scripts that collect data about the browser;",
+"in Europa un sito deve chiedere il consenso prima di usare cookie che non servono al suo funzionamento, come quelli di profilazione: è il motivo dei banner sui cookie.": "in Europe a site must ask for consent before using cookies it doesn't need to work, such as profiling cookies: that's the reason for cookie banners.",
+"<b>Disclaimer:<\/b> amazon.com e x.com (Twitter) sono usati solo a titolo esemplificativo. I messaggi, i cookie e gli accordi pubblicitari mostrati sono ipotetici e non descrivono necessariamente il comportamento reale di questi siti; ads-tracker.com è un servizio inventato.": "<b>Disclaimer:<\/b> amazon.com and x.com (Twitter) are used only as examples. The messages, cookies and advertising deals shown are hypothetical and don't necessarily describe how these sites really behave; ads-tracker.com is a made-up service.",
+"Web cache e GET condizionale": "Web cache and conditional GET",
+"Un <b>proxy server<\/b> conserva una copia degli oggetti che i client richiedono. Prima di riusarla chiede all'<b>origin server<\/b> se nel frattempo è cambiata, con una <b>GET condizionale<\/b>. Seguiamo l'oggetto <code>/fruit/kiwi.gif<\/code> del sito <code>recipes.com<\/code> in tre momenti diversi.": "A <b>proxy server<\/b> keeps a copy of the objects the clients request. Before reusing it, it asks the <b>origin server<\/b> whether it has changed in the meantime, with a <b>conditional GET<\/b>. Let's follow the object <code>/fruit/kiwi.gif<\/code> from the site <code>recipes.com<\/code> at three different moments.",
+"<span class=\"stat\">Data <b id=\"ca-date\">—<\/b><\/span> <span class=\"stat\">Passo <b id=\"ca-step\">0/0<\/b><\/span>": "<span class=\"stat\">Date <b id=\"ca-date\">—<\/b><\/span> <span class=\"stat\">Step <b id=\"ca-step\">0/0<\/b><\/span>",
+"qui il proxy controlla sempre con l'origin server prima di riusare una copia, come nelle slide. Nella realtà l'origin server può dire per quanto tempo una copia resta valida (header <code>Cache-Control: max-age<\/code> o <code>Expires<\/code>); finché è valida, la cache risponde subito senza contattarlo;": "here the proxy always checks with the origin server before reusing a copy, as in the slides. In reality the origin server can say how long a copy stays valid (header <code>Cache-Control: max-age<\/code> or <code>Expires<\/code>); while it's valid, the cache answers right away without contacting it;",
+"oltre a <code>Last-Modified<\/code> e <code>If-Modified-Since<\/code> esiste un meccanismo più preciso: l'origin server assegna a ogni versione un'etichetta (<code>ETag<\/code>) e la cache la rimanda con <code>If-None-Match<\/code>;": "besides <code>Last-Modified<\/code> and <code>If-Modified-Since<\/code> there is a more precise mechanism: the origin server gives each version a tag (<code>ETag<\/code>) and the cache sends it back with <code>If-None-Match<\/code>;",
+"anche il browser ha una sua cache: il 15 dicembre il client 1 ha ancora la versione 1 e farebbe lui stesso una GET condizionale. Qui ignoriamo la cache dei browser;": "the browser has its own cache too: on 15 December client 1 still has version 1 and would make a conditional GET itself. Here we ignore the browsers' cache;",
+"il proxy di solito aggiunge alle risposte che inoltra header come <code>Via<\/code> e <code>Age<\/code>; li omettiamo;": "the proxy usually adds headers such as <code>Via<\/code> and <code>Age<\/code> to the responses it forwards; we leave them out;",
+"usiamo HTTP. Con HTTPS il contenuto è cifrato e un proxy qualsiasi non può leggerlo né metterlo in cache: oggi le cache condivise sono soprattutto quelle delle CDN, che lavorano per conto del sito.": "we use HTTP. With HTTPS the content is encrypted and an arbitrary proxy can neither read it nor cache it: today shared caches are mostly those of CDNs, which work on behalf of the site.",
+"Sottoreti e maschere": "Subnets and masks",
+"Un'organizzazione riceve un <b>blocco<\/b> di indirizzi IP contigui con un prefisso comune, scritto <code>a.b.c.d/x<\/code>: i primi x bit sono fissi, i restanti 32 − x distinguono le interfacce. Prendendo in prestito alcuni di questi bit si divide il blocco in <b>sottoreti<\/b>, ognuna con la sua <b>maschera<\/b>. Si parte dal blocco <code>200.23.16.0/20<\/code>, diviso in 8 sottoreti come nelle slide.": "An organisation receives a <b>block<\/b> of contiguous IP addresses with a common prefix, written <code>a.b.c.d/x<\/code>: the first x bits are fixed, the remaining 32 − x tell the interfaces apart. By borrowing some of these bits the block is divided into <b>subnets<\/b>, each with its own <b>mask<\/b>. We start from the block <code>200.23.16.0/20<\/code>, divided into 8 subnets as in the slides.",
+"Ripristina": "Reset",
+"Clicca su una sottorete per vedere tutti i suoi indirizzi.": "Click a subnet to see all its addresses.",
+"come nelle slide, contiamo come host tutti gli indirizzi di una sottorete. In realtà il primo (bit di host tutti a 0) è l'indirizzo della sottorete stessa e l'ultimo (tutti a 1) è l'indirizzo di broadcast: nessuna interfaccia li usa, quindi una /23 ha 510 indirizzi assegnabili, non 512;": "as in the slides, we count all the addresses of a subnet as hosts. In reality the first (host bits all 0) is the address of the subnet itself and the last (all 1) is the broadcast address: no interface uses them, so a /23 has 510 assignable addresses, not 512;",
+"qui tutte le sottoreti di un blocco hanno la stessa dimensione, come nell'esempio delle slide. CIDR permette anche sottoreti di dimensioni diverse nello stesso blocco (per esempio una /21 e due /22), purché ognuna cominci da un indirizzo multiplo della sua dimensione;": "here all the subnets of a block have the same size, as in the example in the slides. CIDR also allows subnets of different sizes in the same block (for example one /21 and two /22), as long as each one starts at an address that is a multiple of its size;",
+"alcuni blocchi sono riservati, per esempio gli indirizzi privati <code>10.0.0.0/8<\/code> e <code>192.168.0.0/16<\/code> usati con il NAT: qui non ne teniamo conto.": "some blocks are reserved, for example the private addresses <code>10.0.0.0/8<\/code> and <code>192.168.0.0/16<\/code> used with NAT: here we don't take them into account.",
+"NAT: la tabella di traduzione": "NAT: the translation table",
+"I dispositivi di casa hanno indirizzi <b>privati<\/b>, che valgono solo nella rete di casa. Verso Internet il router casalingo ha un solo indirizzo <b>pubblico<\/b>, condiviso da tutti. Per farlo funzionare il router <b>riscrive<\/b> i pacchetti che lo attraversano e annota in una <b>tabella di traduzione<\/b> a quale dispositivo corrisponde ogni porta.": "Devices at home have <b>private<\/b> addresses, which are valid only in the home network. Towards the Internet the home router has a single <b>public<\/b> address, shared by all of them. To make this work the router <b>rewrites<\/b> the packets that pass through it and records in a <b>translation table<\/b> which device each port belongs to.",
+"<span class=\"stat\">Passo <b id=\"nat-step\">0/0<\/b><\/span>": "<span class=\"stat\">Step <b id=\"nat-step\">0/0<\/b><\/span>",
+"<span><i style=\"background:var(--n-pre)\"><\/i>indirizzi privati<\/span><span><i style=\"background:var(--n-host)\"><\/i>indirizzi pubblici<\/span><span><i style=\"background:var(--nat-key)\"><\/i>porta usata dal NAT<\/span>": "<span><i style=\"background:var(--n-pre)\"><\/i>private addresses<\/span><span><i style=\"background:var(--n-host)\"><\/i>public addresses<\/span><span><i style=\"background:var(--nat-key)\"><\/i>port used by NAT<\/span>",
+"le righe della tabella non restano per sempre: il router le cancella dopo un periodo di inattività, o quando la connessione TCP si chiude;": "the table's rows don't stay forever: the router deletes them after a period of inactivity, or when the TCP connection closes;",
+"spesso il router annota anche indirizzo e porta del server e il protocollo (TCP o UDP). Molti router, quando possono, tengono la stessa porta scelta dal PC invece di sceglierne una nuova;": "the router often also records the server's address and port and the protocol (TCP or UDP). Many routers, when they can, keep the same port chosen by the PC instead of picking a new one;",
+"per rendere raggiungibile da Internet un dispositivo di casa (per esempio un server) si può aggiungere a mano una riga fissa nella tabella: si chiama <i>port forwarding<\/i>;": "to make a home device (for example a server) reachable from the Internet you can add a fixed row to the table by hand: it's called <i>port forwarding<\/i>;",
+"gli indirizzi privati sono quelli dei blocchi <code>10.0.0.0/8<\/code>, <code>172.16.0.0/12<\/code> e <code>192.168.0.0/16<\/code>. Anche molti operatori usano a loro volta un NAT, così più clienti condividono uno stesso indirizzo pubblico;": "the private addresses are those of the blocks <code>10.0.0.0/8<\/code>, <code>172.16.0.0/12<\/code> and <code>192.168.0.0/16<\/code>. Many providers use a NAT of their own as well, so several customers share the same public address;",
+"gli indirizzi pubblici usati qui sono solo esempi.": "the public addresses used here are just examples.",
+"Pagine": "Pages",
+"Torna all'indice": "Back to the index",
+"Tema scuro": "Dark theme",
+"Simulazione": "Simulation",
+"Tipo di connessione": "Connection type",
+"Diagramma dei messaggi tra client e server nel tempo": "Diagram of the messages between client and server over time",
+"Timeline del caricamento di ogni oggetto": "Loading timeline of each object",
+"Simulazione dei cookie": "Cookie simulation",
+"Tipo di cookie": "Cookie type",
+"Messaggi tra il browser, i server e il database nel tempo": "Messages between the browser, the servers and the database over time",
+"Simulazione della web cache": "Web cache simulation",
+"Momenti della simulazione": "Moments of the simulation",
+"Due client, il proxy server con la sua cache e l'origin server recipes.com": "Two clients, the proxy server with its cache and the origin server recipes.com",
+"Suddivisione di un blocco di indirizzi": "Dividing a block of addresses",
+"Il blocco di indirizzi diviso in sottoreti": "The address block divided into subnets",
+"Simulazione del NAT": "NAT simulation",
+"Due PC di casa, il router casalingo con il NAT, un web server e un host esterno su Internet": "Two home PCs, the home router with NAT, a web server and an external host on the Internet",
+"Trasmissione (T)": "Transmission (T)",
+"Immagini": "Images",
+"Blocco": "Block",
+"Bit per le sottoreti": "Bits for the subnets",
+"Dove si trova l'indirizzo": "Where the address is",
+"Reti <i>di calcolatori<\/i>": "Computer <i>networks<\/i>"
+});
+i18nApply();
+</script>
 
 <script>
 // Condiviso tra le schede: icone delle slide e messaggi HTTP colorati.
@@ -812,8 +946,8 @@ function httpResp(status, headers, bodyHtml) {
     for (var k = 1; k <= N; k++) objs.push({ name: k + '.jpeg', path: '/info/images/' + k + '.jpeg', rel: 'images/' + k + '.jpeg', k: k, size: 38000 + (k * 7919) % 31000 });
 
     steps.push({ msg: -1, time: 0, text: P
-      ? 'Il browser deve caricare <code>unito.it/info/home.html</code> usando l\'HTTP <b>persistente</b>: aprirà una sola connessione TCP e la userà per tutti gli oggetti. Premi <b>Avanti</b>.'
-      : 'Il browser deve caricare <code>unito.it/info/home.html</code> usando l\'HTTP <b>non persistente</b>: per ogni oggetto aprirà una nuova connessione TCP. Premi <b>Avanti</b>.' });
+      ? TX('Il browser deve caricare <code>unito.it/info/home.html</code> usando l\'HTTP <b>persistente</b>: aprirà una sola connessione TCP e la userà per tutti gli oggetti. Premi <b>Avanti</b>.', `The browser has to load <code>unito.it/info/home.html</code> using <b>persistent</b> HTTP: it will open a single TCP connection and use it for all the objects. Press <b>Next</b>.`)
+      : TX('Il browser deve caricare <code>unito.it/info/home.html</code> usando l\'HTTP <b>non persistente</b>: per ogni oggetto aprirà una nuova connessione TCP. Premi <b>Avanti</b>.', `The browser has to load <code>unito.it/info/home.html</code> using <b>non-persistent</b> HTTP: for each object it will open a new TCP connection. Press <b>Next</b>.`) });
 
     var t = 0;
     function add(m) { msgs.push(m); return msgs.length - 1; }
@@ -821,15 +955,15 @@ function httpResp(status, headers, bodyHtml) {
 
     objs.forEach(function (o, idx) {
       var first = idx === 0;
-      var nth = first ? '' : '<b>' + o.name + '</b> (' + o.k + ' di ' + N + ')';
+      var nth = first ? '' : TX('<b>' + o.name + '</b> (' + o.k + ' di ' + N + ')', `<b>${o.name}</b> (${o.k} of ${N})`);
       o.segs = []; o.t0 = t;
       var reqAt;
       if (!P || first) {
-        var rep = first ? '' : '<span class="ph">6</span>Si ripetono i passi 1–5 per l\'immagine ' + nth + '. ';
+        var rep = first ? '' : TX('<span class="ph">6</span>Si ripetono i passi 1–5 per l\'immagine ' + nth + '. ', `<span class="ph">6</span>Steps 1–5 are repeated for image ${nth}. `);
         var a = add({ kind: 'tcp', name: 'SYN', from: 'c', t0: t, t1: t + R / 2, obj: idx });
-        step({ msg: a, time: t + R / 2, conn: 1, text: rep + '<span class="ph">1a</span>Il client HTTP apre ' + (first ? 'una' : 'una <b>nuova</b>') + ' connessione TCP verso il server <code>unito.it</code>, porta 80: invia un segmento <b>SYN</b>.' });
+        step({ msg: a, time: t + R / 2, conn: 1, text: TX(rep + '<span class="ph">1a</span>Il client HTTP apre ' + (first ? 'una' : 'una <b>nuova</b>') + ' connessione TCP verso il server <code>unito.it</code>, porta 80: invia un segmento <b>SYN</b>.', `${rep}<span class="ph">1a</span>The HTTP client opens ${first ? 'a' : 'a <b>new</b>'} TCP connection to the server <code>unito.it</code>, port 80: it sends a <b>SYN</b> segment.`) });
         var b = add({ kind: 'tcp', name: 'SYN-ACK', from: 's', t0: t + R / 2, t1: t + R, obj: idx });
-        step({ msg: b, time: t + R, text: '<span class="ph">1b</span>Il processo server HTTP, in attesa sulla porta 80, accetta la connessione e risponde con un <b>SYN-ACK</b>. Il client lo riceve a <span class="v">' + ms(t + R) + '</span>: aprire la connessione è costato <b>1 RTT</b>.' });
+        step({ msg: b, time: t + R, text: TX('<span class="ph">1b</span>Il processo server HTTP, in attesa sulla porta 80, accetta la connessione e risponde con un <b>SYN-ACK</b>. Il client lo riceve a <span class="v">' + ms(t + R) + '</span>: aprire la connessione è costato <b>1 RTT</b>.', `<span class="ph">1b</span>The HTTP server process, waiting on port 80, accepts the connection and replies with a <b>SYN-ACK</b>. The client receives it at <span class="v">${ms(t + R)}</span>: opening the connection cost <b>1 RTT</b>.`) });
         o.segs.push({ kind: 'hs', t0: t, t1: t + R });
         reqAt = t + R;
       } else {
@@ -837,27 +971,27 @@ function httpResp(status, headers, bodyHtml) {
       }
       var withAck = !P || first;
       var g = add({ kind: 'get', name: (withAck ? 'ACK + ' : '') + 'GET ' + o.path, from: 'c', t0: reqAt, t1: reqAt + R / 2, obj: idx, ack: withAck });
-      var reqText = '<span class="ph">2</span>Il client ' + (withAck ? 'conferma con un ACK e nello stesso segmento invia' : 'invia, sulla <b>stessa</b> connessione già aperta,') + ' la <b>HTTP request</b> per <code>' + o.path + '</code>';
-      if (!first) reqText += ' (il riferimento <code>' + o.rel + '</code> nella pagina è relativo a <code>/info/</code>)';
-      reqText += '.' + (!withAck ? ' Niente handshake: si risparmia 1 RTT.' : '');
+      var reqText = TX('<span class="ph">2</span>Il client ' + (withAck ? 'conferma con un ACK e nello stesso segmento invia' : 'invia, sulla <b>stessa</b> connessione già aperta,') + ' la <b>HTTP request</b> per <code>' + o.path + '</code>', `<span class="ph">2</span>The client ${withAck ? 'confirms with an ACK and in the same segment sends' : 'sends, on the <b>same</b> connection already open,'} the <b>HTTP request</b> for <code>${o.path}</code>`);
+      if (!first) reqText += TX(' (il riferimento <code>' + o.rel + '</code> nella pagina è relativo a <code>/info/</code>)', ` (the reference <code>${o.rel}</code> in the page is relative to <code>/info/</code>)`);
+      reqText += '.' + (!withAck ? TX(' Niente handshake: si risparmia 1 RTT.', ' No handshake: 1 RTT is saved.') : '');
       step({ msg: g, time: reqAt + R / 2, req: idx, text: reqText });
 
       var sendAt = reqAt + R / 2, doneAt = reqAt + R + T;
       var r = add({ kind: 'resp', name: '200 OK · ' + o.name, from: 's', t0: sendAt, t1: sendAt + R / 2, T: T, obj: idx });
-      step({ msg: r, time: doneAt, text: '<span class="ph">3</span>Il server riceve la richiesta, costruisce la <b>HTTP response</b> con ' + (first ? 'la pagina' : 'l\'immagine') + ' richiesta e la invia sul socket. Trasmetterla richiede <b>T = ' + ms(T) + '</b>; il primo bit arriva al client dopo mezzo RTT.' });
+      step({ msg: r, time: doneAt, text: TX('<span class="ph">3</span>Il server riceve la richiesta, costruisce la <b>HTTP response</b> con ' + (first ? 'la pagina' : 'l\'immagine') + ' richiesta e la invia sul socket. Trasmetterla richiede <b>T = ' + ms(T) + '</b>; il primo bit arriva al client dopo mezzo RTT.', `<span class="ph">3</span>The server receives the request, builds the <b>HTTP response</b> with the requested ${first ? 'page' : 'image'} and sends it on the socket. Transmitting it takes <b>T = ${ms(T)}</b>; the first bit reaches the client after half an RTT.`) });
       o.segs.push({ kind: 'req', t0: reqAt, t1: reqAt + R });
       o.segs.push({ kind: 'tx', t0: reqAt + R, t1: doneAt });
 
       if (!P) {
         var f = add({ kind: 'fin', name: 'FIN', from: 's', t0: sendAt + T + R * 0.14, t1: sendAt + T + R * 0.64, obj: idx });
-        step({ msg: f, time: doneAt, close: 1, text: '<span class="ph">4</span>Il server chiede a TCP di chiudere la connessione (<b>FIN</b>). TCP la chiude davvero solo quando è sicuro che il client abbia ricevuto tutta la risposta.' });
+        step({ msg: f, time: doneAt, close: 1, text: TX('<span class="ph">4</span>Il server chiede a TCP di chiudere la connessione (<b>FIN</b>). TCP la chiude davvero solo quando è sicuro che il client abbia ricevuto tutta la risposta.', `<span class="ph">4</span>The server asks TCP to close the connection (<b>FIN</b>). TCP actually closes it only once it is sure the client has received the whole response.`) });
       }
 
       var cost = (!P || first) ? '2 RTT + T = ' + ms(2 * R + T) : 'RTT + T = ' + ms(R + T);
       var recv = first
-        ? '<span class="ph">5</span>Il client riceve la HTTP response con la pagina html (a <span class="v">' + ms(doneAt) + '</span>). Elaborandola trova i riferimenti ad altri <b>' + N + ' oggetti</b> jpeg: per ognuno servirà una richiesta.'
-        : '<span class="ph">5</span>Il client riceve ' + nth + ' e la mostra nella pagina (a <span class="v">' + ms(doneAt) + '</span>).';
-      recv += ' Response time per questo oggetto: <b>' + cost + '</b>.' + (P ? ' La connessione resta aperta.' : '');
+        ? TX('<span class="ph">5</span>Il client riceve la HTTP response con la pagina html (a <span class="v">' + ms(doneAt) + '</span>). Elaborandola trova i riferimenti ad altri <b>' + N + ' oggetti</b> jpeg: per ognuno servirà una richiesta.', `<span class="ph">5</span>The client receives the HTTP response with the html page (at <span class="v">${ms(doneAt)}</span>). Processing it, it finds references to <b>${N} more objects</b>, jpeg images: each one will need a request.`)
+        : TX('<span class="ph">5</span>Il client riceve ' + nth + ' e la mostra nella pagina (a <span class="v">' + ms(doneAt) + '</span>).', `<span class="ph">5</span>The client receives ${nth} and shows it in the page (at <span class="v">${ms(doneAt)}</span>).`);
+      recv += TX(' Response time per questo oggetto: <b>' + cost + '</b>.' + (P ? ' La connessione resta aperta.' : ''), ` Response time for this object: <b>${cost}</b>.${P ? ' The connection stays open.' : ''}`);
       step({ msg: r, time: doneAt, recv: idx, text: recv });
       o.t1 = doneAt;
       t = doneAt;
@@ -865,8 +999,8 @@ function httpResp(status, headers, bodyHtml) {
 
     var tot = t;
     steps.push({ msg: -1, time: tot, end: true, text: P
-      ? 'Pagina caricata in <span class="v">' + ms(tot) + '</span> con <b>una sola</b> connessione TCP. Solo il primo oggetto paga l\'apertura della connessione; la connessione resta aperta e il server la chiuderà dopo un periodo di inattività.'
-      : 'Pagina caricata in <span class="v">' + ms(tot) + '</span> aprendo <b>' + (N + 1) + ' connessioni TCP</b>, una per oggetto: ognuno ha pagato 2 RTT + T.' });
+      ? TX('Pagina caricata in <span class="v">' + ms(tot) + '</span> con <b>una sola</b> connessione TCP. Solo il primo oggetto paga l\'apertura della connessione; la connessione resta aperta e il server la chiuderà dopo un periodo di inattività.', `Page loaded in <span class="v">${ms(tot)}</span> with <b>a single</b> TCP connection. Only the first object pays for opening the connection; the connection stays open and the server will close it after a period of inactivity.`)
+      : TX('Pagina caricata in <span class="v">' + ms(tot) + '</span> aprendo <b>' + (N + 1) + ' connessioni TCP</b>, una per oggetto: ognuno ha pagato 2 RTT + T.', `Page loaded in <span class="v">${ms(tot)}</span> by opening <b>${N + 1} TCP connections</b>, one per object: each one paid 2 RTT + T.`) });
 
     return { objs: objs, msgs: msgs, steps: steps, total: tot, P: P };
   }
@@ -957,7 +1091,7 @@ function httpResp(status, headers, bodyHtml) {
         var mx = (XC + XS) / 2, my = (ya + yb) / 2;
         el('text', { x: mx, y: my - 6, 'text-anchor': 'middle', 'class': 'lb', transform: 'rotate(' + ang.toFixed(2) + ' ' + mx + ' ' + my + ')' }, g, M.name);
       }
-      el('title', {}, g, 'Clicca per vedere il contenuto del messaggio');
+      el('title', {}, g, TX('Clicca per vedere il contenuto del messaggio', 'Click to see the content of the message'));
     }
 
     if (st.shown >= 0) {
@@ -966,7 +1100,7 @@ function httpResp(status, headers, bodyHtml) {
     }
     if (run.steps[S.i].end && run.P) {
       var ye = Y(run.total) + 26;
-      el('text', { x: (XC + XS) / 2, y: ye, 'text-anchor': 'middle', 'class': 's-end' }, svg, 'la connessione resta aperta…');
+      el('text', { x: (XC + XS) / 2, y: ye, 'text-anchor': 'middle', 'class': 's-end' }, svg, TX('la connessione resta aperta…', 'the connection stays open…'));
     }
 
     // Tiene in vista il messaggio corrente
@@ -980,20 +1114,20 @@ function httpResp(status, headers, bodyHtml) {
   function inspect(m) {
     var box = $('insp');
     if (m < 0) {
-      box.innerHTML = '<h3>Contenuto del messaggio</h3><p>Qui compare il contenuto del messaggio corrente. Puoi cliccare su qualsiasi freccia del diagramma per rivederlo.</p>';
+      box.innerHTML = TX('<h3>Contenuto del messaggio</h3><p>Qui compare il contenuto del messaggio corrente. Puoi cliccare su qualsiasi freccia del diagramma per rivederlo.</p>', '<h3>Message content</h3><p>The content of the current message shows up here. You can click on any arrow in the diagram to see it again.</p>');
       return;
     }
     var M = run.msgs[m], o = run.objs[M.obj], P = run.P;
     var conn = P ? 'keep-alive' : 'close';
     var h = '';
-    if (M.name === 'SYN') h = '<h3>Segmento TCP · SYN</h3><p>Il client chiede di aprire una connessione TCP verso <code>unito.it</code>, porta 80. Non contiene ancora dati HTTP.</p>';
-    else if (M.name === 'SYN-ACK') h = '<h3>Segmento TCP · SYN-ACK</h3><p>Il server accetta la connessione. Da qui il client può inviare la richiesta.</p>';
-    else if (M.kind === 'fin') h = '<h3>Segmento TCP · FIN</h3><p>Il server chiude la connessione. Per il prossimo oggetto il client dovrà aprirne una nuova, pagando di nuovo 1 RTT.</p>';
+    if (M.name === 'SYN') h = TX('<h3>Segmento TCP · SYN</h3><p>Il client chiede di aprire una connessione TCP verso <code>unito.it</code>, porta 80. Non contiene ancora dati HTTP.</p>', '<h3>TCP segment · SYN</h3><p>The client asks to open a TCP connection to <code>unito.it</code>, port 80. It doesn\'t contain any HTTP data yet.</p>');
+    else if (M.name === 'SYN-ACK') h = TX('<h3>Segmento TCP · SYN-ACK</h3><p>Il server accetta la connessione. Da qui il client può inviare la richiesta.</p>', '<h3>TCP segment · SYN-ACK</h3><p>The server accepts the connection. From here the client can send the request.</p>');
+    else if (M.kind === 'fin') h = TX('<h3>Segmento TCP · FIN</h3><p>Il server chiude la connessione. Per il prossimo oggetto il client dovrà aprirne una nuova, pagando di nuovo 1 RTT.</p>', '<h3>TCP segment · FIN</h3><p>The server closes the connection. For the next object the client will have to open a new one, paying 1 RTT again.</p>');
     else if (M.kind === 'get') {
-      h = '<h3>HTTP request' + (M.ack ? ' (viaggia insieme all\'ACK di TCP)' : '') + '</h3><pre>' + httpReq('GET', o.path, [['Host', 'unito.it'], ['Connection', conn]]) + '</pre>';
+      h = '<h3>HTTP request' + (M.ack ? TX(' (viaggia insieme all\'ACK di TCP)', ' (travels together with TCP\'s ACK)') : '') + '</h3><pre>' + httpReq('GET', o.path, [['Host', 'unito.it'], ['Connection', conn]]) + '</pre>';
     } else {
       var type = o.html ? 'text/html; charset=UTF-8' : 'image/jpeg';
-      var body = o.html ? '&lt;!DOCTYPE html&gt;\n&lt;html lang="it"&gt; …' : '[' + o.size.toLocaleString('it-IT') + ' byte di dati dell\'immagine]';
+      var body = o.html ? '&lt;!DOCTYPE html&gt;\n&lt;html lang="' + TX('it', 'en') + '"&gt; …' : '[' + o.size.toLocaleString(TX('it-IT', 'en-GB')) + TX(' byte di dati dell\'immagine]', ' bytes of image data]');
       h = '<h3>HTTP response</h3><pre>' + httpResp('200 OK', [['Content-Type', type], ['Content-Length', o.size], ['Connection', conn]], body) + '</pre>';
     }
     box.innerHTML = h;
@@ -1014,8 +1148,8 @@ function httpResp(status, headers, bodyHtml) {
 
   function drawCode(st) {
     var lines = [
-      '<!DOCTYPE html>', '<html lang="it">', '  <head>', '    <meta charset="UTF-8">',
-      '    <meta name="viewport" content="width=device-width">', '    <title>Informazioni</title>',
+      '<!DOCTYPE html>', '<html lang="' + TX('it', 'en') + '">', '  <head>', '    <meta charset="UTF-8">',
+      '    <meta name="viewport" content="width=device-width">', '    <title>' + TX('Informazioni', 'Information') + '</title>',
       '  </head>', '  <body>', '    <!-- Some content -->'
     ];
     var out = lines.map(function (l) { return '<li><span class="src">' + hl(l) + '</span></li>'; });
@@ -1031,8 +1165,8 @@ function httpResp(status, headers, bodyHtml) {
     code.classList.toggle('unknown', !known);
     var got = 0; for (var j = 1; j <= S.N; j++) if (st.done[j]) got++;
     $('code-hint').textContent = !known
-      ? 'Il client non ha ancora ricevuto home.html: non sa ancora cosa contiene.'
-      : 'Elaborando home.html il client ha trovato ' + S.N + ' immagini da richiedere. Ricevute: ' + got + ' di ' + S.N + '.';
+      ? TX('Il client non ha ancora ricevuto home.html: non sa ancora cosa contiene.', 'The client hasn\'t received home.html yet: it doesn\'t know what it contains.')
+      : TX('Elaborando home.html il client ha trovato ' + S.N + ' immagini da richiedere. Ricevute: ' + got + ' di ' + S.N + '.', `Processing home.html the client found ${S.N} images to request. Received: ${got} of ${S.N}.`);
   }
 
   function picture(k) {
@@ -1048,14 +1182,14 @@ function httpResp(status, headers, bodyHtml) {
     var got = 0; for (var j = 1; j <= S.N; j++) if (st.done[j]) got++;
     var complete = known && got === S.N;
     var started = st.shown >= 0;
-    var title = known ? 'Informazioni' : started ? 'unito.it' : 'Nuova scheda';
+    var title = known ? TX('Informazioni', 'Information') : started ? 'unito.it' : TX('Nuova scheda', 'New tab');
     var h = '<div class="b-top ' + (started && !complete ? 'loading' : '') + '"><div class="b-tab"><span class="b-dots"><i></i><i></i><i></i></span>' +
       (complete ? '<span class="b-ok" aria-hidden="true"></span>' : '<span class="spin" aria-hidden="true"></span>') +
       '<span>' + title + '</span></div><div class="b-url"><b>unito.it</b>/info/home.html</div></div><div class="b-body">';
     if (!known) {
-      h += '<div class="b-wait">' + (started ? 'In attesa di unito.it…' : 'Il browser non ha ancora contattato il server.') + '</div>';
+      h += '<div class="b-wait">' + TX((started ? 'In attesa di unito.it…' : 'Il browser non ha ancora contattato il server.'), (started ? 'Waiting for unito.it…' : 'The browser hasn\'t contacted the server yet.')) + '</div>';
     } else {
-      h += '<h4>Informazioni</h4><div class="b-txt"></div><div class="b-txt" style="width:80%"></div><div class="b-grid">';
+      h += '<h4>' + TX('Informazioni', 'Information') + '</h4><div class="b-txt"></div><div class="b-txt" style="width:80%"></div><div class="b-grid">';
       for (var k = 1; k <= S.N; k++) {
         if (st.done[k]) h += '<div class="slot done" title="' + k + '.jpeg">' + picture(k) + '</div>';
         else h += '<div class="slot ' + (st.req[k] ? 'req' : '') + '">' + k + '.jpeg</div>';
@@ -1105,10 +1239,10 @@ function httpResp(status, headers, bodyHtml) {
       return '<div class="cmp-row' + (S.mode === mode ? ' on' : '') + '"><div class="cmp-head"><span>' + name + '</span><b>' + ms(tot) + '</b></div>' +
         '<div class="cmp-bar"><i style="width:' + (tot / max * 100).toFixed(1) + '%"></i></div><div class="cmp-f">' + f + '</div></div>';
     }
-    $('cmp').innerHTML = '<p class="cap">Tempo totale per caricare la pagina</p>' +
-      row('np', 'Non persistente', np, (N + 1) + ' × (2 × ' + R + ' + ' + T + ') = ' + np) +
-      row('p', 'Persistente', p, '(2 × ' + R + ' + ' + T + ') + ' + N + ' × (' + R + ' + ' + T + ') = ' + p) +
-      '<p class="hint" style="margin:0;font-size:13px;color:var(--muted)">Con l\'HTTP persistente ogni immagine risparmia l\'RTT di apertura della connessione: ' + N + ' × ' + R + ' = ' + (N * R) + ' ms in meno.</p>';
+    $('cmp').innerHTML = TX('<p class="cap">Tempo totale per caricare la pagina</p>', '<p class="cap">Total time to load the page</p>') +
+      row('np', TX('Non persistente', 'Non-persistent'), np, (N + 1) + ' × (2 × ' + R + ' + ' + T + ') = ' + np) +
+      row('p', TX('Persistente', 'Persistent'), p, '(2 × ' + R + ' + ' + T + ') + ' + N + ' × (' + R + ' + ' + T + ') = ' + p) +
+      TX('<p class="hint" style="margin:0;font-size:13px;color:var(--muted)">Con l\'HTTP persistente ogni immagine risparmia l\'RTT di apertura della connessione: ' + N + ' × ' + R + ' = ' + (N * R) + ' ms in meno.</p>', `<p class="hint" style="margin:0;font-size:13px;color:var(--muted)">With persistent HTTP each image saves the RTT for opening the connection: ${N} × ${R} = ${N * R} ms less.</p>`);
   }
 
   function render() {
@@ -1138,12 +1272,12 @@ function httpResp(status, headers, bodyHtml) {
   }
   function stop() {
     if (S.timer) { clearInterval(S.timer); S.timer = null; }
-    $('b-play').textContent = 'Riproduci';
+    $('b-play').textContent = TX('Riproduci', 'Play');
   }
   function play() {
     if (S.timer) { stop(); render(); return; }
     if (S.i === run.steps.length - 1) S.i = 0;
-    $('b-play').textContent = 'Pausa';
+    $('b-play').textContent = TX('Pausa', 'Pause');
     S.timer = setInterval(function () { go(S.i + 1); }, 1100);
     go(S.i + 1);
   }
@@ -1215,13 +1349,13 @@ function httpResp(status, headers, bodyHtml) {
 
   // Le due versioni di kiwi.gif sull'origin server.
   var V = {
-    1: { lm: 'Wed, 03 Jun 2026 09:12:44 GMT', day: '3 giu 2026', size: 48213, name: 'versione 1' },
-    2: { lm: 'Mon, 02 Nov 2026 14:20:05 GMT', day: '2 nov 2026', size: 51877, name: 'versione 2' }
+    1: { lm: 'Wed, 03 Jun 2026 09:12:44 GMT', day: TX('3 giu 2026', '3 Jun 2026'), size: 48213, name: TX('versione 1', 'version 1') },
+    2: { lm: 'Mon, 02 Nov 2026 14:20:05 GMT', day: TX('2 nov 2026', '2 Nov 2026'), size: 51877, name: TX('versione 2', 'version 2') }
   };
   var DAYS = [
-    { label: '15 settembre 2026', sub: 'prima richiesta: cache miss' },
-    { label: '17 settembre 2026', sub: 'due giorni dopo: cache hit' },
-    { label: '15 dicembre 2026', sub: 'tre mesi dopo: oggetto cambiato' }
+    { label: TX('15 settembre 2026', '15 September 2026'), sub: TX('prima richiesta: cache miss', 'first request: cache miss') },
+    { label: TX('17 settembre 2026', '17 September 2026'), sub: TX('due giorni dopo: cache hit', 'two days later: cache hit') },
+    { label: TX('15 dicembre 2026', '15 December 2026'), sub: TX('tre mesi dopo: oggetto cambiato', 'three months later: object changed') }
   ];
 
   function kiwiInner(v) {
@@ -1248,43 +1382,43 @@ function httpResp(status, headers, bodyHtml) {
   function get(ims) {
     var h = [['Host', 'recipes.com']];
     if (ims) h.push(['If-Modified-Since', ims]);
-    return { html: httpReq('GET', PATH, h), short: ims ? 'GET condizionale' : 'GET ' + PATH };
+    return { html: httpReq('GET', PATH, h), short: ims ? TX('GET condizionale', 'conditional GET') : 'GET ' + PATH };
   }
   function ok(date, v) {
     var h = [['Date', date], ['Server', 'Apache/2.4.62'], ['Last-Modified', V[v].lm], ['Content-Type', 'image/gif'], ['Content-Length', V[v].size]];
-    var body = '<span class="ca-thumb">' + kiwiSvg(v, 28) + '</span>' + V[v].size.toLocaleString('it-IT') + ' byte di dati: kiwi.gif, ' + V[v].name;
+    var body = '<span class="ca-thumb">' + kiwiSvg(v, 28) + '</span>' + TX(V[v].size.toLocaleString(TX('it-IT', 'en-GB')) + ' byte di dati: kiwi.gif, ' + V[v].name, `${V[v].size.toLocaleString('en-GB')} bytes of data: kiwi.gif, ${V[v].name}`);
     return { html: httpResp('200 OK', h, body), short: '200 OK · kiwi.gif v' + v };
   }
   function notModified(date) {
     var h = [['Date', date], ['Server', 'Apache/2.4.62']];
-    return { html: httpResp('304 Not Modified', h, '(corpo vuoto)'), short: '304 Not Modified' };
+    return { html: httpResp('304 Not Modified', h, TX('(corpo vuoto)', '(empty body)')), short: '304 Not Modified' };
   }
 
   var D1 = 'Tue, 15 Sep 2026 10:30:01 GMT', D2 = 'Thu, 17 Sep 2026 16:05:01 GMT', D3 = 'Tue, 15 Dec 2026 09:40:01 GMT';
   var STEPS = [
-    { day: 0, date: '15 set 2026', text: 'Il 15 settembre la cache del proxy è vuota. Su <code>recipes.com</code> c\'è <code>kiwi.gif</code>, modificato l\'ultima volta il 3 giugno 2026. Premi <b>Avanti</b>.' },
-    { day: 0, date: '15 set 2026', link: 'c1', dir: 'req', msg: get(), text: 'Il <b>client 1</b> vuole l\'oggetto <code>/fruit/kiwi.gif</code> di <code>recipes.com</code>. Il suo browser è configurato per usare il proxy: invia la HTTP request al <b>proxy server</b>, non a recipes.com.' },
-    { day: 0, date: '15 set 2026', badge: 'miss', title: 'Il proxy cerca nella cache', note: 'Nessun messaggio: il proxy cerca <code>recipes.com/fruit/kiwi.gif</code> tra gli oggetti che ha salvato.', text: 'Il proxy cerca <code>kiwi.gif</code> nella sua cache: non c\'è. È un <b>cache miss</b>: per rispondere deve chiedere l\'oggetto all\'origin server.' },
-    { day: 0, date: '15 set 2026', link: 'o', dir: 'req', msg: get(), text: 'Il proxy invia una <b>GET classica</b> all\'origin server <code>recipes.com</code>. In questo scambio il proxy fa da client.' },
-    { day: 0, date: '15 set 2026', link: 'o', dir: 'resp', msg: ok(D1, 1), text: 'L\'origin server risponde <b>200 OK</b> con l\'immagine. Tra gli header c\'è <code>Last-Modified</code>: la data dell\'ultima modifica dell\'oggetto, il 3 giugno 2026.' },
-    { day: 0, date: '15 set 2026', badge: 'saved', set: { cache: 1 }, title: 'Il proxy salva la copia', note: 'Nella cache ora ci sono <code>kiwi.gif</code> e la sua data di ultima modifica: <code>' + V[1].lm + '</code>.', text: 'Il proxy <b>salva</b> una copia dell\'oggetto e la sua <b>data di ultima modifica</b>.' },
-    { day: 0, date: '15 set 2026', link: 'c1', dir: 'resp', msg: ok(D1, 1), set: { c1: 1 }, text: 'Il proxy <b>inoltra</b> la risposta al client 1, che mostra il kiwi.' },
+    { day: 0, date: TX('15 set 2026', '15 Sep 2026'), text: TX('Il 15 settembre la cache del proxy è vuota. Su <code>recipes.com</code> c\'è <code>kiwi.gif</code>, modificato l\'ultima volta il 3 giugno 2026. Premi <b>Avanti</b>.', 'On 15 September the proxy\'s cache is empty. On <code>recipes.com</code> there is <code>kiwi.gif</code>, last modified on 3 June 2026. Press <b>Next</b>.') },
+    { day: 0, date: TX('15 set 2026', '15 Sep 2026'), link: 'c1', dir: 'req', msg: get(), text: TX('Il <b>client 1</b> vuole l\'oggetto <code>/fruit/kiwi.gif</code> di <code>recipes.com</code>. Il suo browser è configurato per usare il proxy: invia la HTTP request al <b>proxy server</b>, non a recipes.com.', '<b>Client 1</b> wants the object <code>/fruit/kiwi.gif</code> from <code>recipes.com</code>. Its browser is configured to use the proxy: it sends the HTTP request to the <b>proxy server</b>, not to recipes.com.') },
+    { day: 0, date: TX('15 set 2026', '15 Sep 2026'), badge: 'miss', title: TX('Il proxy cerca nella cache', 'The proxy looks in its cache'), note: TX('Nessun messaggio: il proxy cerca <code>recipes.com/fruit/kiwi.gif</code> tra gli oggetti che ha salvato.', 'No message: the proxy looks for <code>recipes.com/fruit/kiwi.gif</code> among the objects it has saved.'), text: TX('Il proxy cerca <code>kiwi.gif</code> nella sua cache: non c\'è. È un <b>cache miss</b>: per rispondere deve chiedere l\'oggetto all\'origin server.', 'The proxy looks for <code>kiwi.gif</code> in its cache: it isn\'t there. It\'s a <b>cache miss</b>: to answer, it has to ask the origin server for the object.') },
+    { day: 0, date: TX('15 set 2026', '15 Sep 2026'), link: 'o', dir: 'req', msg: get(), text: TX('Il proxy invia una <b>GET classica</b> all\'origin server <code>recipes.com</code>. In questo scambio il proxy fa da client.', 'The proxy sends a <b>regular GET</b> to the origin server <code>recipes.com</code>. In this exchange the proxy acts as the client.') },
+    { day: 0, date: TX('15 set 2026', '15 Sep 2026'), link: 'o', dir: 'resp', msg: ok(D1, 1), text: TX('L\'origin server risponde <b>200 OK</b> con l\'immagine. Tra gli header c\'è <code>Last-Modified</code>: la data dell\'ultima modifica dell\'oggetto, il 3 giugno 2026.', 'The origin server replies <b>200 OK</b> with the image. Among the headers there is <code>Last-Modified</code>: the date the object was last modified, 3 June 2026.') },
+    { day: 0, date: TX('15 set 2026', '15 Sep 2026'), badge: 'saved', set: { cache: 1 }, title: TX('Il proxy salva la copia', 'The proxy saves the copy'), note: TX('Nella cache ora ci sono <code>kiwi.gif</code> e la sua data di ultima modifica: <code>' + V[1].lm + '</code>.', `The cache now holds <code>kiwi.gif</code> and its last-modified date: <code>${V[1].lm}</code>.`), text: TX('Il proxy <b>salva</b> una copia dell\'oggetto e la sua <b>data di ultima modifica</b>.', 'The proxy <b>saves</b> a copy of the object and its <b>last-modified date</b>.') },
+    { day: 0, date: TX('15 set 2026', '15 Sep 2026'), link: 'c1', dir: 'resp', msg: ok(D1, 1), set: { c1: 1 }, text: TX('Il proxy <b>inoltra</b> la risposta al client 1, che mostra il kiwi.', 'The proxy <b>forwards</b> the response to client 1, which shows the kiwi.') },
 
-    { day: 1, date: '17 set 2026', link: 'c2', dir: 'req', msg: get(), text: 'Due giorni dopo, il <b>client 2</b> chiede lo stesso oggetto al proxy.' },
-    { day: 1, date: '17 set 2026', badge: 'found', title: 'Il proxy cerca nella cache', note: 'La copia c\'è: salvata il 15 settembre, con <code>Last-Modified: ' + V[1].lm + '</code>.', text: 'Il proxy trova <code>kiwi.gif</code> nella cache. La copia però ha due giorni: nel frattempo il file su recipes.com potrebbe essere cambiato, e il proxy deve verificarlo.' },
-    { day: 1, date: '17 set 2026', link: 'o', dir: 'req', msg: get(V[1].lm), text: 'Il proxy invia una <b>GET condizionale</b>: aggiunge l\'header <code>If-Modified-Since</code> con la data di ultima modifica che aveva salvato. Vuol dire: «mandami l\'oggetto solo se è cambiato dopo questa data».' },
-    { day: 1, date: '17 set 2026', link: 'o', dir: 'resp', msg: notModified(D2), badge: 'hit', text: 'Il file non è cambiato dal 3 giugno: l\'origin server risponde <b>304 Not Modified</b>, con il <b>corpo vuoto</b>. Invece dei ' + V[1].size.toLocaleString('it-IT') + ' byte dell\'immagine ne viaggiano poche decine.' },
-    { day: 1, date: '17 set 2026', link: 'c2', dir: 'resp', msg: ok(D2, 1), set: { c2: 1 }, text: 'Il proxy risponde al client 2 con la copia che aveva in cache: è un <b>cache hit</b>. L\'immagine non è passata di nuovo tra recipes.com e il proxy.' },
+    { day: 1, date: TX('17 set 2026', '17 Sep 2026'), link: 'c2', dir: 'req', msg: get(), text: TX('Due giorni dopo, il <b>client 2</b> chiede lo stesso oggetto al proxy.', 'Two days later, <b>client 2</b> asks the proxy for the same object.') },
+    { day: 1, date: TX('17 set 2026', '17 Sep 2026'), badge: 'found', title: TX('Il proxy cerca nella cache', 'The proxy looks in its cache'), note: TX('La copia c\'è: salvata il 15 settembre, con <code>Last-Modified: ' + V[1].lm + '</code>.', `The copy is there: saved on 15 September, with <code>Last-Modified: ${V[1].lm}</code>.`), text: TX('Il proxy trova <code>kiwi.gif</code> nella cache. La copia però ha due giorni: nel frattempo il file su recipes.com potrebbe essere cambiato, e il proxy deve verificarlo.', 'The proxy finds <code>kiwi.gif</code> in its cache. But the copy is two days old: in the meantime the file on recipes.com might have changed, and the proxy has to check.') },
+    { day: 1, date: TX('17 set 2026', '17 Sep 2026'), link: 'o', dir: 'req', msg: get(V[1].lm), text: TX('Il proxy invia una <b>GET condizionale</b>: aggiunge l\'header <code>If-Modified-Since</code> con la data di ultima modifica che aveva salvato. Vuol dire: «mandami l\'oggetto solo se è cambiato dopo questa data».', 'The proxy sends a <b>conditional GET</b>: it adds the <code>If-Modified-Since</code> header with the last-modified date it had saved. It means: “send me the object only if it changed after this date”.') },
+    { day: 1, date: TX('17 set 2026', '17 Sep 2026'), link: 'o', dir: 'resp', msg: notModified(D2), badge: 'hit', text: TX('Il file non è cambiato dal 3 giugno: l\'origin server risponde <b>304 Not Modified</b>, con il <b>corpo vuoto</b>. Invece dei ' + V[1].size.toLocaleString(TX('it-IT', 'en-GB')) + ' byte dell\'immagine ne viaggiano poche decine.', `The file hasn't changed since 3 June: the origin server replies <b>304 Not Modified</b>, with an <b>empty body</b>. Instead of the image's ${V[1].size.toLocaleString('en-GB')} bytes, only a few dozen travel.`) },
+    { day: 1, date: TX('17 set 2026', '17 Sep 2026'), link: 'c2', dir: 'resp', msg: ok(D2, 1), set: { c2: 1 }, text: TX('Il proxy risponde al client 2 con la copia che aveva in cache: è un <b>cache hit</b>. L\'immagine non è passata di nuovo tra recipes.com e il proxy.', 'The proxy answers client 2 with the copy it had in its cache: it\'s a <b>cache hit</b>. The image didn\'t travel again between recipes.com and the proxy.') },
 
-    { day: 2, date: '2 nov 2026', set: { origin: 2 }, title: 'Su recipes.com', note: 'Ora su recipes.com <code>kiwi.gif</code> ha <code>Last-Modified: ' + V[2].lm + '</code>. Nella cache del proxy c\'è ancora la versione 1.', text: 'Il 2 novembre il gestore di <code>recipes.com</code> sostituisce <code>kiwi.gif</code> con una <b>nuova versione</b>. Il proxy non ne sa niente: nella sua cache c\'è ancora la versione 1.' },
-    { day: 2, date: '15 dic 2026', link: 'c1', dir: 'req', msg: get(), text: 'Il 15 dicembre il <b>client 1</b> chiede di nuovo <code>kiwi.gif</code> al proxy.' },
-    { day: 2, date: '15 dic 2026', badge: 'found', title: 'Il proxy cerca nella cache', note: 'La copia c\'è: salvata il 15 settembre, con <code>Last-Modified: ' + V[1].lm + '</code>.', text: 'Il proxy trova nella cache la copia salvata a settembre, con data di ultima modifica 3 giugno 2026. Anche questa volta deve verificare che sia ancora quella giusta.' },
-    { day: 2, date: '15 dic 2026', link: 'o', dir: 'req', msg: get(V[1].lm), text: 'Come due giorni dopo la prima richiesta, il proxy invia una <b>GET condizionale</b> con la data che conosce: <code>If-Modified-Since: ' + V[1].lm + '</code>.' },
-    { day: 2, date: '15 dic 2026', link: 'o', dir: 'resp', msg: ok(D3, 2), badge: 'stale', text: 'Questa volta il file <b>è cambiato</b> dopo quella data: l\'origin server risponde <b>200 OK</b> con l\'oggetto aggiornato e la nuova data, <code>Last-Modified</code> 2 novembre 2026.' },
-    { day: 2, date: '15 dic 2026', badge: 'replaced', set: { cache: 2 }, title: 'Il proxy aggiorna la cache', note: 'La versione 1 viene scartata. Ora nella cache ci sono la versione 2 e <code>Last-Modified: ' + V[2].lm + '</code>.', text: 'La vecchia copia non è più valida: il proxy la <b>sostituisce</b> con la nuova versione e salva la nuova data di ultima modifica.' },
-    { day: 2, date: '15 dic 2026', link: 'c1', dir: 'resp', msg: ok(D3, 2), set: { c1: 2 }, text: 'Il proxy inoltra la risposta: il client 1 vede il <b>nuovo kiwi</b>.' }
+    { day: 2, date: TX('2 nov 2026', '2 Nov 2026'), set: { origin: 2 }, title: TX('Su recipes.com', 'On recipes.com'), note: TX('Ora su recipes.com <code>kiwi.gif</code> ha <code>Last-Modified: ' + V[2].lm + '</code>. Nella cache del proxy c\'è ancora la versione 1.', `Now on recipes.com <code>kiwi.gif</code> has <code>Last-Modified: ${V[2].lm}</code>. The proxy's cache still holds version 1.`), text: TX('Il 2 novembre il gestore di <code>recipes.com</code> sostituisce <code>kiwi.gif</code> con una <b>nuova versione</b>. Il proxy non ne sa niente: nella sua cache c\'è ancora la versione 1.', 'On 2 November the owner of <code>recipes.com</code> replaces <code>kiwi.gif</code> with a <b>new version</b>. The proxy knows nothing about it: its cache still holds version 1.') },
+    { day: 2, date: TX('15 dic 2026', '15 Dec 2026'), link: 'c1', dir: 'req', msg: get(), text: TX('Il 15 dicembre il <b>client 1</b> chiede di nuovo <code>kiwi.gif</code> al proxy.', 'On 15 December <b>client 1</b> asks the proxy for <code>kiwi.gif</code> again.') },
+    { day: 2, date: TX('15 dic 2026', '15 Dec 2026'), badge: 'found', title: TX('Il proxy cerca nella cache', 'The proxy looks in its cache'), note: TX('La copia c\'è: salvata il 15 settembre, con <code>Last-Modified: ' + V[1].lm + '</code>.', `The copy is there: saved on 15 September, with <code>Last-Modified: ${V[1].lm}</code>.`), text: TX('Il proxy trova nella cache la copia salvata a settembre, con data di ultima modifica 3 giugno 2026. Anche questa volta deve verificare che sia ancora quella giusta.', 'The proxy finds in its cache the copy saved in September, last modified on 3 June 2026. This time too it has to check that it\'s still the right one.') },
+    { day: 2, date: TX('15 dic 2026', '15 Dec 2026'), link: 'o', dir: 'req', msg: get(V[1].lm), text: TX('Come due giorni dopo la prima richiesta, il proxy invia una <b>GET condizionale</b> con la data che conosce: <code>If-Modified-Since: ' + V[1].lm + '</code>.', `Just like two days after the first request, the proxy sends a <b>conditional GET</b> with the date it knows: <code>If-Modified-Since: ${V[1].lm}</code>.`) },
+    { day: 2, date: TX('15 dic 2026', '15 Dec 2026'), link: 'o', dir: 'resp', msg: ok(D3, 2), badge: 'stale', text: TX('Questa volta il file <b>è cambiato</b> dopo quella data: l\'origin server risponde <b>200 OK</b> con l\'oggetto aggiornato e la nuova data, <code>Last-Modified</code> 2 novembre 2026.', 'This time the file <b>has changed</b> since that date: the origin server replies <b>200 OK</b> with the updated object and the new date, <code>Last-Modified</code> 2 November 2026.') },
+    { day: 2, date: TX('15 dic 2026', '15 Dec 2026'), badge: 'replaced', set: { cache: 2 }, title: TX('Il proxy aggiorna la cache', 'The proxy updates its cache'), note: TX('La versione 1 viene scartata. Ora nella cache ci sono la versione 2 e <code>Last-Modified: ' + V[2].lm + '</code>.', `Version 1 is discarded. The cache now holds version 2 and <code>Last-Modified: ${V[2].lm}</code>.`), text: TX('La vecchia copia non è più valida: il proxy la <b>sostituisce</b> con la nuova versione e salva la nuova data di ultima modifica.', 'The old copy is no longer valid: the proxy <b>replaces</b> it with the new version and saves the new last-modified date.') },
+    { day: 2, date: TX('15 dic 2026', '15 Dec 2026'), link: 'c1', dir: 'resp', msg: ok(D3, 2), set: { c1: 2 }, text: TX('Il proxy inoltra la risposta: il client 1 vede il <b>nuovo kiwi</b>.', 'The proxy forwards the response: client 1 sees the <b>new kiwi</b>.') }
   ];
-  STEPS.push({ day: 2, date: '15 dic 2026', end: true, title: 'Riepilogo', note: 'Tre richieste dei client, due immagini inviate dall\'origin server.', text: 'Fine. I client hanno chiesto <code>kiwi.gif</code> tre volte e l\'hanno sempre ricevuta, ma l\'origin server l\'ha inviata solo <b>due volte</b>: il 17 settembre è bastato un 304. Ogni volta che il proxy ha una copia valida, l\'immagine non deve viaggiare dall\'origin server.' });
+  STEPS.push({ day: 2, date: TX('15 dic 2026', '15 Dec 2026'), end: true, title: TX('Riepilogo', 'Summary'), note: TX('Tre richieste dei client, due immagini inviate dall\'origin server.', 'Three requests from the clients, two images sent by the origin server.'), text: TX('Fine. I client hanno chiesto <code>kiwi.gif</code> tre volte e l\'hanno sempre ricevuta, ma l\'origin server l\'ha inviata solo <b>due volte</b>: il 17 settembre è bastato un 304. Ogni volta che il proxy ha una copia valida, l\'immagine non deve viaggiare dall\'origin server.', 'Done. The clients asked for <code>kiwi.gif</code> three times and always got it, but the origin server sent it only <b>twice</b>: on 17 September a 304 was enough. Whenever the proxy has a valid copy, the image doesn\'t have to travel from the origin server.') });
 
   var S = { i: 0, prev: -1, anim: null };
 
@@ -1345,8 +1479,8 @@ function httpResp(status, headers, bodyHtml) {
   }
 
   var BADGES = {
-    miss: ['cache miss', 'bd-bad'], saved: ['copia salvata', 'bd-info'], found: ['copia trovata', 'bd-info'],
-    hit: ['copia valida', 'bd-ok'], stale: ['copia scaduta', 'bd-bad'], replaced: ['copia aggiornata', 'bd-info']
+    miss: [TX('cache miss', 'cache miss'), 'bd-bad'], saved: [TX('copia salvata', 'copy saved'), 'bd-info'], found: [TX('copia trovata', 'copy found'), 'bd-info'],
+    hit: [TX('copia valida', 'valid copy'), 'bd-ok'], stale: [TX('copia scaduta', 'stale copy'), 'bd-bad'], replaced: [TX('copia aggiornata', 'copy updated'), 'bd-info']
   };
 
   // Riquadro con titolo e contenuto centrati. Lo stato (cache miss, copia valida…) sta sotto, fuori dal riquadro,
@@ -1362,7 +1496,7 @@ function httpResp(status, headers, bodyHtml) {
     }
     var top = y + 32;
     if (!v) {
-      el('text', { x: cx, y: top + (y + h - top) / 2 + 2, 'text-anchor': 'middle', 'class': 'ca-empty' }, g, 'vuota');
+      el('text', { x: cx, y: top + (y + h - top) / 2 + 2, 'text-anchor': 'middle', 'class': 'ca-empty' }, g, TX('vuota', 'empty'));
       return;
     }
     var longest = lines.reduce(function (m, l) { return Math.max(m, l.length); }, 0);
@@ -1406,9 +1540,9 @@ function httpResp(status, headers, bodyHtml) {
       if (v) {
         kiwiAt(svg, v, p.x - 56, p.y + 55, 36);
         el('text', { x: p.x - 12, y: p.y + 70, 'class': 'ca-tx k' }, svg, 'kiwi.gif');
-        el('text', { x: p.x - 12, y: p.y + 86, 'class': 'ca-tx' }, svg, 'versione ' + v);
+        el('text', { x: p.x - 12, y: p.y + 86, 'class': 'ca-tx' }, svg, TX('versione ' + v, 'version ' + v));
       } else {
-        el('text', { x: p.x, y: p.y + 78, 'text-anchor': 'middle', 'class': 'ca-empty' }, svg, 'nessuna immagine');
+        el('text', { x: p.x, y: p.y + 78, 'text-anchor': 'middle', 'class': 'ca-empty' }, svg, TX('nessuna immagine', 'no image'));
       }
     });
 
@@ -1416,7 +1550,7 @@ function httpResp(status, headers, bodyHtml) {
     var px = P.px;
     el('image', { href: ICON_SERVER, x: px.x - 34, y: px.y - 40, width: 68, height: 68, 'class': 'dk' }, svg);
     el('text', { x: px.x, y: px.y + 42, 'text-anchor': 'middle', 'class': 'ca-who' }, svg, 'proxy server');
-    box(svg, px.x - 92, px.y + 58, 184, 92, 'Cache del proxy', st.cache,
+    box(svg, px.x - 92, px.y + 58, 184, 92, TX('Cache del proxy', 'Proxy cache'), st.cache,
       st.cache ? ['kiwi.gif · v' + st.cache, 'Last-Modified', V[st.cache].day] : [], s.badge, s.set && s.set.cache);
 
     // Origin server
@@ -1424,8 +1558,8 @@ function httpResp(status, headers, bodyHtml) {
     el('image', { href: ICON_SERVER, x: or.x - 34, y: or.y - 40, width: 68, height: 68, 'class': 'dk' }, svg);
     el('text', { x: or.x, y: or.y + 42, 'text-anchor': 'middle', 'class': 'ca-who' }, svg, 'origin server');
     el('text', { x: or.x, y: or.y + 56, 'text-anchor': 'middle', 'class': 'ca-sub' }, svg, 'recipes.com');
-    box(svg, or.x - 90, or.y + 68, 180, 92, 'File sul server', st.origin,
-      ['kiwi.gif · v' + st.origin, 'modificato il', V[st.origin].day], null, s.set && s.set.origin);
+    box(svg, or.x - 90, or.y + 68, 180, 92, TX('File sul server', 'File on the server'), st.origin,
+      ['kiwi.gif · v' + st.origin, TX('modificato il', 'modified on'), V[st.origin].day], null, s.set && s.set.origin);
 
     // Il messaggio viaggia: la freccia attiva si allunga dal mittente al destinatario.
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1449,7 +1583,7 @@ function httpResp(status, headers, bodyHtml) {
     } else if (s.title) {
       box.innerHTML = '<h3>' + s.title + '</h3><p>' + s.note + '</p>';
     } else {
-      box.innerHTML = '<h3>Messaggi HTTP</h3><p>Qui compare il contenuto di ogni HTTP request e response, con gli header che contano: <code>Last-Modified</code>, <code>If-Modified-Since</code> e il codice di stato.</p>';
+      box.innerHTML = TX('<h3>Messaggi HTTP</h3><p>Qui compare il contenuto di ogni HTTP request e response, con gli header che contano: <code>Last-Modified</code>, <code>If-Modified-Since</code> e il codice di stato.</p>', '<h3>HTTP messages</h3><p>The content of every HTTP request and response shows up here, with the headers that matter: <code>Last-Modified</code>, <code>If-Modified-Since</code> and the status code.</p>');
     }
   }
 
@@ -1518,7 +1652,7 @@ function httpResp(status, headers, bodyHtml) {
   function req(path, host, extra, method) { return mark(httpReq(method || 'GET', path, [['Host', host]].concat(extra || []))); }
   function resp(extra, body) { return mark(httpResp('200 OK', [['Content-Type', body.type]].concat(extra || []), body.text)); }
   var PAGE = { type: 'text/html; charset=UTF-8', text: '&lt;!DOCTYPE html&gt; …' };
-  var GIF = { type: 'image/gif', text: '[immagine trasparente di 1×1 pixel]' };
+  var GIF = { type: 'image/gif', text: TX('[immagine trasparente di 1×1 pixel]', '[transparent 1×1 pixel image]') };
 
   var FP_COOKIE = 'session-id=1678; Domain=amazon.com; Max-Age=31536000';
   var TP_COOKIE = 'uid=af93; Domain=ads-tracker.com; Max-Age=31536000; SameSite=None; Secure';
@@ -1526,68 +1660,68 @@ function httpResp(status, headers, bodyHtml) {
   var SC = {
     fp: {
       W: 660,
-      lanes: { c: { x: 90, name: 'Client (browser)', icon: 'pc' }, s: { x: 360, name: 'amazon.com', sub: 'server', icon: 'srv' }, db: { x: 570, name: 'database', sub: 'di amazon.com', icon: 'db' } },
-      dbTitle: 'Database di amazon.com',
+      lanes: { c: { x: 90, name: 'Client (browser)', icon: 'pc' }, s: { x: 360, name: 'amazon.com', sub: 'server', icon: 'srv' }, db: { x: 570, name: 'database', sub: TX('di amazon.com', 'of amazon.com'), icon: 'db' } },
+      dbTitle: TX('Database di amazon.com', 'amazon.com database'),
       steps: [
-        { date: 'lun 12 ott 2026', text: 'L\'utente non ha mai visitato <code>amazon.com</code> con questo browser: nel browser non c\'è nessun cookie di amazon.com. Premi <b>Avanti</b>.' },
-        { date: 'lun 12 ott 2026', url: 'www.amazon.com', from: 'c', to: 's', short: 'GET /', msg: { t: 'HTTP request · browser → amazon.com', h: req('/', 'www.amazon.com') },
-          text: 'Il browser chiede la home page di <code>www.amazon.com</code>. Non ha cookie per questo dominio, quindi la richiesta non contiene l\'header <code>Cookie</code>.' },
-        { date: 'lun 12 ott 2026', from: 's', to: 'db', db: { id: '1678', line: 'nuovo utente, 12 ott 2026' }, short: 'crea l\'utente 1678', note: 'Il server registra nel suo database un nuovo identificativo, 1678. Per ora non sa chi sia l\'utente: sa solo che è un browser nuovo.',
-          text: 'Il server non riconosce il browser: crea l\'identificativo <b>1678</b> per questo utente e lo registra nel suo <b>database</b>.' },
-        { date: 'lun 12 ott 2026', from: 's', to: 'c', cookie: true, short: '200 OK · Set-Cookie', msg: { t: 'HTTP response · amazon.com → browser', h: resp([['Set-Cookie', FP_COOKIE]], PAGE) },
-          set: { dom: 'amazon.com', val: 'session-id=1678', exp: '12 ott 2027', party: 'prima parte' },
-          text: 'La risposta contiene l\'header <code>Set-Cookie</code>: chiede al browser di conservare <code>session-id=1678</code> per un anno. Il browser lo salva, associato al dominio <code>amazon.com</code>.' },
-        { date: 'lun 12 ott 2026', from: 'c', to: 's', cookie: true, send: 'amazon.com', short: 'GET /carrello/aggiungi · Cookie', msg: { t: 'HTTP request · browser → amazon.com', h: req('/carrello/aggiungi?prodotto=libro-reti', 'www.amazon.com', [['Cookie', 'session-id=1678']]) },
-          text: 'L\'utente aggiunge un libro al carrello. La richiesta va di nuovo a <code>amazon.com</code>, quindi il browser aggiunge da solo l\'header <code>Cookie: session-id=1678</code>.' },
-        { date: 'lun 12 ott 2026', from: 's', to: 'db', db: { id: '1678', line: 'carrello: libro «Reti di calcolatori»' }, short: 'azione per l\'utente 1678', note: 'Dal cookie il server sa che la richiesta viene dall\'utente 1678, e salva il carrello sotto quel nome.',
-          text: 'Grazie al cookie il server sa che la richiesta viene dall\'utente <b>1678</b>: salva nel database il suo carrello. È un\'<b>azione specifica</b> per quell\'utente.' },
-        { date: 'lun 12 ott 2026', from: 's', to: 'c', short: '200 OK', msg: { t: 'HTTP response · amazon.com → browser', h: resp([], PAGE) },
-          text: 'Il server risponde con la pagina del carrello. Il cookie è già nel browser: non serve impostarlo di nuovo.' },
-        { gap: 'una settimana dopo', date: 'lun 19 ott 2026', text: 'Passa una settimana. L\'utente ha chiuso il browser, ma il cookie resta: vale per un anno (<code>Max-Age</code>), quindi il browser lo ha salvato su disco.' },
-        { date: 'lun 19 ott 2026', url: 'www.amazon.com', from: 'c', to: 's', cookie: true, send: 'amazon.com', short: 'GET / · Cookie', msg: { t: 'HTTP request · browser → amazon.com', h: req('/', 'www.amazon.com', [['Cookie', 'session-id=1678']]) },
-          text: 'L\'utente torna su <code>amazon.com</code>. Il browser trova il cookie di quel dominio e lo invia con la richiesta.' },
-        { date: 'lun 19 ott 2026', from: 's', to: 'db', db: { id: '1678', line: 'ultima visita: 19 ott 2026' }, short: 'cerca l\'utente 1678', note: 'Il server ritrova nel database tutto quello che ha salvato per l\'utente 1678, compreso il carrello.',
-          text: 'Il server cerca <b>1678</b> nel database e ritrova il carrello di una settimana prima.' },
-        { date: 'lun 19 ott 2026', from: 's', to: 'c', short: '200 OK', msg: { t: 'HTTP response · amazon.com → browser', h: resp([], PAGE) },
-          text: 'La pagina dice «Bentornato: nel carrello hai 1 articolo». HTTP non ha memoria, ma il cookie permette al server di riconoscere l\'utente da una visita all\'altra.' }
+        { date: TX('lun 12 ott 2026', 'Mon 12 Oct 2026'), text: TX('L\'utente non ha mai visitato <code>amazon.com</code> con questo browser: nel browser non c\'è nessun cookie di amazon.com. Premi <b>Avanti</b>.', 'The user has never visited <code>amazon.com</code> with this browser: there is no amazon.com cookie in the browser. Press <b>Next</b>.') },
+        { date: TX('lun 12 ott 2026', 'Mon 12 Oct 2026'), url: 'www.amazon.com', from: 'c', to: 's', short: 'GET /', msg: { t: 'HTTP request · browser → amazon.com', h: req('/', 'www.amazon.com') },
+          text: TX('Il browser chiede la home page di <code>www.amazon.com</code>. Non ha cookie per questo dominio, quindi la richiesta non contiene l\'header <code>Cookie</code>.', 'The browser asks for the home page of <code>www.amazon.com</code>. It has no cookies for this domain, so the request doesn\'t contain the <code>Cookie</code> header.') },
+        { date: TX('lun 12 ott 2026', 'Mon 12 Oct 2026'), from: 's', to: 'db', db: { id: '1678', line: TX('nuovo utente, 12 ott 2026', 'new user, 12 Oct 2026') }, short: TX('crea l\'utente 1678', 'create user 1678'), note: TX('Il server registra nel suo database un nuovo identificativo, 1678. Per ora non sa chi sia l\'utente: sa solo che è un browser nuovo.', 'The server records a new identifier, 1678, in its database. For now it doesn\'t know who the user is: it only knows it\'s a new browser.'),
+          text: TX('Il server non riconosce il browser: crea l\'identificativo <b>1678</b> per questo utente e lo registra nel suo <b>database</b>.', 'The server doesn\'t recognise the browser: it creates the identifier <b>1678</b> for this user and records it in its <b>database</b>.') },
+        { date: TX('lun 12 ott 2026', 'Mon 12 Oct 2026'), from: 's', to: 'c', cookie: true, short: '200 OK · Set-Cookie', msg: { t: 'HTTP response · amazon.com → browser', h: resp([['Set-Cookie', FP_COOKIE]], PAGE) },
+          set: { dom: 'amazon.com', val: 'session-id=1678', exp: TX('12 ott 2027', '12 Oct 2027'), party: TX('prima parte', 'first party') },
+          text: TX('La risposta contiene l\'header <code>Set-Cookie</code>: chiede al browser di conservare <code>session-id=1678</code> per un anno. Il browser lo salva, associato al dominio <code>amazon.com</code>.', 'The response contains the <code>Set-Cookie</code> header: it asks the browser to keep <code>session-id=1678</code> for a year. The browser saves it, tied to the domain <code>amazon.com</code>.') },
+        { date: TX('lun 12 ott 2026', 'Mon 12 Oct 2026'), from: 'c', to: 's', cookie: true, send: 'amazon.com', short: TX('GET /carrello/aggiungi · Cookie', 'GET /cart/add · Cookie'), msg: { t: 'HTTP request · browser → amazon.com', h: req(TX('/carrello/aggiungi?prodotto=libro-reti', '/cart/add?product=networking-book'), 'www.amazon.com', [['Cookie', 'session-id=1678']]) },
+          text: TX('L\'utente aggiunge un libro al carrello. La richiesta va di nuovo a <code>amazon.com</code>, quindi il browser aggiunge da solo l\'header <code>Cookie: session-id=1678</code>.', 'The user adds a book to the cart. The request goes to <code>amazon.com</code> again, so the browser adds the <code>Cookie: session-id=1678</code> header on its own.') },
+        { date: TX('lun 12 ott 2026', 'Mon 12 Oct 2026'), from: 's', to: 'db', db: { id: '1678', line: TX('carrello: libro «Reti di calcolatori»', 'cart: book “Computer Networking”') }, short: TX('azione per l\'utente 1678', 'action for user 1678'), note: TX('Dal cookie il server sa che la richiesta viene dall\'utente 1678, e salva il carrello sotto quel nome.', 'From the cookie the server knows the request comes from user 1678, and saves the cart under that name.'),
+          text: TX('Grazie al cookie il server sa che la richiesta viene dall\'utente <b>1678</b>: salva nel database il suo carrello. È un\'<b>azione specifica</b> per quell\'utente.', 'Thanks to the cookie the server knows the request comes from user <b>1678</b>: it saves their cart in the database. It\'s a <b>user-specific action</b>.') },
+        { date: TX('lun 12 ott 2026', 'Mon 12 Oct 2026'), from: 's', to: 'c', short: '200 OK', msg: { t: 'HTTP response · amazon.com → browser', h: resp([], PAGE) },
+          text: TX('Il server risponde con la pagina del carrello. Il cookie è già nel browser: non serve impostarlo di nuovo.', 'The server replies with the cart page. The cookie is already in the browser: there\'s no need to set it again.') },
+        { gap: TX('una settimana dopo', 'one week later'), date: TX('lun 19 ott 2026', 'Mon 19 Oct 2026'), text: TX('Passa una settimana. L\'utente ha chiuso il browser, ma il cookie resta: vale per un anno (<code>Max-Age</code>), quindi il browser lo ha salvato su disco.', 'A week goes by. The user has closed the browser, but the cookie stays: it\'s valid for a year (<code>Max-Age</code>), so the browser saved it to disk.') },
+        { date: TX('lun 19 ott 2026', 'Mon 19 Oct 2026'), url: 'www.amazon.com', from: 'c', to: 's', cookie: true, send: 'amazon.com', short: 'GET / · Cookie', msg: { t: 'HTTP request · browser → amazon.com', h: req('/', 'www.amazon.com', [['Cookie', 'session-id=1678']]) },
+          text: TX('L\'utente torna su <code>amazon.com</code>. Il browser trova il cookie di quel dominio e lo invia con la richiesta.', 'The user comes back to <code>amazon.com</code>. The browser finds the cookie for that domain and sends it with the request.') },
+        { date: TX('lun 19 ott 2026', 'Mon 19 Oct 2026'), from: 's', to: 'db', db: { id: '1678', line: TX('ultima visita: 19 ott 2026', 'last visit: 19 Oct 2026') }, short: TX('cerca l\'utente 1678', 'look up user 1678'), note: TX('Il server ritrova nel database tutto quello che ha salvato per l\'utente 1678, compreso il carrello.', 'The server finds in its database everything it saved for user 1678, including the cart.'),
+          text: TX('Il server cerca <b>1678</b> nel database e ritrova il carrello di una settimana prima.', 'The server looks up <b>1678</b> in the database and finds the cart from a week earlier.') },
+        { date: TX('lun 19 ott 2026', 'Mon 19 Oct 2026'), from: 's', to: 'c', short: '200 OK', msg: { t: 'HTTP response · amazon.com → browser', h: resp([], PAGE) },
+          text: TX('La pagina dice «Bentornato: nel carrello hai 1 articolo». HTTP non ha memoria, ma il cookie permette al server di riconoscere l\'utente da una visita all\'altra.', 'The page says “Welcome back: you have 1 item in your cart”. HTTP has no memory, but the cookie lets the server recognise the user from one visit to the next.') }
       ]
     },
     tp: {
       W: 700,
       lanes: { c: { x: 80, name: 'Client (browser)', icon: 'pc' }, x: { x: 265, name: 'x.com', sub: 'server', icon: 'srv' }, a: { x: 440, name: 'amazon.com', sub: 'server', icon: 'srv' }, t: { x: 620, name: 'ads-tracker.com', sub: 'tracker', icon: 'srv' } },
-      dbTitle: 'Database di ads-tracker.com',
+      dbTitle: TX('Database di ads-tracker.com', 'ads-tracker.com database'),
       initJar: [
-        { dom: 'x.com', val: 'auth_token=7f3c9e', exp: '13 apr 2027', party: 'prima parte: login su x.com' },
-        { dom: 'amazon.com', val: 'session-id=1678', exp: '12 ott 2027', party: 'prima parte' }
+        { dom: 'x.com', val: 'auth_token=7f3c9e', exp: TX('13 apr 2027', '13 Apr 2027'), party: TX('prima parte: login su x.com', 'first party: login on x.com') },
+        { dom: 'amazon.com', val: 'session-id=1678', exp: TX('12 ott 2027', '12 Oct 2027'), party: TX('prima parte', 'first party') }
       ],
       steps: [
-        { date: 'mar 13 ott 2026', text: 'L\'utente ha fatto il login su <code>x.com</code> e ha già visitato <code>amazon.com</code>: nel browser ci sono i loro due cookie di prima parte. Sia x.com sia amazon.com includono nelle loro pagine oggetti di <code>ads-tracker.com</code>, un\'azienda di pubblicità. Premi <b>Avanti</b>.' },
-        { date: 'mar 13 ott 2026', url: 'x.com/una_pianta/status/1717', from: 'c', to: 'x', cookie: true, send: 'x.com', short: 'GET /una_pianta/… · Cookie', msg: { t: 'HTTP request · browser → x.com', h: req('/una_pianta/status/1717', 'x.com', [['Cookie', 'auth_token=7f3c9e']]) },
-          text: 'L\'utente apre il tweet di Sandra la pianta. La richiesta va a <code>x.com</code>, quindi il browser invia il cookie di x.com: così x.com sa chi è l\'utente.' },
-        { date: 'mar 13 ott 2026', from: 'x', to: 'c', short: '200 OK · pagina', msg: { t: 'HTTP response · x.com → browser', h: resp([], PAGE) },
-          text: 'x.com risponde con la pagina del tweet.' },
-        { date: 'mar 13 ott 2026', from: 'c', to: 'x', cookie: true, send: 'x.com', short: 'POST /i/like · Cookie', msg: { t: 'HTTP request · browser → x.com', h: req('/i/like?tweet=1717', 'x.com', [['Cookie', 'auth_token=7f3c9e']], 'POST') },
-          text: 'L\'utente mette <b>like</b> al tweet. Il browser invia la richiesta a x.com, sempre con il cookie di x.com.' },
-        { date: 'mar 13 ott 2026', from: 'x', to: 'c', short: '200 OK · pixel del tracker', msg: { t: 'HTTP response · x.com → browser', h: resp([], { type: PAGE.type, text: '… &lt;img src="https://ads-tracker.com/pixel.gif?evento=like&amp;tema=piante"&gt; …' }) },
-          text: 'x.com registra il like e, nella pagina aggiornata, include un\'immagine invisibile di <code>ads-tracker.com</code>. Nel suo indirizzo x.com ha scritto cosa è successo: <code>evento=like&amp;tema=piante</code>.' },
-        { date: 'mar 13 ott 2026', from: 'c', to: 't', short: 'GET /pixel.gif?…tema=piante', msg: { t: 'HTTP request · browser → ads-tracker.com', h: req('/pixel.gif?evento=like&tema=piante', 'ads-tracker.com', [['Referer', 'https://x.com/una_pianta/status/1717']]) },
-          text: 'Per scaricare l\'immagine il browser contatta <code>ads-tracker.com</code>. Il cookie di x.com <b>non</b> viene inviato: la richiesta non va a x.com. Il tracker non ha ancora cookie nel browser.' },
-        { date: 'mar 13 ott 2026', from: 't', to: 't', db: { id: 'af93', line: 'like a un tweet sulle piante (x.com, 13 ott)' }, short: 'crea af93', note: 'Il tracker registra un nuovo identificativo e quello che ha letto nella richiesta: un like a un tweet sulle piante.',
-          text: 'Il tracker crea l\'identificativo <b>af93</b> e annota nel suo database: «ha messo like a un tweet sulle piante». È lui, non il cookie, a conservare le informazioni.' },
-        { date: 'mar 13 ott 2026', from: 't', to: 'c', cookie: true, short: '200 OK · Set-Cookie', msg: { t: 'HTTP response · ads-tracker.com → browser', h: resp([['Set-Cookie', TP_COOKIE]], GIF) },
-          set: { dom: 'ads-tracker.com', val: 'uid=af93', exp: '13 ott 2027', party: 'terza parte: impostato mentre visitavi x.com' },
-          text: 'Il tracker risponde con l\'immagine e un <code>Set-Cookie</code> con il solo identificativo. È un cookie di <b>terza parte</b>: l\'utente è su x.com, ma il cookie appartiene a <code>ads-tracker.com</code>.' },
-        { gap: 'due giorni dopo', date: 'gio 15 ott 2026', text: 'Due giorni dopo l\'utente va su Amazon.' },
-        { date: 'gio 15 ott 2026', url: 'www.amazon.com', from: 'c', to: 'a', cookie: true, send: 'amazon.com', short: 'GET / · Cookie', msg: { t: 'HTTP request · browser → amazon.com', h: req('/', 'www.amazon.com', [['Cookie', 'session-id=1678']]) },
-          text: 'Il browser chiede la home page di <code>amazon.com</code> e invia solo il cookie di amazon.com. Amazon <b>non riceve</b> il cookie di x.com né quello del tracker, e non ha modo di leggerli.' },
-        { date: 'gio 15 ott 2026', from: 'a', to: 'c', short: '200 OK · spazio pubblicitario', msg: { t: 'HTTP response · amazon.com → browser', h: resp([], { type: PAGE.type, text: '… &lt;img src="https://ads-tracker.com/annuncio?spazio=offerte-lampo"&gt; …' }) },
-          text: 'Nella pagina di Amazon c\'è uno spazio «Offerte lampo» riempito da <code>ads-tracker.com</code>: Amazon lascia al tracker la scelta dell\'annuncio.' },
-        { date: 'gio 15 ott 2026', from: 'c', to: 't', cookie: true, send: 'ads-tracker.com', short: 'GET /annuncio · Cookie', msg: { t: 'HTTP request · browser → ads-tracker.com', h: req('/annuncio?spazio=offerte-lampo', 'ads-tracker.com', [['Referer', 'https://www.amazon.com/'], ['Cookie', 'uid=af93']]) },
-          text: 'Il browser chiede l\'annuncio al tracker e, visto che la richiesta va ad <code>ads-tracker.com</code>, invia il suo cookie: <code>Cookie: uid=af93</code>.' },
-        { date: 'gio 15 ott 2026', from: 't', to: 't', db: { id: 'af93', line: 'annuncio su amazon.com: concime (15 ott)' }, short: 'cerca af93', note: 'Il tracker ritrova af93 e il like sulle piante, e sceglie un annuncio adatto: il concime.',
-          text: 'Il tracker riconosce <b>af93</b>, ritrova il like di due giorni prima e sceglie l\'annuncio più adatto: un <b>concime</b>.' },
-        { date: 'gio 15 ott 2026', from: 't', to: 'c', short: '200 OK · annuncio concime', msg: { t: 'HTTP response · ads-tracker.com → browser', h: resp([], { type: 'image/jpeg', text: '[immagine dell\'annuncio: concime per piante]' }) },
-          text: 'Su Amazon compare la pubblicità del concime. Amazon non ha letto i cookie di x.com: ogni dominio riceve solo i propri. È stato il <b>tracker</b>, presente su entrambi i siti, a riconoscere l\'utente con il suo cookie di terza parte.' }
+        { date: TX('mar 13 ott 2026', 'Tue 13 Oct 2026'), text: TX('L\'utente ha fatto il login su <code>x.com</code> e ha già visitato <code>amazon.com</code>: nel browser ci sono i loro due cookie di prima parte. Sia x.com sia amazon.com includono nelle loro pagine oggetti di <code>ads-tracker.com</code>, un\'azienda di pubblicità. Premi <b>Avanti</b>.', 'The user has logged in to <code>x.com</code> and has already visited <code>amazon.com</code>: the browser holds the two sites\' first-party cookies. Both x.com and amazon.com include objects from <code>ads-tracker.com</code>, an advertising company, in their pages. Press <b>Next</b>.') },
+        { date: TX('mar 13 ott 2026', 'Tue 13 Oct 2026'), url: 'x.com/una_pianta/status/1717', from: 'c', to: 'x', cookie: true, send: 'x.com', short: 'GET /una_pianta/… · Cookie', msg: { t: 'HTTP request · browser → x.com', h: req('/una_pianta/status/1717', 'x.com', [['Cookie', 'auth_token=7f3c9e']]) },
+          text: TX('L\'utente apre il tweet di Sandra la pianta. La richiesta va a <code>x.com</code>, quindi il browser invia il cookie di x.com: così x.com sa chi è l\'utente.', 'The user opens a tweet by Sandra the plant. The request goes to <code>x.com</code>, so the browser sends the x.com cookie: this way x.com knows who the user is.') },
+        { date: TX('mar 13 ott 2026', 'Tue 13 Oct 2026'), from: 'x', to: 'c', short: TX('200 OK · pagina', '200 OK · page'), msg: { t: 'HTTP response · x.com → browser', h: resp([], PAGE) },
+          text: TX('x.com risponde con la pagina del tweet.', 'x.com replies with the tweet\'s page.') },
+        { date: TX('mar 13 ott 2026', 'Tue 13 Oct 2026'), from: 'c', to: 'x', cookie: true, send: 'x.com', short: 'POST /i/like · Cookie', msg: { t: 'HTTP request · browser → x.com', h: req('/i/like?tweet=1717', 'x.com', [['Cookie', 'auth_token=7f3c9e']], 'POST') },
+          text: TX('L\'utente mette <b>like</b> al tweet. Il browser invia la richiesta a x.com, sempre con il cookie di x.com.', 'The user <b>likes</b> the tweet. The browser sends the request to x.com, again with the x.com cookie.') },
+        { date: TX('mar 13 ott 2026', 'Tue 13 Oct 2026'), from: 'x', to: 'c', short: TX('200 OK · pixel del tracker', '200 OK · tracker pixel'), msg: { t: 'HTTP response · x.com → browser', h: resp([], { type: PAGE.type, text: TX('… &lt;img src="https://ads-tracker.com/pixel.gif?evento=like&amp;tema=piante"&gt; …', '… &lt;img src="https://ads-tracker.com/pixel.gif?event=like&amp;topic=plants"&gt; …') }) },
+          text: TX('x.com registra il like e, nella pagina aggiornata, include un\'immagine invisibile di <code>ads-tracker.com</code>. Nel suo indirizzo x.com ha scritto cosa è successo: <code>evento=like&amp;tema=piante</code>.', 'x.com records the like and, in the updated page, includes an invisible image from <code>ads-tracker.com</code>. In its address x.com has written what happened: <code>event=like&amp;topic=plants</code>.') },
+        { date: TX('mar 13 ott 2026', 'Tue 13 Oct 2026'), from: 'c', to: 't', short: TX('GET /pixel.gif?…tema=piante', 'GET /pixel.gif?…topic=plants'), msg: { t: 'HTTP request · browser → ads-tracker.com', h: req(TX('/pixel.gif?evento=like&tema=piante', '/pixel.gif?event=like&topic=plants'), 'ads-tracker.com', [['Referer', 'https://x.com/una_pianta/status/1717']]) },
+          text: TX('Per scaricare l\'immagine il browser contatta <code>ads-tracker.com</code>. Il cookie di x.com <b>non</b> viene inviato: la richiesta non va a x.com. Il tracker non ha ancora cookie nel browser.', 'To download the image the browser contacts <code>ads-tracker.com</code>. The x.com cookie is <b>not</b> sent: the request doesn\'t go to x.com. The tracker has no cookie in the browser yet.') },
+        { date: TX('mar 13 ott 2026', 'Tue 13 Oct 2026'), from: 't', to: 't', db: { id: 'af93', line: TX('like a un tweet sulle piante (x.com, 13 ott)', 'like on a tweet about plants (x.com, 13 Oct)') }, short: TX('crea af93', 'create af93'), note: TX('Il tracker registra un nuovo identificativo e quello che ha letto nella richiesta: un like a un tweet sulle piante.', 'The tracker records a new identifier and what it read in the request: a like on a tweet about plants.'),
+          text: TX('Il tracker crea l\'identificativo <b>af93</b> e annota nel suo database: «ha messo like a un tweet sulle piante». È lui, non il cookie, a conservare le informazioni.', 'The tracker creates the identifier <b>af93</b> and notes in its database: “liked a tweet about plants”. The tracker, not the cookie, is what keeps the information.') },
+        { date: TX('mar 13 ott 2026', 'Tue 13 Oct 2026'), from: 't', to: 'c', cookie: true, short: '200 OK · Set-Cookie', msg: { t: 'HTTP response · ads-tracker.com → browser', h: resp([['Set-Cookie', TP_COOKIE]], GIF) },
+          set: { dom: 'ads-tracker.com', val: 'uid=af93', exp: TX('13 ott 2027', '13 Oct 2027'), party: TX('terza parte: impostato mentre visitavi x.com', 'third party: set while you were on x.com') },
+          text: TX('Il tracker risponde con l\'immagine e un <code>Set-Cookie</code> con il solo identificativo. È un cookie di <b>terza parte</b>: l\'utente è su x.com, ma il cookie appartiene a <code>ads-tracker.com</code>.', 'The tracker replies with the image and a <code>Set-Cookie</code> holding just the identifier. It\'s a <b>third-party</b> cookie: the user is on x.com, but the cookie belongs to <code>ads-tracker.com</code>.') },
+        { gap: TX('due giorni dopo', 'two days later'), date: TX('gio 15 ott 2026', 'Thu 15 Oct 2026'), text: TX('Due giorni dopo l\'utente va su Amazon.', 'Two days later the user goes to Amazon.') },
+        { date: TX('gio 15 ott 2026', 'Thu 15 Oct 2026'), url: 'www.amazon.com', from: 'c', to: 'a', cookie: true, send: 'amazon.com', short: 'GET / · Cookie', msg: { t: 'HTTP request · browser → amazon.com', h: req('/', 'www.amazon.com', [['Cookie', 'session-id=1678']]) },
+          text: TX('Il browser chiede la home page di <code>amazon.com</code> e invia solo il cookie di amazon.com. Amazon <b>non riceve</b> il cookie di x.com né quello del tracker, e non ha modo di leggerli.', 'The browser asks for the home page of <code>amazon.com</code> and sends only the amazon.com cookie. Amazon <b>doesn\'t receive</b> the x.com cookie or the tracker\'s one, and has no way to read them.') },
+        { date: TX('gio 15 ott 2026', 'Thu 15 Oct 2026'), from: 'a', to: 'c', short: TX('200 OK · spazio pubblicitario', '200 OK · ad slot'), msg: { t: 'HTTP response · amazon.com → browser', h: resp([], { type: PAGE.type, text: TX('… &lt;img src="https://ads-tracker.com/annuncio?spazio=offerte-lampo"&gt; …', '… &lt;img src="https://ads-tracker.com/ad?slot=flash-deals"&gt; …') }) },
+          text: TX('Nella pagina di Amazon c\'è uno spazio «Offerte lampo» riempito da <code>ads-tracker.com</code>: Amazon lascia al tracker la scelta dell\'annuncio.', 'Amazon\'s page has a “Flash deals” slot filled by <code>ads-tracker.com</code>: Amazon lets the tracker choose the ad.') },
+        { date: TX('gio 15 ott 2026', 'Thu 15 Oct 2026'), from: 'c', to: 't', cookie: true, send: 'ads-tracker.com', short: TX('GET /annuncio · Cookie', 'GET /ad · Cookie'), msg: { t: 'HTTP request · browser → ads-tracker.com', h: req(TX('/annuncio?spazio=offerte-lampo', '/ad?slot=flash-deals'), 'ads-tracker.com', [['Referer', 'https://www.amazon.com/'], ['Cookie', 'uid=af93']]) },
+          text: TX('Il browser chiede l\'annuncio al tracker e, visto che la richiesta va ad <code>ads-tracker.com</code>, invia il suo cookie: <code>Cookie: uid=af93</code>.', 'The browser asks the tracker for the ad and, since the request goes to <code>ads-tracker.com</code>, sends its cookie: <code>Cookie: uid=af93</code>.') },
+        { date: TX('gio 15 ott 2026', 'Thu 15 Oct 2026'), from: 't', to: 't', db: { id: 'af93', line: TX('annuncio su amazon.com: concime (15 ott)', 'ad on amazon.com: fertiliser (15 Oct)') }, short: TX('cerca af93', 'look up af93'), note: TX('Il tracker ritrova af93 e il like sulle piante, e sceglie un annuncio adatto: il concime.', 'The tracker finds af93 and the like about plants, and picks a fitting ad: fertiliser.'),
+          text: TX('Il tracker riconosce <b>af93</b>, ritrova il like di due giorni prima e sceglie l\'annuncio più adatto: un <b>concime</b>.', 'The tracker recognises <b>af93</b>, finds the like from two days earlier and picks the most fitting ad: a <b>fertiliser</b>.') },
+        { date: TX('gio 15 ott 2026', 'Thu 15 Oct 2026'), from: 't', to: 'c', short: TX('200 OK · annuncio concime', '200 OK · fertiliser ad'), msg: { t: 'HTTP response · ads-tracker.com → browser', h: resp([], { type: 'image/jpeg', text: TX('[immagine dell\'annuncio: concime per piante]', '[ad image: plant fertiliser]') }) },
+          text: TX('Su Amazon compare la pubblicità del concime. Amazon non ha letto i cookie di x.com: ogni dominio riceve solo i propri. È stato il <b>tracker</b>, presente su entrambi i siti, a riconoscere l\'utente con il suo cookie di terza parte.', 'The fertiliser ad shows up on Amazon. Amazon hasn\'t read the x.com cookies: each domain receives only its own. It was the <b>tracker</b>, present on both sites, that recognised the user with its third-party cookie.') }
       ]
     }
   };
@@ -1613,28 +1747,28 @@ function httpResp(status, headers, bodyHtml) {
   var BOOK = '<svg viewBox="0 0 40 50" aria-hidden="true"><rect x="4" y="2" width="32" height="46" rx="3" fill="#2B55CC"/><rect x="8" y="10" width="24" height="4" rx="1" fill="#E3E8FA"/><rect x="8" y="18" width="16" height="3" rx="1" fill="#AFC0F5"/></svg>';
 
   function amzBar() {
-    return '<div class="pg-amz-bar"><b>amazon.com</b><span class="pg-search">Cerca</span><span class="pg-cart">Carrello</span></div>';
+    return TX('<div class="pg-amz-bar"><b>amazon.com</b><span class="pg-search">Cerca</span><span class="pg-cart">Carrello</span></div>', '<div class="pg-amz-bar"><b>amazon.com</b><span class="pg-search">Search</span><span class="pg-cart">Cart</span></div>');
   }
   function grid(n) { var h = '<div class="pg-grid">'; for (var i = 0; i < n; i++) h += '<i></i>'; return h + '</div>'; }
 
   function pageHtml(v) {
     switch (v) {
-      case 'loading': return '<div class="pg-wait">Caricamento…</div>';
-      case 'closed': return '<div class="pg-wait">Browser chiuso</div>';
-      case 'amz-home': return amzBar() + '<div class="pg-body"><div class="pg-h">Benvenuto</div>' + grid(4) + '</div>';
-      case 'amz-cart': return amzBar() + '<div class="pg-body"><div class="pg-h">Carrello · 1 articolo</div><div class="pg-item">' + BOOK + '<span><b>Reti di calcolatori</b><br>Aggiunto al carrello</span></div></div>';
-      case 'amz-back': return amzBar() + '<div class="pg-body"><div class="pg-h">Bentornato!</div><div class="pg-item">' + BOOK + '<span>Nel carrello hai <b>1 articolo</b>:<br>Reti di calcolatori</span></div></div>';
+      case 'loading': return TX('<div class="pg-wait">Caricamento…</div>', '<div class="pg-wait">Loading…</div>');
+      case 'closed': return TX('<div class="pg-wait">Browser chiuso</div>', '<div class="pg-wait">Browser closed</div>');
+      case 'amz-home': return amzBar() + TX('<div class="pg-body"><div class="pg-h">Benvenuto</div>', '<div class="pg-body"><div class="pg-h">Welcome</div>') + grid(4) + '</div>';
+      case 'amz-cart': return amzBar() + TX('<div class="pg-body"><div class="pg-h">Carrello · 1 articolo</div><div class="pg-item">', '<div class="pg-body"><div class="pg-h">Cart · 1 item</div><div class="pg-item">') + BOOK + TX('<span><b>Reti di calcolatori</b><br>Aggiunto al carrello</span></div></div>', '<span><b>Computer Networking</b><br>Added to cart</span></div></div>');
+      case 'amz-back': return amzBar() + TX('<div class="pg-body"><div class="pg-h">Bentornato!</div><div class="pg-item">', '<div class="pg-body"><div class="pg-h">Welcome back!</div><div class="pg-item">') + BOOK + TX('<span>Nel carrello hai <b>1 articolo</b>:<br>Reti di calcolatori</span></div></div>', '<span>You have <b>1 item</b> in your cart:<br>Computer Networking</span></div></div>');
       case 'amz-slot':
       case 'amz-ad':
-        return amzBar() + '<div class="pg-body pg-split"><div><div class="pg-h">Benvenuto</div>' + grid(4) + '</div><div class="pg-ad' + (v === 'amz-ad' ? ' on' : '') + '"><span>Offerte lampo</span>' +
-          (v === 'amz-ad' ? FERT + '<b>Concime per piante</b>' : '<em>annuncio in arrivo da ads-tracker.com…</em>') + '</div></div>';
+        return amzBar() + TX('<div class="pg-body pg-split"><div><div class="pg-h">Benvenuto</div>', '<div class="pg-body pg-split"><div><div class="pg-h">Welcome</div>') + grid(4) + '</div><div class="pg-ad' + (v === 'amz-ad' ? ' on' : '') + TX('"><span>Offerte lampo</span>', '"><span>Flash deals</span>') +
+          (v === 'amz-ad' ? FERT + TX('<b>Concime per piante</b>', '<b>Plant fertiliser</b>') : TX('<em>annuncio in arrivo da ads-tracker.com…</em>', '<em>ad coming from ads-tracker.com…</em>')) + '</div></div>';
       case 'tweet':
       case 'tweet-liked':
         var liked = v === 'tweet-liked';
-        return '<div class="pg-tw"><div class="pg-tw-h"><span class="pg-av">🌿</span><span><b>Sandra la pianta</b><br><small>@una_pianta</small></span></div>' +
-          '<p>Pensa che fortuna, essere una pianta senza Instagram! Gli influencer passano il tempo ad autopromuoversi, io invece mi godo il sole. <span class="pg-tag">#NoInstagram #PlantPerks</span></p>' +
+        return TX('<div class="pg-tw"><div class="pg-tw-h"><span class="pg-av">🌿</span><span><b>Sandra la pianta</b><br><small>@una_pianta</small></span></div>', '<div class="pg-tw"><div class="pg-tw-h"><span class="pg-av">🌿</span><span><b>Sandra the plant</b><br><small>@una_pianta</small></span></div>') +
+          TX('<p>Pensa che fortuna, essere una pianta senza Instagram! Gli influencer passano il tempo ad autopromuoversi, io invece mi godo il sole. <span class="pg-tag">#NoInstagram #PlantPerks</span></p>', '<p>Lucky me, being a plant without Instagram! Influencers spend their time promoting themselves, while I just enjoy the sun. <span class="pg-tag">#NoInstagram #PlantPerks</span></p>') +
           '<div class="pg-img">' + PLANT + '</div><div class="pg-act"><span>💬</span><span>🔁</span><span class="pg-like' + (liked ? ' on' : '') + '">' + (liked ? '♥ 4' : '♡ 3') + '</span><span>🔖</span></div></div>';
-      default: return '<div class="pg-wait">Nuova scheda</div>';
+      default: return TX('<div class="pg-wait">Nuova scheda</div>', '<div class="pg-wait">New tab</div>');
     }
   }
 
@@ -1749,15 +1883,15 @@ function httpResp(status, headers, bodyHtml) {
 
   function drawJar(st) {
     var s = sc().steps[S.i];
-    var h = '<div class="ck-url"><span>Barra degli indirizzi</span><b>' + (st.url || '—') + '</b></div>';
+    var h = TX('<div class="ck-url"><span>Barra degli indirizzi</span><b>', '<div class="ck-url"><span>Address bar</span><b>') + (st.url || '—') + '</b></div>';
     h += '<div class="ck-page">' + pageHtml(st.view) + '</div>';
-    h += '<div class="ck-jt">Cookie salvati nel browser</div>';
-    if (!st.jar.length) h += '<div class="ck-empty">nessun cookie</div>';
+    h += TX('<div class="ck-jt">Cookie salvati nel browser</div>', '<div class="ck-jt">Cookies saved in the browser</div>');
+    if (!st.jar.length) h += TX('<div class="ck-empty">nessun cookie</div>', '<div class="ck-empty">no cookies</div>');
     st.jar.forEach(function (c) {
       var isNew = s.set && s.set.dom === c.dom, sent = s.send === c.dom;
       h += '<div class="ck-c' + (isNew || sent ? ' on' : '') + '"><div class="ck-ch"><b>' + c.dom + '</b>' +
-        (isNew ? '<span class="tag new">salvato ora</span>' : sent ? '<span class="tag sent">inviato a ' + c.dom + '</span>' : '') + '</div>' +
-        '<code>' + c.val + '</code><span class="ck-meta">scade il ' + c.exp + ' · ' + c.party + '</span></div>';
+        (isNew ? TX('<span class="tag new">salvato ora</span>', '<span class="tag new">saved now</span>') : sent ? TX('<span class="tag sent">inviato a ', '<span class="tag sent">sent to ') + c.dom + '</span>' : '') + '</div>' +
+        '<code>' + c.val + TX('</code><span class="ck-meta">scade il ', '</code><span class="ck-meta">expires ') + c.exp + ' · ' + c.party + '</span></div>';
     });
     $('ck-jar').innerHTML = h;
   }
@@ -1765,7 +1899,7 @@ function httpResp(status, headers, bodyHtml) {
   function drawDb(st) {
     var s = sc().steps[S.i];
     $('ck-dbcap').textContent = sc().dbTitle;
-    if (!st.order.length) { $('ck-db').innerHTML = '<div class="ck-empty">vuoto</div>'; return; }
+    if (!st.order.length) { $('ck-db').innerHTML = TX('<div class="ck-empty">vuoto</div>', '<div class="ck-empty">empty</div>'); return; }
     $('ck-db').innerHTML = st.order.map(function (id) {
       var on = s.db && s.db.id === id;
       return '<div class="ck-row' + (on ? ' on' : '') + '"><b>' + id + '</b><ul>' + st.db[id].map(function (l, k) {
@@ -1777,8 +1911,8 @@ function httpResp(status, headers, bodyHtml) {
   function inspect() {
     var s = sc().steps[S.i], box = $('ck-insp');
     if (s.msg) box.innerHTML = '<h3>' + s.msg.t + '</h3><pre>' + s.msg.h + '</pre>';
-    else if (s.db) box.innerHTML = '<h3>Nel database</h3><p>' + s.note + '</p>';
-    else box.innerHTML = '<h3>Messaggi HTTP</h3><p>Qui compare il contenuto di ogni messaggio. Le righe con un cookie sono evidenziate.</p>';
+    else if (s.db) box.innerHTML = TX('<h3>Nel database</h3><p>', '<h3>In the database</h3><p>') + s.note + '</p>';
+    else box.innerHTML = TX('<h3>Messaggi HTTP</h3><p>Qui compare il contenuto di ogni messaggio. Le righe con un cookie sono evidenziate.</p>', '<h3>HTTP messages</h3><p>The content of every message shows up here. Lines with a cookie are highlighted.</p>');
   }
 
   function render(animate) {
@@ -1835,7 +1969,7 @@ function httpResp(status, headers, bodyHtml) {
   var S = { ip: 0, net: 0, x: 20, k: 3, sel: -1, open: -1 };
 
   function pow2(e) { return Math.pow(2, e); }
-  function fmt(n) { return n.toLocaleString('it-IT'); }
+  function fmt(n) { return n.toLocaleString(TX('it-IT', 'en-GB')); }
   function p2(e) { return '2<sup>' + e + '</sup>'; }
   function ipToInt(s) {
     var m = /^\s*(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\s*$/.exec(s || '');
@@ -1872,9 +2006,9 @@ function httpResp(status, headers, bodyHtml) {
     var w = $('sn-warn');
     w.hidden = S.ip === S.net;
     if (!w.hidden) {
-      w.innerHTML = '<code>' + esc(intToIp(S.ip)) + '/' + S.x + '</code> non è l\'indirizzo di un blocco: con /' + S.x +
+      w.innerHTML = TX('<code>' + esc(intToIp(S.ip)) + '/' + S.x + '</code> non è l\'indirizzo di un blocco: con /' + S.x +
         ' i bit dopo i primi ' + S.x + ' devono valere tutti 0. Il blocco che lo contiene è <code>' + intToIp(S.net) + '/' + S.x +
-        '</code>, ed è quello mostrato qui. Il numero di bit liberi, e quindi il conto delle sottoreti, non cambia.';
+        '</code>, ed è quello mostrato qui. Il numero di bit liberi, e quindi il conto delle sottoreti, non cambia.', `<code>${esc(intToIp(S.ip))}/${S.x}</code> is not the address of a block: with /${S.x} the bits after the first ${S.x} must all be 0. The block that contains it is <code>${intToIp(S.net)}/${S.x}</code>, and that's the one shown here. The number of free bits, and so the subnet count, doesn't change.`);
     }
     return true;
   }
@@ -1883,9 +2017,9 @@ function httpResp(status, headers, bodyHtml) {
   function plan() {
     var x = S.x, free = 32 - x, k = S.k = Math.min(S.k, maxK()), h = free - k, sm = x + k;
     return [
-      'Il blocco <code>' + intToIp(S.net) + '/' + x + '</code> fissa i primi <b>' + x + ' bit</b>: restano 32 − ' + x + ' = <b>' + free + ' bit</b> liberi, cioè ' + p2(free) + ' = ' + fmt(pow2(free)) + ' indirizzi.',
-      'Con <b>' + k + ' bit</b> di sottorete si ottengono ' + p2(k) + ' = <b>' + fmt(pow2(k)) + ' sottoreti</b>, ognuna con maschera /' + x + ' + ' + k + ' = <b>/' + sm + '</b>.',
-      'A ogni sottorete restano ' + free + ' − ' + k + ' = ' + h + ' bit di host: ' + p2(h) + ' = <b>' + fmt(pow2(h)) + ' indirizzi</b>.'
+      TX('Il blocco <code>' + intToIp(S.net) + '/' + x + '</code> fissa i primi <b>' + x + ' bit</b>: restano 32 − ' + x + ' = <b>' + free + ' bit</b> liberi, cioè ' + p2(free) + ' = ' + fmt(pow2(free)) + ' indirizzi.', `The block <code>${intToIp(S.net)}/${x}</code> fixes the first <b>${x} bits</b>: 32 − ${x} = <b>${free} bits</b> are left free, that is ${p2(free)} = ${fmt(pow2(free))} addresses.`),
+      TX('Con <b>' + k + ' bit</b> di sottorete si ottengono ' + p2(k) + ' = <b>' + fmt(pow2(k)) + ' sottoreti</b>, ognuna con maschera /' + x + ' + ' + k + ' = <b>/' + sm + '</b>.', `With <b>${k} subnet bit${k === 1 ? '' : 's'}</b> you get ${p2(k)} = <b>${fmt(pow2(k))} subnet${pow2(k) === 1 ? '' : 's'}</b>, each with mask /${x} + ${k} = <b>/${sm}</b>.`),
+      TX('A ogni sottorete restano ' + free + ' − ' + k + ' = ' + h + ' bit di host: ' + p2(h) + ' = <b>' + fmt(pow2(h)) + ' indirizzi</b>.', `Each subnet is left with ${free} − ${k} = ${h} host bit${h === 1 ? '' : 's'}: ${p2(h)} = <b>${fmt(pow2(h))} address${pow2(h) === 1 ? '' : 'es'}</b>.`)
     ];
   }
 
@@ -1902,16 +2036,16 @@ function httpResp(status, headers, bodyHtml) {
     $('sn-k').max = maxK(); $('sn-k').value = k; $('sn-k-out').textContent = k;
     if (resetSel) { S.sel = lookupIndex(); S.open = -1; }
     $('sn-stats').innerHTML =
-      '<span class="stat">Indirizzi nel blocco <b>' + fmt(pow2(32 - x)) + '</b></span>' +
-      '<span class="stat">Sottoreti <b>' + fmt(pow2(k)) + '</b></span>' +
-      '<span class="stat">Maschera delle sottoreti <b>/' + sm + '</b></span>' +
-      '<span class="stat">Indirizzi per sottorete <b>' + fmt(pow2(h)) + '</b></span>';
+      TX('<span class="stat">Indirizzi nel blocco <b>', '<span class="stat">Addresses in the block <b>') + fmt(pow2(32 - x)) + TX('</b></span>' +
+      '<span class="stat">Sottoreti <b>', '</b></span><span class="stat">Subnets <b>') + fmt(pow2(k)) + '</b></span>' +
+      TX('<span class="stat">Maschera delle sottoreti <b>/', '<span class="stat">Subnet mask <b>/') + sm + '</b></span>' +
+      TX('<span class="stat">Indirizzi per sottorete <b>', '<span class="stat">Addresses per subnet <b>') + fmt(pow2(h)) + '</b></span>';
     $('sn-desc').innerHTML = steps.map(function (s) { return '<li>' + s + '</li>'; }).join('');
     $('sn-bits').innerHTML =
-      '<span class="lab">Blocco</span><span class="dec">' + intToIp(S.net) + '/' + x + '</span><span class="bin">' + binHtml(S.net, x, k) + '</span>' +
-      '<div class="sn-legend"><span><i style="background:var(--n-pre)"></i>prefisso del blocco: ' + x + ' bit</span>' +
-      '<span><i style="background:var(--n-sub)"></i>bit di sottorete: ' + k + '</span>' +
-      '<span><i style="background:var(--n-host)"></i>bit di host: ' + h + '</span></div>';
+      TX('<span class="lab">Blocco</span><span class="dec">', '<span class="lab">Block</span><span class="dec">') + intToIp(S.net) + '/' + x + '</span><span class="bin">' + binHtml(S.net, x, k) + TX('</span>' +
+      '<div class="sn-legend"><span><i style="background:var(--n-pre)"></i>prefisso del blocco: ', '</span><div class="sn-legend"><span><i style="background:var(--n-pre)"></i>block prefix: ') + x + TX(' bit</span>' +
+      '<span><i style="background:var(--n-sub)"></i>bit di sottorete: ', ' bits</span><span><i style="background:var(--n-sub)"></i>subnet bits: ') + k + TX('</span>' +
+      '<span><i style="background:var(--n-host)"></i>bit di host: ', '</span><span><i style="background:var(--n-host)"></i>host bits: ') + h + '</span></div>';
     renderBar(); renderTable(); renderLookup();
   }
 
@@ -1954,11 +2088,11 @@ function httpResp(status, headers, bodyHtml) {
       if (S.sel >= 32 && S.sel < n - 2) idx.push(S.sel);
       idx.push(n - 2, n - 1);
     }
-    var o = '<thead><tr><th>Sottorete di…</th><th>Indirizzo sottorete</th><th>Indirizzo (binario)</th><th>Indirizzi, dal primo all\'ultimo</th></tr></thead><tbody>' +
-      '<tr class="top"><td style="font-family:var(--f-body)">Blocco intero</td><td>' + intToIp(S.net) + '/' + x + '</td><td>' + binHtml(S.net, x, k) + '</td><td>' + intToIp(S.net) + ' – ' + intToIp(S.net + total - 1) + '</td></tr>';
+    var o = TX('<thead><tr><th>Sottorete di…</th><th>Indirizzo sottorete</th><th>Indirizzo (binario)</th><th>Indirizzi, dal primo all\'ultimo</th></tr></thead><tbody>', '<thead><tr><th>Subnet of…</th><th>Subnet address</th><th>Address (binary)</th><th>Addresses, first to last</th></tr></thead><tbody>') +
+      TX('<tr class="top"><td style="font-family:var(--f-body)">Blocco intero</td><td>', '<tr class="top"><td style="font-family:var(--f-body)">Whole block</td><td>') + intToIp(S.net) + '/' + x + '</td><td>' + binHtml(S.net, x, k) + '</td><td>' + intToIp(S.net) + ' – ' + intToIp(S.net + total - 1) + '</td></tr>';
     var prev = -1;
     idx.forEach(function (i) {
-      if (i - prev > 1) o += '<tr class="more"><td colspan="4">… altre ' + fmt(i - prev - 1) + ' sottoreti …</td></tr>';
+      if (i - prev > 1) o += TX('<tr class="more"><td colspan="4">… altre ' + fmt(i - prev - 1) + ' sottoreti …</td></tr>', `<tr class="more"><td colspan="4">… ${fmt(i - prev - 1)} more subnet${i - prev - 1 === 1 ? '' : 's'} …</td></tr>`);
       prev = i;
       var st = S.net + i * size;
       var op = i === S.open;
@@ -1971,15 +2105,15 @@ function httpResp(status, headers, bodyHtml) {
 
   // Tutti gli indirizzi di una sottorete, in decimale e in binario (se sono troppi, l'inizio e la fine).
   function addrList(st, size, x, k) {
-    var LIM = 1024, EDGE = 128, o = '<div class="sn-addrs"><p class="hint">' + fmt(size) + ' indirizzi: cambiano solo i ' + (32 - x - k) + ' bit di host, in verde.</p><div class="sn-alist">';
+    var LIM = 1024, EDGE = 128, o = TX('<div class="sn-addrs"><p class="hint">' + fmt(size) + ' indirizzi: cambiano solo i ' + (32 - x - k) + ' bit di host, in verde.</p><div class="sn-alist">', `<div class="sn-addrs"><p class="hint">${fmt(size)} addresses: only the ${32 - x - k} host bits change, in green.</p><div class="sn-alist">`);
     function row(a) {
-      var note = size >= 4 && a === st ? 'indirizzo della sottorete' : size >= 4 && a === st + size - 1 ? 'broadcast' : '';
+      var note = size >= 4 && a === st ? TX('indirizzo della sottorete', 'subnet address') : size >= 4 && a === st + size - 1 ? 'broadcast' : '';
       return '<span class="dec">' + intToIp(a) + '</span><span class="bin">' + binHtml(a, x, k) + '</span><span class="nt">' + note + '</span>';
     }
     if (size <= LIM) { for (var a = 0; a < size; a++) o += row(st + a); }
     else {
       for (var b = 0; b < EDGE; b++) o += row(st + b);
-      o += '<span class="gap">… altri ' + fmt(size - 2 * EDGE) + ' indirizzi …</span>';
+      o += TX('<span class="gap">… altri ' + fmt(size - 2 * EDGE) + ' indirizzi …</span>', `<span class="gap">… ${fmt(size - 2 * EDGE)} more addresses …</span>`);
       for (var c = size - EDGE; c < size; c++) o += row(st + c);
     }
     return o + '</div></div>';
@@ -2016,22 +2150,22 @@ function httpResp(status, headers, bodyHtml) {
   function renderLookup() {
     var box = $('sn-look'), ip = ipToInt($('sn-ip').value), x = S.x, k = S.k, h = 32 - x - k;
     $('sn-ip').classList.toggle('bad', ip === null);
-    if (ip === null) { box.innerHTML = '<p>Scrivi un indirizzo nella forma <code>a.b.c.d</code>, per esempio <code>200.23.19.232</code>.</p>'; return; }
+    if (ip === null) { box.innerHTML = TX('<p>Scrivi un indirizzo nella forma <code>a.b.c.d</code>, per esempio <code>200.23.19.232</code>.</p>', '<p>Type an address in the form <code>a.b.c.d</code>, for example <code>200.23.19.232</code>.</p>'); return; }
     var o = '';
     if (((ip & mask(x)) >>> 0) !== S.net) {
       var nd = 0, A = bin(ip), B = bin(S.net);
       for (var d = 0; d < x; d++) if (A[d] !== B[d]) nd++;
-      o += '<p>Confrontiamo l\'indirizzo con il blocco: contano solo i primi ' + x + ' bit, il prefisso.</p>' +
-        cmpGrid(ip, S.net, 'blocco /' + x, x, x, k) +
-        '<p><span class="no">Fuori dal blocco:</span> ' + nd + (nd === 1 ? ' bit del prefisso è diverso' : ' bit del prefisso sono diversi') + ' (≠).</p>';
+      o += TX('<p>Confrontiamo l\'indirizzo con il blocco: contano solo i primi ' + x + ' bit, il prefisso.</p>', `<p>Let's compare the address with the block: only the first ${x} bits count, the prefix.</p>`) +
+        cmpGrid(ip, S.net, TX('blocco /' + x, 'block /' + x), x, x, k) +
+        TX('<p><span class="no">Fuori dal blocco:</span> ' + nd + (nd === 1 ? ' bit del prefisso è diverso' : ' bit del prefisso sono diversi') + ' (≠).</p>', `<p><span class="no">Outside the block:</span> ${nd} prefix bit${nd === 1 ? ' is' : 's are'} different (≠).</p>`);
     } else {
       var size = pow2(h), i = Math.floor((ip - S.net) / size), st = S.net + i * size, nm = nameOf(i);
-      o += '<p>Confrontiamo l\'indirizzo con la sua sottorete: contano i primi ' + (x + k) + ' bit, prefisso del blocco e bit di sottorete. Gli altri ' + h + ', quelli di host (·), possono valere qualsiasi cosa.</p>' +
+      o += TX('<p>Confrontiamo l\'indirizzo con la sua sottorete: contano i primi ' + (x + k) + ' bit, prefisso del blocco e bit di sottorete. Gli altri ' + h + ', quelli di host (·), possono valere qualsiasi cosa.</p>', `<p>Let's compare the address with its subnet: the first ${x + k} bits count, block prefix and subnet bits. The other ${h}, the host bits (·), can be anything.</p>`) +
         cmpGrid(ip, st, intToIp(st) + '/' + (x + k), x + k, x, k) +
-        '<p><span class="ok">Nel blocco:</span> i primi ' + x + ' bit coincidono con quelli di <code>' + intToIp(S.net) + '/' + x + '</code>.</p>';
-      if (k > 0) o += '<p>I ' + k + ' bit di sottorete valgono <code class="ns">' + bin(ip).substr(x, k) + '</code>: l\'indirizzo è nella sottorete <b>' + intToIp(st) + '/' + (x + k) + '</b> (' + esc(nm) + ').</p>';
-      if (h >= 2 && ip === st) o += '<p>I bit di host sono tutti 0: è l\'indirizzo della sottorete stessa, che non si assegna a nessuna interfaccia.</p>';
-      if (h >= 2 && ip === st + size - 1) o += '<p>I bit di host sono tutti 1: è l\'indirizzo di broadcast della sottorete, che non si assegna a nessuna interfaccia.</p>';
+        TX('<p><span class="ok">Nel blocco:</span> i primi ' + x + ' bit coincidono con quelli di <code>' + intToIp(S.net) + '/' + x + '</code>.</p>', `<p><span class="ok">In the block:</span> the first ${x} bits match those of <code>${intToIp(S.net)}/${x}</code>.</p>`);
+      if (k > 0) o += TX('<p>I ' + k + ' bit di sottorete valgono <code class="ns">' + bin(ip).substr(x, k) + '</code>: l\'indirizzo è nella sottorete <b>' + intToIp(st) + '/' + (x + k) + '</b> (' + esc(nm) + ').</p>', `<p>The ${k} subnet bit${k === 1 ? ' is' : 's are'} <code class="ns">${bin(ip).substr(x, k)}</code>: the address is in the subnet <b>${intToIp(st)}/${x + k}</b> (${esc(nm)}).</p>`);
+      if (h >= 2 && ip === st) o += TX('<p>I bit di host sono tutti 0: è l\'indirizzo della sottorete stessa, che non si assegna a nessuna interfaccia.</p>', '<p>The host bits are all 0: it\'s the address of the subnet itself, which is not assigned to any interface.</p>');
+      if (h >= 2 && ip === st + size - 1) o += TX('<p>I bit di host sono tutti 1: è l\'indirizzo di broadcast della sottorete, che non si assegna a nessuna interfaccia.</p>', '<p>The host bits are all 1: it\'s the subnet\'s broadcast address, which is not assigned to any interface.</p>');
     }
     box.innerHTML = o;
   }
@@ -2090,33 +2224,33 @@ function httpResp(status, headers, bodyHtml) {
 
   // Ogni passo: un pacchetto in viaggio su un collegamento, oppure il router che lo riscrive (in/out) o lo scarta.
   var MOMENTS = [
-    { title: 'Il PC .25 apre una pagina', sub: 'il router crea la prima riga', table: [], steps: [
-      { desc: 'In casa ci sono due PC con indirizzi <b>privati</b>, in rosso. Verso Internet il router ha un solo indirizzo <b>pubblico</b>, in verde: <span class="v">' + PUB + '</span>. Il PC <span class="v">' + A + '</span> vuole una pagina dal web server <span class="v">' + SRV + '</span>. Premi <b>Avanti</b>.' },
-      { link: 'ar', fwd: true, pkt: pk1, num: 1, desc: 'Il PC invia una <b>HTTP request</b>. Sorgente: il suo indirizzo privato e la porta <span class="v">3345</span>, scelta dal sistema operativo. Destinazione: il web server, porta 80.' },
+    { title: TX('Il PC .25 apre una pagina', 'PC .25 opens a page'), sub: TX('il router crea la prima riga', 'the router creates the first row'), table: [], steps: [
+      { desc: TX('In casa ci sono due PC con indirizzi <b>privati</b>, in rosso. Verso Internet il router ha un solo indirizzo <b>pubblico</b>, in verde: <span class="v">' + PUB + '</span>. Il PC <span class="v">' + A + '</span> vuole una pagina dal web server <span class="v">' + SRV + '</span>. Premi <b>Avanti</b>.', `At home there are two PCs with <b>private</b> addresses, in red. Towards the Internet the router has a single <b>public</b> address, in green: <span class="v">${PUB}</span>. The PC <span class="v">${A}</span> wants a page from the web server <span class="v">${SRV}</span>. Press <b>Next</b>.`) },
+      { link: 'ar', fwd: true, pkt: pk1, num: 1, desc: TX('Il PC invia una <b>HTTP request</b>. Sorgente: il suo indirizzo privato e la porta <span class="v">3345</span>, scelta dal sistema operativo. Destinazione: il web server, porta 80.', 'The PC sends an <b>HTTP request</b>. Source: its private address and port <span class="v">3345</span>, chosen by the operating system. Destination: the web server, port 80.') },
       { rewrite: 's', from: 'ar', to: 'rs', before: pk1, after: pk2, nb: 1, na: 2, add: ROW_A,
-        desc: '<b>Riscrittura.</b> Un indirizzo privato non può uscire su Internet. Il router sostituisce la sorgente: al posto di ' + A + ' mette il suo indirizzo pubblico, al posto della porta 3345 una porta libera scelta da lui, <span class="v">5001</span>. Poi annota la coppia nella tabella.' },
-      { link: 'rs', fwd: true, pkt: pk2, num: 2, desc: 'La request, riscritta, attraversa Internet. Il web server vede solo l\'indirizzo pubblico del router: non sa che dietro c\'è un PC.' },
-      { link: 'rs', fwd: false, pkt: pk3, num: 3, desc: 'Il server risponde con una <b>HTTP response</b>, indirizzata all\'indirizzo e alla porta che ha visto: <span class="v">' + PUB + '</span>, porta <span class="v">5001</span>.' },
+        desc: TX('<b>Riscrittura.</b> Un indirizzo privato non può uscire su Internet. Il router sostituisce la sorgente: al posto di ' + A + ' mette il suo indirizzo pubblico, al posto della porta 3345 una porta libera scelta da lui, <span class="v">5001</span>. Poi annota la coppia nella tabella.', `<b>Rewriting.</b> A private address can't go out on the Internet. The router replaces the source: instead of ${A} it puts its public address, and instead of port 3345 a free port of its own choosing, <span class="v">5001</span>. Then it writes the pair down in the table.`) },
+      { link: 'rs', fwd: true, pkt: pk2, num: 2, desc: TX('La request, riscritta, attraversa Internet. Il web server vede solo l\'indirizzo pubblico del router: non sa che dietro c\'è un PC.', 'The rewritten request crosses the Internet. The web server sees only the router\'s public address: it doesn\'t know there\'s a PC behind it.') },
+      { link: 'rs', fwd: false, pkt: pk3, num: 3, desc: TX('Il server risponde con una <b>HTTP response</b>, indirizzata all\'indirizzo e alla porta che ha visto: <span class="v">' + PUB + '</span>, porta <span class="v">5001</span>.', `The server replies with an <b>HTTP response</b>, addressed to the address and port it saw: <span class="v">${PUB}</span>, port <span class="v">5001</span>.`) },
       { rewrite: 'd', from: 'rs', to: 'ar', before: pk3, after: pk4, nb: 3, na: 4, look: 5001,
-        desc: '<b>Riscrittura.</b> Il router guarda la <b>porta</b> di destinazione, 5001, e la cerca nella tabella: corrisponde a ' + A + ', porta 3345. Riscrive la destinazione con questi valori.' },
-      { link: 'ar', fwd: false, pkt: pk4, num: 4, desc: 'La response arriva al PC <span class="v">' + A + '</span>, sulla porta 3345 da cui era partita la richiesta.' }
+        desc: TX('<b>Riscrittura.</b> Il router guarda la <b>porta</b> di destinazione, 5001, e la cerca nella tabella: corrisponde a ' + A + ', porta 3345. Riscrive la destinazione con questi valori.', `<b>Rewriting.</b> The router looks at the destination <b>port</b>, 5001, and looks it up in the table: it matches ${A}, port 3345. It rewrites the destination with these values.`) },
+      { link: 'ar', fwd: false, pkt: pk4, num: 4, desc: TX('La response arriva al PC <span class="v">' + A + '</span>, sulla porta 3345 da cui era partita la richiesta.', `The response reaches the PC <span class="v">${A}</span>, on port 3345, where the request had come from.`) }
     ] },
-    { title: 'Anche il PC .50', sub: 'stesso indirizzo pubblico, porta diversa', table: [ROW_A], steps: [
-      { desc: 'La riga di prima è ancora nella tabella. Ora anche il PC <span class="v">' + B + '</span> contatta lo stesso web server, e il suo sistema operativo sceglie per caso la stessa porta, <span class="v">3345</span>.' },
-      { link: 'br', fwd: true, pkt: qk1, num: 1, desc: 'Il PC .50 invia la sua HTTP request: sorgente ' + B + ', porta 3345.' },
+    { title: TX('Anche il PC .50', 'PC .50 as well'), sub: TX('stesso indirizzo pubblico, porta diversa', 'same public address, different port'), table: [ROW_A], steps: [
+      { desc: TX('La riga di prima è ancora nella tabella. Ora anche il PC <span class="v">' + B + '</span> contatta lo stesso web server, e il suo sistema operativo sceglie per caso la stessa porta, <span class="v">3345</span>.', `The earlier row is still in the table. Now the PC <span class="v">${B}</span> contacts the same web server too, and its operating system happens to pick the same port, <span class="v">3345</span>.`) },
+      { link: 'br', fwd: true, pkt: qk1, num: 1, desc: TX('Il PC .50 invia la sua HTTP request: sorgente ' + B + ', porta 3345.', `PC .50 sends its HTTP request: source ${B}, port 3345.`) },
       { rewrite: 's', from: 'br', to: 'rs', before: qk1, after: qk2, nb: 1, na: 2, add: ROW_B,
-        desc: '<b>Riscrittura.</b> Anche qui la sorgente diventa ' + PUB + ', ma la porta 5001 è già usata per il PC .25: il router sceglie <span class="v">5002</span>. Verso Internet i due PC hanno lo stesso indirizzo; a distinguerli è solo la <b>porta</b>.' },
-      { link: 'rs', fwd: true, pkt: qk2, num: 2, desc: 'Per il web server questa request viene dallo stesso indirizzo di prima, ma da un\'altra porta.' },
-      { link: 'rs', fwd: false, pkt: qk3, num: 3, desc: 'Il server risponde con una HTTP response a ' + PUB + ', porta <span class="v">5002</span>. L\'indirizzo di destinazione è identico a quello delle risposte per il PC .25: cambia solo la porta.' },
+        desc: TX('<b>Riscrittura.</b> Anche qui la sorgente diventa ' + PUB + ', ma la porta 5001 è già usata per il PC .25: il router sceglie <span class="v">5002</span>. Verso Internet i due PC hanno lo stesso indirizzo; a distinguerli è solo la <b>porta</b>.', `<b>Rewriting.</b> Here too the source becomes ${PUB}, but port 5001 is already used for PC .25: the router picks <span class="v">5002</span>. Towards the Internet the two PCs have the same address; only the <b>port</b> tells them apart.`) },
+      { link: 'rs', fwd: true, pkt: qk2, num: 2, desc: TX('Per il web server questa request viene dallo stesso indirizzo di prima, ma da un\'altra porta.', 'To the web server this request comes from the same address as before, but from another port.') },
+      { link: 'rs', fwd: false, pkt: qk3, num: 3, desc: TX('Il server risponde con una HTTP response a ' + PUB + ', porta <span class="v">5002</span>. L\'indirizzo di destinazione è identico a quello delle risposte per il PC .25: cambia solo la porta.', `The server replies with an HTTP response to ${PUB}, port <span class="v">5002</span>. The destination address is the same as in the responses for PC .25: only the port changes.`) },
       { rewrite: 'd', from: 'rs', to: 'br', before: qk3, after: qk4, nb: 3, na: 4, look: 5002,
-        desc: '<b>Riscrittura.</b> Il router cerca la porta 5002 nella tabella e trova ' + B + ', porta 3345. È la <b>porta</b>, non l\'indirizzo, a dire a quale PC consegnare il pacchetto.' },
-      { link: 'br', fwd: false, pkt: qk4, num: 4, desc: 'La response arriva al PC <span class="v">' + B + '</span>. Il PC .25 non vede nulla: la risposta non era per lui.' }
+        desc: TX('<b>Riscrittura.</b> Il router cerca la porta 5002 nella tabella e trova ' + B + ', porta 3345. È la <b>porta</b>, non l\'indirizzo, a dire a quale PC consegnare il pacchetto.', `<b>Rewriting.</b> The router looks up port 5002 in the table and finds ${B}, port 3345. It's the <b>port</b>, not the address, that says which PC to deliver the packet to.`) },
+      { link: 'br', fwd: false, pkt: qk4, num: 4, desc: TX('La response arriva al PC <span class="v">' + B + '</span>. Il PC .25 non vede nulla: la risposta non era per lui.', `The response reaches the PC <span class="v">${B}</span>. PC .25 sees nothing: the response wasn't for it.`) }
     ] },
-    { title: 'Un pacchetto non richiesto', sub: 'nessuna riga: il router lo scarta', table: [ROW_A, ROW_B], steps: [
-      { desc: 'Un host esterno, <span class="v">' + X + '</span>, prova a contattare un dispositivo della rete di casa. Conosce solo l\'indirizzo pubblico del router.' },
-      { link: 'xr', fwd: false, pkt: zk1, num: 1, desc: 'Il pacchetto arriva al router: destinazione ' + PUB + ', porta <span class="v">8080</span>.' },
+    { title: TX('Un pacchetto non richiesto', 'An unrequested packet'), sub: TX('nessuna riga: il router lo scarta', 'no row: the router drops it'), table: [ROW_A, ROW_B], steps: [
+      { desc: TX('Un host esterno, <span class="v">' + X + '</span>, prova a contattare un dispositivo della rete di casa. Conosce solo l\'indirizzo pubblico del router.', `An external host, <span class="v">${X}</span>, tries to contact a device in the home network. It only knows the router's public address.`) },
+      { link: 'xr', fwd: false, pkt: zk1, num: 1, desc: TX('Il pacchetto arriva al router: destinazione ' + PUB + ', porta <span class="v">8080</span>.', `The packet reaches the router: destination ${PUB}, port <span class="v">8080</span>.`) },
       { drop: true, from: 'xr', before: zk1, nb: 1, look: 8080,
-        desc: 'Il router cerca la porta 8080 nella tabella: <b>nessuna riga</b>. Non sa a quale PC consegnare il pacchetto e lo <b>scarta</b>. Le righe nascono solo dai pacchetti in uscita: per questo da Internet non si raggiungono i dispositivi di casa, se non si configura il router apposta.' }
+        desc: TX('Il router cerca la porta 8080 nella tabella: <b>nessuna riga</b>. Non sa a quale PC consegnare il pacchetto e lo <b>scarta</b>. Le righe nascono solo dai pacchetti in uscita: per questo da Internet non si raggiungono i dispositivi di casa, se non si configura il router apposta.', 'The router looks for port 8080 in the table: <b>no row</b>. It doesn\'t know which PC to deliver the packet to, so it <b>drops</b> it. Rows are created only by outgoing packets: that\'s why devices at home can\'t be reached from the Internet, unless the router is configured for it.') }
     ] }
   ];
 
@@ -2227,10 +2361,10 @@ function httpResp(status, headers, bodyHtml) {
     el('rect', { x: x0, y: y0, width: w, height: h, 'class': 'nt-bg' }, svg);
     // Intestazione scura: angoli arrotondati solo in alto, come la cornice.
     el('path', { d: 'M' + x0 + ',' + (y0 + capH) + ' V' + (y0 + 6) + ' Q' + x0 + ',' + y0 + ' ' + (x0 + 6) + ',' + y0 + ' H' + (x0 + w - 6) + ' Q' + (x0 + w) + ',' + y0 + ' ' + (x0 + w) + ',' + (y0 + 6) + ' V' + (y0 + capH) + ' Z', 'class': 'nt-cap' }, svg);
-    el('text', { x: R.x, y: y0 + 17, 'text-anchor': 'middle', 'class': 'nt-capt' }, svg, 'Tabella di traduzione NAT');
+    el('text', { x: R.x, y: y0 + 17, 'text-anchor': 'middle', 'class': 'nt-capt' }, svg, TX('Tabella di traduzione NAT', 'NAT translation table'));
     el('rect', { x: x0 + 0.6, y: y0 + capH, width: w - 1.2, height: hdH, 'class': 'nt-head' }, svg);
-    el('text', { x: x0 + w / 4, y: y0 + capH + 15, 'text-anchor': 'middle', 'class': 'nt-ht' }, svg, 'Lato LAN');
-    el('text', { x: xm + w / 4, y: y0 + capH + 15, 'text-anchor': 'middle', 'class': 'nt-ht' }, svg, 'Lato WAN');
+    el('text', { x: x0 + w / 4, y: y0 + capH + 15, 'text-anchor': 'middle', 'class': 'nt-ht' }, svg, TX('Lato LAN', 'LAN side'));
+    el('text', { x: xm + w / 4, y: y0 + capH + 15, 'text-anchor': 'middle', 'class': 'nt-ht' }, svg, TX('Lato WAN', 'WAN side'));
     var y = y0 + capH + hdH;
     var pos = { rows: [], miss: null };
     function cell(x, ty, ip, port, key) {
@@ -2241,7 +2375,7 @@ function httpResp(status, headers, bodyHtml) {
       el('text', { x: ptX, y: ty, 'class': 'nt-tx pt' + (key ? ' on' : '') }, svg, port);
       return { x: ptX + pw / 2, y: y0 + h + 3 };
     }
-    if (!rows.length) el('text', { x: R.x, y: y + 16, 'text-anchor': 'middle', 'class': 'nt-empty' }, svg, 'vuota');
+    if (!rows.length) el('text', { x: R.x, y: y + 16, 'text-anchor': 'middle', 'class': 'nt-empty' }, svg, TX('vuota', 'empty'));
     rows.forEach(function (r, j) {
       var cls = st.add === r ? 'new' : st.look === r[3] ? 'hl' : '', ry = y + j * rH;
       if (cls) el('rect', { x: x0 + 0.6, y: ry, width: w - 1.2, height: rH, 'class': 'nt-row' }, svg);
@@ -2250,7 +2384,7 @@ function httpResp(status, headers, bodyHtml) {
     if (st.drop) {
       var my = y + Math.max(rows.length, 1) * rH;
       el('rect', { x: x0 + 0.6, y: my, width: w - 1.2, height: rH, 'class': 'nt-row miss' }, svg);
-      el('text', { x: R.x, y: my + 16, 'text-anchor': 'middle', 'class': 'nt-miss' }, svg, 'nessuna riga con porta ' + st.look);
+      el('text', { x: R.x, y: my + 16, 'text-anchor': 'middle', 'class': 'nt-miss' }, svg, TX('nessuna riga con porta ' + st.look, 'no row with port ' + st.look));
       pos.miss = { x: R.x + 150, y: y0 + h + 3 };
     }
     el('line', { x1: xm, y1: y0 + capH, x2: xm, y2: y + rows.length * rH, 'class': 'nt-sep' }, svg);
@@ -2267,8 +2401,8 @@ function httpResp(status, headers, bodyHtml) {
     // Le due zone: rete di casa e Internet; il confine passa per il router.
     el('rect', { x: 0, y: 0, width: P.r.x, height: H, rx: 8, 'class': 'nat-zone priv' }, svg);
     el('rect', { x: P.r.x, y: 0, width: W - P.r.x, height: H, rx: 8, 'class': 'nat-zone pub' }, svg);
-    el('text', { x: 12, y: 20, 'class': 'nat-zl priv' }, svg, 'Rete di casa · indirizzi privati');
-    el('text', { x: W - 12, y: 20, 'text-anchor': 'end', 'class': 'nat-zl pub' }, svg, 'Internet · indirizzi pubblici');
+    el('text', { x: 12, y: 20, 'class': 'nat-zl priv' }, svg, TX('Rete di casa · indirizzi privati', 'Home network · private addresses'));
+    el('text', { x: W - 12, y: 20, 'text-anchor': 'end', 'class': 'nat-zl pub' }, svg, TX('Internet · indirizzi pubblici', 'Internet · public addresses'));
 
     Object.keys(LINKS).forEach(function (lk) {
       var g = geom(lk);
@@ -2283,7 +2417,7 @@ function httpResp(status, headers, bodyHtml) {
     host(P.a, ICON_PC, 'PC', A);
     host(P.b, ICON_PC, 'PC', B);
     host(P.s, ICON_SERVER, 'web server', SRV);
-    host(P.x, ICON_PC, 'host esterno', X);
+    host(P.x, ICON_PC, TX('host esterno', 'external host'), X);
 
     var R = P.r;
     var gl = el('g', {}, svg), tpos = natTable(svg, st, R);
@@ -2291,12 +2425,12 @@ function httpResp(status, headers, bodyHtml) {
     // Il router al lavoro: sfondo colorato dietro l'icona e una scritta sotto.
     if (st.rewrite || st.drop) el('rect', { x: R.x - 74, y: R.y - 40, width: 148, height: 80, rx: 16, 'class': 'nat-halo' + (st.drop ? ' bad' : '') }, svg);
     el('image', { href: ICON_ROUTER, x: R.x - 55, y: R.y - 31, width: 110, height: 62 }, svg);
-    el('text', { x: R.x, y: R.y + 58, 'text-anchor': 'middle', 'class': 'nat-who' }, svg, 'router casalingo (NAT)');
+    el('text', { x: R.x, y: R.y + 58, 'text-anchor': 'middle', 'class': 'nat-who' }, svg, TX('router casalingo (NAT)', 'home router (NAT)'));
     el('text', { x: R.x - 14, y: R.y - 50, 'text-anchor': 'end', 'class': 'nat-ip priv' }, svg, '192.168.1.1');
     el('text', { x: R.x + 14, y: R.y - 50, 'class': 'nat-ip pub' }, svg, PUB);
 
     if (st.rewrite) {
-      el('text', { x: R.x, y: R.y + 76, 'text-anchor': 'middle', 'class': 'nat-rtl' }, svg, st.rewrite === 's' ? 'riscrive la sorgente' : 'riscrive la destinazione');
+      el('text', { x: R.x, y: R.y + 76, 'text-anchor': 'middle', 'class': 'nat-rtl' }, svg, st.rewrite === 's' ? TX('riscrive la sorgente', 'rewrites the source') : TX('riscrive la destinazione', 'rewrites the destination'));
       var cb = at(st.from, REW[st.from]), ca = at(st.to, REW[st.to]), f = st.rewrite;
       place(packet(svg, st.before, st.nb, { dim: true, key: f }), cb);
       place(packet(svg, st.after, st.na, { chg: f }), ca);
@@ -2307,7 +2441,7 @@ function httpResp(status, headers, bodyHtml) {
         portLink(gl, f === 's' ? row.wan : row.lan, pktAnchor(ca, st.after, f));
       }
     } else if (st.drop) {
-      el('text', { x: R.x, y: R.y + 76, 'text-anchor': 'middle', 'class': 'nat-dropl' }, svg, 'pacchetto scartato');
+      el('text', { x: R.x, y: R.y + 76, 'text-anchor': 'middle', 'class': 'nat-dropl' }, svg, TX('pacchetto scartato', 'packet dropped'));
       var cd = at(st.from, REW[st.from]);
       place(packet(svg, st.before, st.nb, { dim: true, key: 'd' }), cd);
       if (tpos.miss) portLink(gl, pktAnchor(cd, st.before, 'd'), tpos.miss);
@@ -2347,18 +2481,18 @@ function httpResp(status, headers, bodyHtml) {
   function panel() {
     var st = MOMENTS[S.m].steps[S.i], o;
     if (st.rewrite) {
-      o = '<h3>Nel router: ' + (st.rewrite === 's' ? 'pacchetto in uscita' : 'pacchetto in entrata') + '</h3>' +
-        '<div class="nat-cards">' + cardHtml('arriva: ' + kindOf(st.before), st.before, null, st.rewrite === 'd' ? 'd' : null) + '<span class="to">↓</span>' + cardHtml('esce: ' + kindOf(st.after), st.after, st.rewrite) + '</div>' +
+      o = TX('<h3>Nel router: ', '<h3>In the router: ') + (st.rewrite === 's' ? TX('pacchetto in uscita', 'outgoing packet') : TX('pacchetto in entrata', 'incoming packet')) + '</h3>' +
+        '<div class="nat-cards">' + cardHtml(TX('arriva: ' + kindOf(st.before), 'in: ' + kindOf(st.before)), st.before, null, st.rewrite === 'd' ? 'd' : null) + '<span class="to">↓</span>' + cardHtml(TX('esce: ' + kindOf(st.after), 'out: ' + kindOf(st.after)), st.after, st.rewrite) + '</div>' +
         '<p>' + (st.rewrite === 's'
-          ? 'Cambiano indirizzo e porta di <b>sorgente</b>. La nuova porta, ' + st.after.s[1] + ', è la chiave della nuova riga della tabella.'
-          : 'La porta di destinazione, ' + st.look + ', è la chiave: il router la cerca nel lato WAN della tabella e rimette indirizzo e porta del lato LAN.') + '</p>';
+          ? TX('Cambiano indirizzo e porta di <b>sorgente</b>. La nuova porta, ' + st.after.s[1] + ', è la chiave della nuova riga della tabella.', `The <b>source</b> address and port change. The new port, ${st.after.s[1]}, is the key of the table's new row.`)
+          : TX('La porta di destinazione, ' + st.look + ', è la chiave: il router la cerca nel lato WAN della tabella e rimette indirizzo e porta del lato LAN.', `The destination port, ${st.look}, is the key: the router looks it up on the table's WAN side and puts back the LAN-side address and port.`)) + '</p>';
     } else if (st.drop) {
-      o = '<h3>Nel router: pacchetto in entrata</h3><div class="nat-cards">' + cardHtml('arriva: ' + kindOf(st.before), st.before, null, 'd') + '<span class="to">↓</span><div class="nat-card"><small>esce</small><span class="no" style="color:var(--high);font-family:var(--f-body)">niente: scartato</span></div></div>' +
-        '<p>Nella tabella non c\'è nessuna riga con la porta ' + st.look + '.</p>';
+      o = TX('<h3>Nel router: pacchetto in entrata</h3><div class="nat-cards">', '<h3>In the router: incoming packet</h3><div class="nat-cards">') + cardHtml(TX('arriva: ' + kindOf(st.before), 'in: ' + kindOf(st.before)), st.before, null, 'd') + TX('<span class="to">↓</span><div class="nat-card"><small>esce</small><span class="no" style="color:var(--high);font-family:var(--f-body)">niente: scartato</span></div></div>', '<span class="to">↓</span><div class="nat-card"><small>out</small><span class="no" style="color:var(--high);font-family:var(--f-body)">nothing: dropped</span></div></div>') +
+        TX('<p>Nella tabella non c\'è nessuna riga con la porta ' + st.look + '.</p>', `<p>The table has no row with port ${st.look}.</p>`);
     } else if (st.link) {
-      o = '<h3>' + kindOf(st.pkt) + ' in viaggio</h3><div class="nat-cards">' + cardHtml(st.link === 'rs' || st.link === 'xr' ? 'su Internet' : 'nella rete di casa', st.pkt) + '</div>';
+      o = '<h3>' + kindOf(st.pkt) + TX(' in viaggio</h3><div class="nat-cards">', ' on its way</h3><div class="nat-cards">') + cardHtml(st.link === 'rs' || st.link === 'xr' ? TX('su Internet', 'on the Internet') : TX('nella rete di casa', 'in the home network'), st.pkt) + '</div>';
     } else {
-      o = '<h3>Il router casalingo</h3><p>Lato LAN ha l\'indirizzo privato 192.168.1.1, lato WAN l\'indirizzo pubblico ' + PUB + '. Nei passi che seguono, qui vedi ogni pacchetto e come il router lo riscrive; la tabella di traduzione è disegnata sopra il router.</p>';
+      o = TX('<h3>Il router casalingo</h3><p>Lato LAN ha l\'indirizzo privato 192.168.1.1, lato WAN l\'indirizzo pubblico ' + PUB + '. Nei passi che seguono, qui vedi ogni pacchetto e come il router lo riscrive; la tabella di traduzione è disegnata sopra il router.</p>', `<h3>The home router</h3><p>On the LAN side it has the private address 192.168.1.1, on the WAN side the public address ${PUB}. In the following steps you'll see each packet here and how the router rewrites it; the translation table is drawn above the router.</p>`);
     }
     $('nat-insp').innerHTML = o;
 
@@ -2441,8 +2575,8 @@ function httpResp(status, headers, bodyHtml) {
     var d = dark();
     b.innerHTML = d ? SUN : MOON;
     b.setAttribute('aria-pressed', d ? 'true' : 'false');
-    b.setAttribute('aria-label', 'Tema scuro');
-    b.title = d ? 'Passa al tema chiaro' : 'Passa al tema scuro';
+    b.setAttribute('aria-label', TX('Tema scuro', 'Dark theme'));
+    b.title = d ? TX('Passa al tema chiaro', 'Switch to light theme') : TX('Passa al tema scuro', 'Switch to dark theme');
   }
   b.addEventListener('click', function () {
     var t = dark() ? 'light' : 'dark';
@@ -2472,7 +2606,7 @@ function httpResp(status, headers, bodyHtml) {
     w.appendChild(b);
     return b;
   }
-  var L = arrow('l', 'Schede precedenti', -1), Rr = arrow('r', 'Schede successive', 1);
+  var L = arrow('l', TX('Schede precedenti', 'Previous tabs'), -1), Rr = arrow('r', TX('Schede successive', 'Next tabs'), 1);
   function update() {
     var max = t.scrollWidth - t.clientWidth;
     L.classList.toggle('on', t.scrollLeft > 2);
@@ -2500,5 +2634,22 @@ function httpResp(status, headers, bodyHtml) {
 })();
 </script>
 <footer class="copy">© 2026 Enrico Mensa</footer>
+<script>
+// Pulsante della lingua: mostra la lingua in cui si passa; la scelta resta salvata e la pagina si ricarica (stessa scheda).
+(function () {
+  var b = document.getElementById('lang-tg');
+  if (!b) return;
+  var to = LANG === 'en' ? 'it' : 'en';
+  b.textContent = to.toUpperCase();
+  b.title = LANG === 'en' ? 'Passa all\'italiano' : 'Switch to English';
+  b.setAttribute('aria-label', b.title);
+  b.setAttribute('lang', to);
+  b.addEventListener('click', function () {
+    try { localStorage.setItem('lang', to); } catch (e) {}
+    var s = location.search.replace(/([?&])lang=(it|en)(&|$)/, function (m, a, x, c) { return c ? a : ''; }).replace(/[?&]$/, '');
+    if (s !== location.search) location.search = s; else location.reload();
+  });
+})();
+</script>
 </body>
 </html>

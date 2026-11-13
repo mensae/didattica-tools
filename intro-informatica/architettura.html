@@ -8,6 +8,45 @@
 // Tema scelto con l'interruttore in alto a destra (vale per tutte le pagine): applicato subito, prima di disegnare.
 try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light') document.documentElement.setAttribute('data-theme', tm); } catch (e) {}
 </script>
+<script>
+// Lingua dei testi (italiano o inglese): si sceglie con il pulsante in alto a destra e vale per tutte le pagine.
+// ?lang=en (o ?lang=it) nell'indirizzo la impone, per esempio in un link.
+var LANG = (function () {
+  var q = /[?&]lang=(it|en)(&|$)/.exec(location.search);
+  if (q) return q[1];
+  try { var v = localStorage.getItem('lang'); if (v === 'it' || v === 'en') return v; } catch (e) {}
+  return 'it';
+})();
+document.documentElement.lang = LANG;
+// TX('testo italiano', 'English text'): il testo nella lingua attiva (usato dagli script delle pagine).
+function TX(it, en) { return LANG === 'en' && en != null ? en : it; }
+// Testi fissi dell'HTML: ogni pagina mette in I18N le traduzioni, cercate per contenuto italiano dell'elemento
+// (spazi normalizzati), e chiama i18nApply() subito dopo l'HTML, prima dei suoi script; quello che non ha
+// traduzione resta in italiano.
+var I18N = {};
+function i18nApply() {
+  if (LANG !== 'en') return;
+  var ATTR = ['title', 'aria-label', 'placeholder', 'alt', 'value'], SKIP = { SCRIPT: 1, STYLE: 1, svg: 1, TEXTAREA: 1 };
+  function norm(s) { return s.replace(/\s+/g, ' ').trim(); }
+  (function walk(e) {
+    for (var n = e.firstChild; n; n = n.nextSibling) {
+      // Testo sciolto accanto ad altri elementi (per esempio l'etichetta di un campo): si traduce da solo.
+      if (n.nodeType === 3) {
+        var k = norm(n.nodeValue), tt = k && I18N[k];
+        if (tt != null) n.nodeValue = n.nodeValue.replace(/^(\s*)[\s\S]*?(\s*)$/, function (m, a, b) { return a + tt + b; });
+        continue;
+      }
+      if (n.nodeType !== 1) continue;
+      var c = n;
+      ATTR.forEach(function (a) { var v = c.getAttribute(a), t = v && I18N[norm(v)]; if (t != null) c.setAttribute(a, t); });
+      if (SKIP[c.tagName]) continue;
+      var h = c.innerHTML;
+      if (h.length < 6000) { var t = I18N[norm(h)]; if (t != null) { c.innerHTML = t; continue; } }
+      walk(c);
+    }
+  })(document.documentElement);
+}
+</script>
 <style>
 /* Interruttore tema chiaro / scuro */
 .theme-tg { flex: none; margin-left: auto; width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); cursor: pointer; }
@@ -15,10 +54,14 @@ try { var tm = localStorage.getItem('theme'); if (tm === 'dark' || tm === 'light
 .theme-tg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .theme-tg svg { width: 18px; height: 18px; display: block; }
 .theme-tg.float { position: fixed; top: 14px; right: 16px; z-index: 50; }
+/* Pulsante della lingua, accanto a quello del tema */
+.lang-tg { font: 700 12px/1 var(--f-mono, ui-monospace, monospace); letter-spacing: .04em; }
+.topnav-in > .theme-tg.lang-tg { position: absolute; right: 62px; top: 50%; transform: translateY(-50%); }
+.lang-tg.float { position: fixed; top: 14px; right: 58px; z-index: 50; }
 /* Copyright in fondo a destra */
 .copy { margin: 0; padding: 0 20px 16px; text-align: right; font-size: 12px; color: var(--muted); }
 /* Nella barra in alto: sempre a destra, anche quando le schede vanno a capo o scorrono */
-.topnav .topnav-in { position: relative; padding-right: 66px; }
+.topnav .topnav-in { position: relative; padding-right: 108px; }
 .topnav-in > .theme-tg { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); }
 /* Schede che non ci stanno nella barra: frecce ai lati e sfumatura */
 .tabs-wrap { position: relative; display: flex; flex: 1 1 auto; min-width: 0; }
@@ -230,7 +273,7 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
       <button class="tab" role="tab" type="button" data-page="ciclo">Ciclo di esecuzione</button>
       <button class="tab" role="tab" type="button" data-page="salti">Salti condizionali</button>
     </div>
-  <button class="theme-tg" type="button" id="theme-tg" aria-label="Tema scuro" aria-pressed="false"></button>
+  <button class="theme-tg lang-tg" type="button" id="lang-tg"></button><button class="theme-tg" type="button" id="theme-tg" aria-label="Tema scuro" aria-pressed="false"></button>
   </div>
 </nav>
 
@@ -345,6 +388,54 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
     </div>
   </section>
 </main>
+<script>
+// Traduzioni inglesi dei testi fissi qui sopra (chiave: il testo italiano, come nell'HTML).
+Object.assign(I18N, {
+"Architettura degli elaboratori": "Computer architecture",
+"Architettura <i>degli elaboratori<\/i>": "Computer <i>architecture<\/i>",
+"Ciclo di esecuzione": "Execution cycle",
+"Salti condizionali": "Conditional jumps",
+"Un programma di 10 istruzioni. Per ogni istruzione la CPU ripete tre fasi: <b>fetch<\/b> (prende l'istruzione indicata dal PC), <b>decode<\/b> (la CU capisce che cosa fare) ed <b>execute<\/b> (la esegue). Le frecce mostrano dove si spostano i dati.": "A program of 10 instructions. For each instruction the CPU repeats three phases: <b>fetch<\/b> (it takes the instruction the PC points to), <b>decode<\/b> (the CU works out what to do) and <b>execute<\/b> (it carries it out). The arrows show where the data moves.",
+"Cambiando un dato il programma ricomincia.": "Changing a value restarts the program.",
+"copia il dato della cella x nel registro R": "copy the data in cell x into register R",
+"copia il registro R nella cella x": "copy register R into cell x",
+"R + S, il risultato va in R": "R + S, the result goes into R",
+"R − S, il risultato va in R": "R − S, the result goes into R",
+"R × S, il risultato va in R": "R × S, the result goes into R",
+"ferma il programma": "stop the program",
+"Che cosa ci sarà alla fine nelle celle 1110 e 1111?": "What will cells 1110 and 1111 hold at the end?",
+"Verifica": "Check",
+"Ricomincia": "Restart",
+"◀ Indietro": "◀ Back",
+"Avanti ▶": "Next ▶",
+"Le istruzioni vengono eseguite in ordine perché il PC aumenta di 1. Un <b>salto<\/b> cambia il PC: se la condizione è vera, l'esecuzione continua dall'istruzione indicata.": "The instructions run in order because the PC goes up by 1. A <b>jump<\/b> changes the PC: if the condition is true, execution continues from the instruction indicated.",
+"Qualsiasi": "Any",
+"Pari o dispari": "Even or odd",
+"Confronto": "Comparison",
+"Fasce di valori": "Value ranges",
+"Ciclo": "Loop",
+"Nuovo esercizio": "New exercise",
+"Esercizio": "Exercise",
+"Mostra le risposte": "Show the answers",
+"Esercizi": "Exercises",
+"Torna all'indice": "Back to the index",
+"Tema scuro": "Dark theme",
+"CPU e RAM": "CPU and RAM",
+"Registri e memoria": "Registers and memory",
+"Dati in RAM": "Data in RAM",
+"cella 1010": "cell 1010",
+"cella 1011": "cell 1011",
+"cella 1100": "cell 1100",
+"cella 1101": "cell 1101",
+"cella 1110": "cell 1110",
+"cella 1111": "cell 1111",
+"Le istruzioni": "The instructions",
+"Prova a prevedere": "Try to predict",
+"Tipo di esercizio": "Exercise type",
+"Domande": "Questions"
+});
+i18nApply();
+</script>
 
 <script>
 (function () {
@@ -603,15 +694,15 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
       trace = trace.concat([pc]);
       var act = {}; act['ram:' + pc] = 1;
       steps.push(Object.assign(f, { phase: 0, instr: trace.length, trace: trace,
-        arrows: [{ k: 'pc-ram', row: M.rowIdx(pc), label: fa(pc), note: 'Il PC indica la cella da leggere: ' + fa(pc) + '.' }, { k: 'ram-ir', row: M.rowIdx(pc), label: M.txt(ins), sets: ['ir'], note: 'L\'istruzione ' + M.txt(ins) + ' viene copiata dalla RAM nell\'IR.' }, { k: 'pc-inc', label: '+1', sets: ['pc'], note: 'Il PC aumenta di 1 e diventa ' + fa(pc + 1) + '.' }],
+        arrows: [{ k: 'pc-ram', row: M.rowIdx(pc), label: fa(pc), note: TX('Il PC indica la cella da leggere: ' + fa(pc) + '.', `The PC points to the cell to read: ${fa(pc)}.`) }, { k: 'ram-ir', row: M.rowIdx(pc), label: M.txt(ins), sets: ['ir'], note: TX('L\'istruzione ' + M.txt(ins) + ' viene copiata dalla RAM nell\'IR.', `The instruction ${M.txt(ins)} is copied from the RAM into the IR.`) }, { k: 'pc-inc', label: '+1', sets: ['pc'], note: TX('Il PC aumenta di 1 e diventa ' + fa(pc + 1) + '.', `The PC goes up by 1 and becomes ${fa(pc + 1)}.`) }],
         chg: { pc: 1, ir: 1 }, act: act,
-        desc: '<b>Fetch</b>. Il PC vale ' + fa(pc) + ': l\'istruzione nella cella ' + fa(pc) + ' (<span class="v">' + esc(M.txt(ins)) + '</span>) viene copiata nell\'IR e il PC aumenta di 1, diventando <span class="v">' + fa(pc + 1) + '</span>.' }));
+        desc: TX('<b>Fetch</b>. Il PC vale ' + fa(pc) + ': l\'istruzione nella cella ' + fa(pc) + ' (<span class="v">' + esc(M.txt(ins)) + '</span>) viene copiata nell\'IR e il PC aumenta di 1, diventando <span class="v">' + fa(pc + 1) + '</span>.', `<b>Fetch</b>. The PC is ${fa(pc)}: the instruction in cell ${fa(pc)} (<span class="v">${esc(M.txt(ins))}</span>) is copied into the IR and the PC goes up by 1, becoming <span class="v">${fa(pc + 1)}</span>.`) }));
       s = f;
       var mean = M.meaning(ins);
       if (M.decode) {
         var d = clone(s); d.cu = mean.cu;
         steps.push(Object.assign(d, { phase: 1, instr: trace.length, trace: trace, arrows: [{ k: 'ir-cu', sets: ['cu'] }], chg: { cu: 1 }, act: {},
-          desc: '<b>Decode</b>. La CU legge l\'istruzione nell\'IR e capisce che cosa fare: ' + mean.long + '.' }));
+          desc: TX('<b>Decode</b>. La CU legge l\'istruzione nell\'IR e capisce che cosa fare: ' + mean.long + '.', `<b>Decode</b>. The CU reads the instruction in the IR and works out what to do: ${mean.long}.`) }));
         s = d;
       }
       // EXECUTE
@@ -652,29 +743,29 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
   }
   var VERB = { ADD: ['sommare', 'somma'], SUB: ['sottrarre', 'sottrai'], MUL: ['moltiplicare', 'moltiplica'] };
   function meaningA(i) {
-    if (i.op === 'LOAD') return { long: 'copiare il dato della cella ' + bin4(i.a) + ' nel registro ' + i.r, cu: ['copia la cella ' + bin4(i.a), 'nel registro ' + i.r] };
-    if (i.op === 'STORE') return { long: 'copiare il contenuto di ' + i.r + ' nella cella ' + bin4(i.a), cu: ['copia il registro ' + i.r, 'nella cella ' + bin4(i.a)] };
-    if (i.op === 'HALT') return { long: 'fermare il programma', cu: ['ferma il programma'] };
-    var l = i.op === 'ADD' ? 'sommare ' + i.r + ' e ' + i.s : i.op === 'SUB' ? 'sottrarre ' + i.s + ' da ' + i.r : 'moltiplicare ' + i.r + ' per ' + i.s;
-    return { long: l + ' e mettere il risultato in ' + i.r, cu: [i.r + ' ' + SYM[i.op] + ' ' + i.s + ' nell\'ALU', 'risultato in ' + i.r] };
+    if (i.op === 'LOAD') return TX({ long: 'copiare il dato della cella ' + bin4(i.a) + ' nel registro ' + i.r, cu: ['copia la cella ' + bin4(i.a), 'nel registro ' + i.r] }, { long: `copy the data in cell ${bin4(i.a)} into register ${i.r}`, cu: [`copy cell ${bin4(i.a)}`, `into register ${i.r}`] });
+    if (i.op === 'STORE') return TX({ long: 'copiare il contenuto di ' + i.r + ' nella cella ' + bin4(i.a), cu: ['copia il registro ' + i.r, 'nella cella ' + bin4(i.a)] }, { long: `copy the content of ${i.r} into cell ${bin4(i.a)}`, cu: [`copy register ${i.r}`, `into cell ${bin4(i.a)}`] });
+    if (i.op === 'HALT') return TX({ long: 'fermare il programma', cu: ['ferma il programma'] }, { long: 'stop the program', cu: ['stop the program'] });
+    var l = TX(i.op === 'ADD' ? 'sommare ' + i.r + ' e ' + i.s : i.op === 'SUB' ? 'sottrarre ' + i.s + ' da ' + i.r : 'moltiplicare ' + i.r + ' per ' + i.s, i.op === 'ADD' ? `add ${i.r} and ${i.s}` : i.op === 'SUB' ? `subtract ${i.s} from ${i.r}` : `multiply ${i.r} by ${i.s}`);
+    return TX({ long: l + ' e mettere il risultato in ' + i.r, cu: [i.r + ' ' + SYM[i.op] + ' ' + i.s + ' nell\'ALU', 'risultato in ' + i.r] }, { long: `${l} and put the result in ${i.r}`, cu: [`${i.r} ${SYM[i.op]} ${i.s} in the ALU`, `result in ${i.r}`] });
   }
   function execCommon(i, s, M) {
     var fa = M.fa, chg = {}, act = {};
     if (i.op === 'LOAD') {
       var v = s.ram[i.a]; s.regs[i.r] = v; chg['reg:' + i.r] = 1; act['ram:' + i.a] = 1;
       return { arrows: [{ k: 'ram-reg', row: M.rowIdx(i.a), reg: i.r, label: show(v), sets: ['reg:' + i.r] }], chg: chg, act: act,
-        desc: 'Il dato della cella ' + fa(i.a) + ' (' + V(show(v)) + ') viene copiato nel registro ' + i.r + '.' };
+        desc: TX('Il dato della cella ' + fa(i.a) + ' (' + V(show(v)) + ') viene copiato nel registro ' + i.r + '.', `The data in cell ${fa(i.a)} (${V(show(v))}) is copied into register ${i.r}.`) };
     }
     if (i.op === 'STORE') {
       var w = s.regs[i.r]; s.ram[i.a] = w; chg['ram:' + i.a] = 1;
       return { arrows: [{ k: 'reg-ram', row: M.rowIdx(i.a), reg: i.r, label: show(w), sets: ['ram:' + i.a] }], chg: chg,
-        desc: 'Il contenuto di ' + i.r + ' (' + V(show(w)) + ') viene scritto nella cella ' + fa(i.a) + '.' };
+        desc: TX('Il contenuto di ' + i.r + ' (' + V(show(w)) + ') viene scritto nella cella ' + fa(i.a) + '.', `The content of ${i.r} (${V(show(w))}) is written into cell ${fa(i.a)}.`) };
     }
     if (SYM[i.op]) {
       var x = s.regs[i.r], y = s.regs[i.s], z = calc(i.op, x, y);
       s.regs[i.r] = z; s.alu = x + ' ' + SYM[i.op] + ' ' + y + ' = ' + z; chg['reg:' + i.r] = 1; chg.alu = 1;
-      return { arrows: [{ k: 'reg-alu', reg: i.r, side: 'L', label: x, note: i.r + ' (' + x + ') entra nell\'ALU.' }, { k: 'reg-alu', reg: i.s, side: 'R', label: y, sets: ['alu'], note: i.s + ' (' + y + ') entra nell\'ALU, che calcola ' + x + ' ' + SYM[i.op] + ' ' + y + ' = ' + z + '.' }, { k: 'alu-reg', reg: i.r, label: z, sets: ['reg:' + i.r], note: 'Il risultato ' + z + ' va in ' + i.r + '.' }], chg: chg,
-        desc: i.r + ' (' + x + ') e ' + i.s + ' (' + y + ') entrano nell\'ALU, che calcola ' + x + ' ' + SYM[i.op] + ' ' + y + ' = ' + V(z) + '. Il risultato va in ' + i.r + '.' };
+      return { arrows: [{ k: 'reg-alu', reg: i.r, side: 'L', label: x, note: TX(i.r + ' (' + x + ') entra nell\'ALU.', `${i.r} (${x}) goes into the ALU.`) }, { k: 'reg-alu', reg: i.s, side: 'R', label: y, sets: ['alu'], note: TX(i.s + ' (' + y + ') entra nell\'ALU, che calcola ' + x + ' ' + SYM[i.op] + ' ' + y + ' = ' + z + '.', `${i.s} (${y}) goes into the ALU, which computes ${x} ${SYM[i.op]} ${y} = ${z}.`) }, { k: 'alu-reg', reg: i.r, label: z, sets: ['reg:' + i.r], note: TX('Il risultato ' + z + ' va in ' + i.r + '.', `The result ${z} goes into ${i.r}.`) }], chg: chg,
+        desc: TX(i.r + ' (' + x + ') e ' + i.s + ' (' + y + ') entrano nell\'ALU, che calcola ' + x + ' ' + SYM[i.op] + ' ' + y + ' = ' + V(z) + '. Il risultato va in ' + i.r + '.', `${i.r} (${x}) and ${i.s} (${y}) go into the ALU, which computes ${x} ${SYM[i.op]} ${y} = ${V(z)}. The result goes into ${i.r}.`) };
     }
     return null;
   }
@@ -687,10 +778,10 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
     var M = {
       id: 'a', svg: $('a-svg'), regs: ['R0', 'R1', 'R2', 'R3'], start: 0, ram: ram, rows: rows, colX: 76, decode: true,
       fa: bin4, txt: txtA, meaning: meaningA, rowIdx: function (a) { return a; },
-      braces: [[0, 9, 'programma'], [10, 15, 'dati']],
-      initDesc: function () { return 'Situazione iniziale. Il PC vale ' + V('0000') + ': la prima istruzione da eseguire è nella cella 0000. I registri non contengono ancora nulla di utile (<b>####</b>).'; },
+      braces: TX([[0, 9, 'programma'], [10, 15, 'dati']], [[0, 9, TX('programma', 'program')], [10, 15, TX('dati', 'data')]]),
+      initDesc: function () { return TX('Situazione iniziale. Il PC vale ' + V('0000') + ': la prima istruzione da eseguire è nella cella 0000. I registri non contengono ancora nulla di utile (<b>####</b>).', `Starting point. The PC is ${V('0000')}: the first instruction to run is in cell 0000. The registers don't hold anything useful yet (<b>####</b>).`); },
       execute: function (i, s) {
-        if (i.op === 'HALT') return { arrows: [], chg: {}, halt: true, desc: 'La CPU si ferma: il programma è finito. Nella cella 1110 c\'è ' + V(s.ram[14]) + ', nella cella 1111 c\'è ' + V(s.ram[15]) + '.' };
+        if (i.op === 'HALT') return { arrows: [], chg: {}, halt: true, desc: TX('La CPU si ferma: il programma è finito. Nella cella 1110 c\'è ' + V(s.ram[14]) + ', nella cella 1111 c\'è ' + V(s.ram[15]) + '.', `The CPU stops: the program is over. Cell 1110 holds ${V(s.ram[14])}, cell 1111 holds ${V(s.ram[15])}.`) };
         return execCommon(i, s, M);
       }
     };
@@ -807,19 +898,19 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
     var N = l.ti !== undefined ? B(L[l.ti].n) : '';
     switch (l.op) {
       case 'DOTS': return '…';
-      case 'LOAD': return 'Carica dall\'indirizzo di memoria ' + B(l.a) + ' al registro ' + B(l.r);
-      case 'STORE': return 'Salva il contenuto di ' + B(l.r) + ' all\'indirizzo di memoria ' + B(l.a);
-      case 'SET': return 'Metti il valore ' + B(l.k) + ' nel registro ' + B(l.r);
-      case 'MOD2': return 'Dividi per due il contenuto di ' + B(l.r) + ' e metti il resto della divisione in ' + B(l.d);
-      case 'MULK': return 'Moltiplica il contenuto di ' + B(l.r) + ' per ' + B(l.k) + ' e metti il risultato in ' + B(l.d);
-      case 'ADDK': return 'Somma ' + B(l.k) + ' al contenuto di ' + B(l.r) + ' e metti il risultato in ' + B(l.d);
-      case 'SUBK': return 'Sottrai ' + B(l.k) + ' dal contenuto di ' + B(l.r) + ' e metti il risultato in ' + B(l.d);
-      case 'ADD': return 'Somma il contenuto di ' + B(l.r) + ' e di ' + B(l.s) + ' e metti il risultato in ' + B(l.d);
-      case 'SUB': return 'Sottrai il contenuto di ' + B(l.s) + ' da quello di ' + B(l.r) + ' e metti il risultato in ' + B(l.d);
-      case 'IFEQ': return '<u>Se</u> il contenuto di ' + B(l.r) + ' è ' + B(l.k) + ' vai all\'istruzione ' + N;
-      case 'IFLT': return '<u>Se</u> il contenuto di ' + B(l.r) + ' è minore di ' + B(l.k) + ' vai all\'istruzione ' + N;
-      case 'IFGT': return '<u>Se</u> il contenuto di ' + B(l.r) + ' è maggiore del contenuto di ' + B(l.s) + ' vai all\'istruzione ' + N;
-      case 'JMP': return 'Vai all\'istruzione ' + N;
+      case 'LOAD': return TX('Carica dall\'indirizzo di memoria ' + B(l.a) + ' al registro ' + B(l.r), `Load from memory address ${B(l.a)} into register ${B(l.r)}`);
+      case 'STORE': return TX('Salva il contenuto di ' + B(l.r) + ' all\'indirizzo di memoria ' + B(l.a), `Store the content of ${B(l.r)} at memory address ${B(l.a)}`);
+      case 'SET': return TX('Metti il valore ' + B(l.k) + ' nel registro ' + B(l.r), `Put the value ${B(l.k)} in register ${B(l.r)}`);
+      case 'MOD2': return TX('Dividi per due il contenuto di ' + B(l.r) + ' e metti il resto della divisione in ' + B(l.d), `Divide the content of ${B(l.r)} by two and put the remainder in ${B(l.d)}`);
+      case 'MULK': return TX('Moltiplica il contenuto di ' + B(l.r) + ' per ' + B(l.k) + ' e metti il risultato in ' + B(l.d), `Multiply the content of ${B(l.r)} by ${B(l.k)} and put the result in ${B(l.d)}`);
+      case 'ADDK': return TX('Somma ' + B(l.k) + ' al contenuto di ' + B(l.r) + ' e metti il risultato in ' + B(l.d), `Add ${B(l.k)} to the content of ${B(l.r)} and put the result in ${B(l.d)}`);
+      case 'SUBK': return TX('Sottrai ' + B(l.k) + ' dal contenuto di ' + B(l.r) + ' e metti il risultato in ' + B(l.d), `Subtract ${B(l.k)} from the content of ${B(l.r)} and put the result in ${B(l.d)}`);
+      case 'ADD': return TX('Somma il contenuto di ' + B(l.r) + ' e di ' + B(l.s) + ' e metti il risultato in ' + B(l.d), `Add the contents of ${B(l.r)} and ${B(l.s)} and put the result in ${B(l.d)}`);
+      case 'SUB': return TX('Sottrai il contenuto di ' + B(l.s) + ' da quello di ' + B(l.r) + ' e metti il risultato in ' + B(l.d), `Subtract the content of ${B(l.s)} from that of ${B(l.r)} and put the result in ${B(l.d)}`);
+      case 'IFEQ': return TX('<u>Se</u> il contenuto di ' + B(l.r) + ' è ' + B(l.k) + ' vai all\'istruzione ' + N, `<u>If</u> the content of ${B(l.r)} is ${B(l.k)} go to instruction ${N}`);
+      case 'IFLT': return TX('<u>Se</u> il contenuto di ' + B(l.r) + ' è minore di ' + B(l.k) + ' vai all\'istruzione ' + N, `<u>If</u> the content of ${B(l.r)} is less than ${B(l.k)} go to instruction ${N}`);
+      case 'IFGT': return TX('<u>Se</u> il contenuto di ' + B(l.r) + ' è maggiore del contenuto di ' + B(l.s) + ' vai all\'istruzione ' + N, `<u>If</u> the content of ${B(l.r)} is greater than the content of ${B(l.s)} go to instruction ${N}`);
+      case 'JMP': return TX('Vai all\'istruzione ' + N, `Go to instruction ${N}`);
     }
   }
 
@@ -828,27 +919,27 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
     ex.regs.forEach(function (r) { regs[r] = null; });
     ex.mem.forEach(function (m) { mem[m[0]] = m[1]; });
     steps.push({ regs: Object.assign({}, regs), mem: Object.assign({}, mem), pc: L[1].n, cur: -1, next: 1, jump: null, arrows: [], chg: {}, read: {}, trace: [],
-      desc: 'L\'esecuzione parte dall\'istruzione ' + V(L[1].n) + '.' });
+      desc: TX('L\'esecuzione parte dall\'istruzione ' + V(L[1].n) + '.', `Execution starts from instruction ${V(L[1].n)}.`) });
     while (L[pc].op !== 'DOTS' && guard++ < 300) {
       var l = L[pc], nx = pc + 1, chg = {}, read = {}, arrows = [], d = '', x, y, z, lab;
       switch (l.op) {
         case 'LOAD':
           x = mem[l.a]; regs[l.r] = x; chg['reg:' + l.r] = 1; read['mem:' + l.a] = 1;
           arrows.push({ k: 'mem-reg', a: l.a, r: l.r, label: x });
-          d = 'il valore all\'indirizzo ' + l.a + ' (' + V(x) + ') viene copiato in ' + l.r + '.'; break;
+          d = TX('il valore all\'indirizzo ' + l.a + ' (' + V(x) + ') viene copiato in ' + l.r + '.', `the value at address ${l.a} (${V(x)}) is copied into ${l.r}.`); break;
         case 'STORE':
           x = regs[l.r]; mem[l.a] = x; chg['mem:' + l.a] = 1; read['reg:' + l.r] = 1;
           arrows.push({ k: 'reg-mem', a: l.a, r: l.r, label: x });
-          d = 'il contenuto di ' + l.r + ' (' + V(x) + ') viene salvato all\'indirizzo ' + l.a + '.'; break;
+          d = TX('il contenuto di ' + l.r + ' (' + V(x) + ') viene salvato all\'indirizzo ' + l.a + '.', `the content of ${l.r} (${V(x)}) is stored at address ${l.a}.`); break;
         case 'SET':
           regs[l.r] = l.k; chg['reg:' + l.r] = 1; arrows.push({ k: 'const', r: l.r, label: l.k });
-          d = l.r + ' prende il valore ' + V(l.k) + '.'; break;
+          d = TX(l.r + ' prende il valore ' + V(l.k) + '.', `${l.r} takes the value ${V(l.k)}.`); break;
         case 'MOD2': case 'MULK': case 'ADDK': case 'SUBK':
           x = regs[l.r];
-          if (l.op === 'MOD2') { z = x % 2; lab = '÷ 2, resto'; d = x + ' diviso 2 fa ' + Math.floor(x / 2) + ' con resto ' + V(z) + ': il resto va in ' + l.d + '.'; }
-          else if (l.op === 'MULK') { z = x * l.k; lab = '× ' + l.k; d = x + ' × ' + l.k + ' = ' + V(z) + ', il risultato va in ' + l.d + '.'; }
-          else if (l.op === 'ADDK') { z = x + l.k; lab = '+ ' + l.k; d = x + ' + ' + l.k + ' = ' + V(z) + ', il risultato va in ' + l.d + '.'; }
-          else { z = x - l.k; lab = '− ' + l.k; d = x + ' − ' + l.k + ' = ' + V(z) + ', il risultato va in ' + l.d + '.'; }
+          if (l.op === 'MOD2') { z = x % 2; lab = TX('÷ 2, resto', '÷ 2, remainder'); d = TX(x + ' diviso 2 fa ' + Math.floor(x / 2) + ' con resto ' + V(z) + ': il resto va in ' + l.d + '.', `${x} divided by 2 is ${Math.floor(x / 2)} with remainder ${V(z)}: the remainder goes into ${l.d}.`); }
+          else if (l.op === 'MULK') { z = x * l.k; lab = '× ' + l.k; d = TX(x + ' × ' + l.k + ' = ' + V(z) + ', il risultato va in ' + l.d + '.', `${x} × ${l.k} = ${V(z)}, the result goes into ${l.d}.`); }
+          else if (l.op === 'ADDK') { z = x + l.k; lab = '+ ' + l.k; d = TX(x + ' + ' + l.k + ' = ' + V(z) + ', il risultato va in ' + l.d + '.', `${x} + ${l.k} = ${V(z)}, the result goes into ${l.d}.`); }
+          else { z = x - l.k; lab = '− ' + l.k; d = TX(x + ' − ' + l.k + ' = ' + V(z) + ', il risultato va in ' + l.d + '.', `${x} − ${l.k} = ${V(z)}, the result goes into ${l.d}.`); }
           regs[l.d] = z; chg['reg:' + l.d] = 1;
           arrows.push(l.d === l.r ? { k: 'self', r: l.r, label: lab } : { k: 'reg-reg', from: l.r, to: l.d, label: lab });
           break;
@@ -858,24 +949,25 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
           regs[l.d] = z; chg['reg:' + l.d] = 1;
           if (l.r !== l.d) arrows.push({ k: 'reg-reg', from: l.r, to: l.d, label: x });
           arrows.push({ k: 'reg-reg', from: l.s, to: l.d, label: sym + ' ' + y });
-          d = x + ' ' + sym + ' ' + y + ' = ' + V(z) + ', il risultato va in ' + l.d + '.'; break;
+          d = TX(x + ' ' + sym + ' ' + y + ' = ' + V(z) + ', il risultato va in ' + l.d + '.', `${x} ${sym} ${y} = ${V(z)}, the result goes into ${l.d}.`); break;
         case 'IFEQ': case 'IFLT': case 'IFGT':
           x = regs[l.r]; read['reg:' + l.r] = 1;
           var ok, cond;
-          if (l.op === 'IFGT') { y = regs[l.s]; read['reg:' + l.s] = 1; ok = x > y; cond = l.r + ' maggiore di ' + l.s; }
-          else if (l.op === 'IFLT') { ok = x < l.k; cond = l.r + ' minore di ' + l.k; }
-          else { ok = x === l.k; cond = l.r + ' uguale a ' + l.k; }
+          if (l.op === 'IFGT') { y = regs[l.s]; read['reg:' + l.s] = 1; ok = x > y; cond = TX(l.r + ' maggiore di ' + l.s, `${l.r} greater than ${l.s}`); }
+          else if (l.op === 'IFLT') { ok = x < l.k; cond = TX(l.r + ' minore di ' + l.k, `${l.r} less than ${l.k}`); }
+          else { ok = x === l.k; cond = TX(l.r + ' uguale a ' + l.k, `${l.r} equal to ${l.k}`); }
           if (ok) nx = l.ti;
-          d = l.r + ' vale ' + x + (l.op === 'IFGT' ? ' e ' + l.s + ' vale ' + y : '') + ', quindi la condizione «' + cond + '» è ' +
-            (ok ? '<b>vera</b>: si salta all\'istruzione ' + V(L[nx].n) + '.' : '<b>falsa</b>: si prosegue con l\'istruzione ' + V(L[nx].n) + '.');
+          d = TX(l.r + ' vale ' + x + (l.op === 'IFGT' ? ' e ' + l.s + ' vale ' + y : '') + ', quindi la condizione «' + cond + '» è ' +
+            (ok ? '<b>vera</b>: si salta all\'istruzione ' + V(L[nx].n) + '.' : '<b>falsa</b>: si prosegue con l\'istruzione ' + V(L[nx].n) + '.'), `${l.r} is ${x}${l.op === 'IFGT' ? ` and ${l.s} is ${y}` : ''}, so the condition “${cond}” is ` +
+            (ok ? `<b>true</b>: jump to instruction ${V(L[nx].n)}.` : `<b>false</b>: carry on with instruction ${V(L[nx].n)}.`));
           break;
         case 'JMP':
-          nx = l.ti; d = 'salto senza condizione all\'istruzione ' + V(L[nx].n) + '.'; break;
+          nx = l.ti; d = TX('salto senza condizione all\'istruzione ' + V(L[nx].n) + '.', `unconditional jump to instruction ${V(L[nx].n)}.`); break;
       }
       if (nx !== pc + 1) chg.pc = 1;
       trace.push(l.n);
       var end = L[nx].op === 'DOTS';
-      d = '<b>Istruzione ' + l.n + '</b>: ' + d + (end ? ' Si arriva alla riga ' + L[nx].n + ' (…): l\'esercizio finisce qui.' : '');
+      d = TX('<b>Istruzione ' + l.n + '</b>: ' + d + (end ? ' Si arriva alla riga ' + L[nx].n + ' (…): l\'esercizio finisce qui.' : ''), `<b>Instruction ${l.n}</b>: ${d}${end ? ` We reach line ${L[nx].n} (…): the exercise ends here.` : ''}`);
       steps.push({ regs: Object.assign({}, regs), mem: Object.assign({}, mem), pc: L[nx].n, cur: pc, next: nx, jump: nx !== pc + 1 ? [pc, nx] : null,
         arrows: arrows, chg: chg, read: read, trace: trace.slice(), desc: d, end: end });
       pc = nx;
@@ -914,7 +1006,7 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
     svg.setAttribute('viewBox', '0 0 ' + SG.W + ' ' + H);
     var pend = animate && !REDUCED && st.arrows.length;
     var h = '<defs><marker id="b-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="m-head"/></marker></defs>';
-    h += '<text class="m-title" x="' + SG.rx + '" y="24">Registri</text><text class="m-title" x="' + SG.mx + '" y="24">RAM</text>';
+    h += TX('<text class="m-title" x="' + SG.rx + '" y="24">Registri</text><text class="m-title" x="' + SG.mx + '" y="24">RAM</text>', `<text class="m-title" x="${SG.rx}" y="24">Registers</text><text class="m-title" x="${SG.mx}" y="24">RAM</text>`);
     var pv = pend ? st._prev : null;
     function sv(v) { return v === null || v === undefined ? '—' : String(v); }
     function box(x, w, i, key, lbl, v, o) {
@@ -956,24 +1048,25 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
       BX.ex = buildEx(BX.kind); BX.steps = runEx(BX.ex); BX.i = 0;
       var ex = BX.ex, L = ex.lines, fin = BX.steps[BX.steps.length - 1];
       var known = ex.mem.filter(function (m) { return m[1] !== null; });
-      $('b-intro').innerHTML = 'In memoria ' + known.map(function (m) { return 'all\'indirizzo ' + B(m[0]) + ' c\'è il valore ' + B(m[1]); }).join(' e ') + '.';
+      $('b-intro').innerHTML = TX('In memoria ' + known.map(function (m) { return 'all\'indirizzo ' + B(m[0]) + ' c\'è il valore ' + B(m[1]); }).join(' e ') + '.', 'In memory, ' + known.map(function (m) { return 'address ' + B(m[0]) + ' holds the value ' + B(m[1]); }).join(' and ') + '.');
       $('b-lines').innerHTML = L.map(function (l, i) {
         return '<div class="line" data-i="' + i + '"><span class="ln">' + l.n + ':</span><span class="tx">' + lineText(l, L) + '</span><span class="tag"></span></div>';
       }).join('');
       var cell = 'all\'indirizzo di memoria ' + B(ex.ask.mem), reg = 'nel registro ' + B(ex.ask.reg);
       var cntLine = L.filter(function (l) { return l.cnt; })[0];
       var execd = fin.trace, skipped = L.filter(function (l) { return l.op !== 'DOTS' && execd.indexOf(l.n) < 0; }).map(function (l) { return l.n; });
-      var qs = ['Che cosa c\'è ' + cell + ' alla fine?', 'Che cosa c\'è ' + reg + ' alla fine?', 'In che ordine vengono eseguite le istruzioni?' + (skipped.length ? ' Quali non vengono mai eseguite?' : '')];
-      var an = ['All\'indirizzo di memoria ' + ex.ask.mem + ' c\'è ' + B(fin.mem[ex.ask.mem]) + '.', 'Nel registro ' + ex.ask.reg + ' c\'è ' + B(fin.regs[ex.ask.reg]) + '.',
-        'Ordine: ' + execd.join(' → ') + '.' + (skipped.length ? ' Mai eseguite: ' + skipped.join(', ') + '.' : '')];
+      var qs = TX(['Che cosa c\'è ' + cell + ' alla fine?', 'Che cosa c\'è ' + reg + ' alla fine?', 'In che ordine vengono eseguite le istruzioni?' + (skipped.length ? ' Quali non vengono mai eseguite?' : '')], [`What is at memory address ${B(ex.ask.mem)} at the end?`, `What is in register ${B(ex.ask.reg)} at the end?`, 'In what order are the instructions executed?' + (skipped.length ? ' Which ones are never executed?' : '')]);
+      var an = TX(['All\'indirizzo di memoria ' + ex.ask.mem + ' c\'è ' + B(fin.mem[ex.ask.mem]) + '.', 'Nel registro ' + ex.ask.reg + ' c\'è ' + B(fin.regs[ex.ask.reg]) + '.',
+        'Ordine: ' + execd.join(' → ') + '.' + (skipped.length ? ' Mai eseguite: ' + skipped.join(', ') + '.' : '')], [`Memory address ${ex.ask.mem} holds ${B(fin.mem[ex.ask.mem])}.`, `Register ${ex.ask.reg} holds ${B(fin.regs[ex.ask.reg])}.`,
+        'Order: ' + execd.join(' → ') + '.' + (skipped.length ? ' Never executed: ' + skipped.join(', ') + '.' : '')]);
       if (cntLine) {
         var c = execd.filter(function (n) { return n === cntLine.n; }).length;
-        qs.push('Quante volte viene eseguita l\'istruzione ' + B(cntLine.n) + '?');
-        an.push('L\'istruzione ' + cntLine.n + ' viene eseguita ' + B(c) + (c === 1 ? ' volta.' : ' volte.'));
+        qs.push(TX('Quante volte viene eseguita l\'istruzione ' + B(cntLine.n) + '?', `How many times is instruction ${B(cntLine.n)} executed?`));
+        an.push(TX('L\'istruzione ' + cntLine.n + ' viene eseguita ' + B(c) + (c === 1 ? ' volta.' : ' volte.'), `Instruction ${cntLine.n} is executed ${B(c)} ${c === 1 ? 'time' : 'times'}.`));
       }
       $('b-qs').innerHTML = qs.map(function (q) { return '<li>' + q + '</li>'; }).join('');
       $('b-answers').innerHTML = an.map(function (q) { return '<li>' + q + '</li>'; }).join('');
-      $('b-answers').hidden = true; $('b-ans').textContent = 'Mostra le risposte'; $('b-ans').setAttribute('aria-expanded', 'false');
+      $('b-answers').hidden = true; $('b-ans').textContent = TX('Mostra le risposte', 'Show the answers'); $('b-ans').setAttribute('aria-expanded', 'false');
       RB.render(false);
     },
     render: function (animate) {
@@ -984,15 +1077,15 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
         var l = L[i], skip = fin && l.op !== 'DOTS' && st.trace.indexOf(l.n) < 0;
         el.classList.toggle('cur', i === st.cur);
         el.classList.toggle('skip', !!skip);
-        el.querySelector('.tag').textContent = skip ? 'mai eseguita' : '';
+        el.querySelector('.tag').textContent = skip ? TX('mai eseguita', 'never executed') : '';
       });
       drawGutter();
       drawState(st, animate);
       $('b-desc').innerHTML = st.desc;
-      $('b-count').textContent = BX.i === 0 ? 'Inizio' : 'Passo ' + BX.i + ' di ' + (BX.steps.length - 1);
+      $('b-count').textContent = TX(BX.i === 0 ? 'Inizio' : 'Passo ' + BX.i + ' di ' + (BX.steps.length - 1), BX.i === 0 ? 'Start' : `Step ${BX.i} of ${BX.steps.length - 1}`);
       $('b-prev').disabled = BX.i === 0; $('b-reset').disabled = BX.i === 0; $('b-next').disabled = BX.i === BX.steps.length - 1;
-      var tr = st.trace, h = '<span>Istruzioni eseguite:</span>';
-      if (!tr.length) h += '<span>nessuna</span>';
+      var tr = st.trace, h = TX('<span>Istruzioni eseguite:</span>', '<span>Instructions executed:</span>');
+      if (!tr.length) h += TX('<span>nessuna</span>', '<span>none</span>');
       tr.forEach(function (n, k) { if (k) h += '<span class="ar">→</span>'; h += '<span class="t' + (k === tr.length - 1 ? ' now' : '') + '">' + n + '</span>'; });
       $('b-trace').innerHTML = h;
       void execd;
@@ -1015,7 +1108,7 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
   pressKind();
   $('b-ans').addEventListener('click', function () {
     var a = $('b-answers'), open = a.hidden; a.hidden = !open;
-    this.textContent = open ? 'Nascondi le risposte' : 'Mostra le risposte'; this.setAttribute('aria-expanded', String(open));
+    this.textContent = TX(open ? 'Nascondi le risposte' : 'Mostra le risposte', open ? 'Hide the answers' : 'Show the answers'); this.setAttribute('aria-expanded', String(open));
   });
   var rzT = 0;
   window.addEventListener('resize', function () { clearTimeout(rzT); rzT = setTimeout(function () { if (BX.ex) drawGutter(); }, 100); });
@@ -1037,7 +1130,7 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
       $(p + '-subs').innerHTML = notes;
       var spans = $(p + '-phases').children;
       for (var k = 0; k < spans.length; k++) spans[k].classList.toggle('on', k === st.phase);
-      $(p + '-count').textContent = st.phase < 0 ? 'Inizio' : 'Istruzione ' + st.instr + ' di ' + M.instrCount + (nSub(R.S) > 1 ? ' · passo ' + (R.j + 1) + ' di ' + nSub(R.S) : '') + '\u00a0';
+      $(p + '-count').textContent = TX(st.phase < 0 ? 'Inizio' : 'Istruzione ' + st.instr + ' di ' + M.instrCount + (nSub(R.S) > 1 ? ' · passo ' + (R.j + 1) + ' di ' + nSub(R.S) : '') + '\u00a0', st.phase < 0 ? 'Start' : `Instruction ${st.instr} of ${M.instrCount}` + (nSub(R.S) > 1 ? ` · step ${R.j + 1} of ${nSub(R.S)}` : '') + '\u00a0');
       var atStart = R.S === 0 && R.j === 0, atEnd = R.S === last() && R.j === nSub(R.S) - 1;
       $(p + '-first').disabled = atStart; $(p + '-prev').disabled = atStart; $(p + '-next').disabled = atEnd;
     };
@@ -1085,10 +1178,10 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
   // verifiche
   $('a-check').addEventListener('click', function () {
     var g0 = parseInt($('a-g0').value, 10), g1 = parseInt($('a-g1').value, 10), e = RA.M.expect, fb = $('a-fb');
-    if (isNaN(g0) || isNaN(g1)) { fb.className = 'fb'; fb.textContent = 'Scrivi un valore per entrambe le celle.'; return; }
+    if (isNaN(g0) || isNaN(g1)) { fb.className = 'fb'; fb.textContent = TX('Scrivi un valore per entrambe le celle.', 'Enter a value for both cells.'); return; }
     var ok0 = g0 === e[0], ok1 = g1 === e[1];
-    if (ok0 && ok1) { fb.className = 'fb ok'; fb.textContent = 'Giusto: 1110 = ' + e[0] + ' e 1111 = ' + e[1] + '.'; }
-    else { fb.className = 'fb no'; fb.textContent = ok0 ? 'La cella 1110 è giusta, la 1111 no. Segui l\'esecuzione per controllare.' : ok1 ? 'La cella 1111 è giusta, la 1110 no. Segui l\'esecuzione per controllare.' : 'Non ancora. Segui l\'esecuzione passo per passo per controllare.'; }
+    if (ok0 && ok1) { fb.className = 'fb ok'; fb.textContent = TX('Giusto: 1110 = ' + e[0] + ' e 1111 = ' + e[1] + '.', `Correct: 1110 = ${e[0]} and 1111 = ${e[1]}.`); }
+    else { fb.className = 'fb no'; fb.textContent = TX(ok0 ? 'La cella 1110 è giusta, la 1111 no. Segui l\'esecuzione per controllare.' : ok1 ? 'La cella 1111 è giusta, la 1110 no. Segui l\'esecuzione per controllare.' : 'Non ancora. Segui l\'esecuzione passo per passo per controllare.', ok0 ? 'Cell 1110 is right, 1111 isn\'t. Follow the execution to check.' : ok1 ? 'Cell 1111 is right, 1110 isn\'t. Follow the execution to check.' : 'Not yet. Follow the execution step by step to check.'); }
   });
   // tastiera: frecce sinistra e destra
   document.addEventListener('keydown', function (e) {
@@ -1131,8 +1224,8 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
     var d = dark();
     b.innerHTML = d ? SUN : MOON;
     b.setAttribute('aria-pressed', d ? 'true' : 'false');
-    b.setAttribute('aria-label', 'Tema scuro');
-    b.title = d ? 'Passa al tema chiaro' : 'Passa al tema scuro';
+    b.setAttribute('aria-label', TX('Tema scuro', 'Dark theme'));
+    b.title = d ? TX('Passa al tema chiaro', 'Switch to light theme') : TX('Passa al tema scuro', 'Switch to dark theme');
   }
   b.addEventListener('click', function () {
     var t = dark() ? 'light' : 'dark';
@@ -1162,7 +1255,7 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
     w.appendChild(b);
     return b;
   }
-  var L = arrow('l', 'Schede precedenti', -1), Rr = arrow('r', 'Schede successive', 1);
+  var L = arrow('l', TX('Schede precedenti', 'Previous tabs'), -1), Rr = arrow('r', TX('Schede successive', 'Next tabs'), 1);
   function update() {
     var max = t.scrollWidth - t.clientWidth;
     L.classList.toggle('on', t.scrollLeft > 2);
@@ -1190,3 +1283,20 @@ h2 { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; text-trans
 })();
 </script>
 <footer class="copy">© 2026 Enrico Mensa</footer>
+<script>
+// Pulsante della lingua: mostra la lingua in cui si passa; la scelta resta salvata e la pagina si ricarica (stessa scheda).
+(function () {
+  var b = document.getElementById('lang-tg');
+  if (!b) return;
+  var to = LANG === 'en' ? 'it' : 'en';
+  b.textContent = to.toUpperCase();
+  b.title = LANG === 'en' ? 'Passa all\'italiano' : 'Switch to English';
+  b.setAttribute('aria-label', b.title);
+  b.setAttribute('lang', to);
+  b.addEventListener('click', function () {
+    try { localStorage.setItem('lang', to); } catch (e) {}
+    var s = location.search.replace(/([?&])lang=(it|en)(&|$)/, function (m, a, x, c) { return c ? a : ''; }).replace(/[?&]$/, '');
+    if (s !== location.search) location.search = s; else location.reload();
+  });
+})();
+</script>
