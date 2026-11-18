@@ -444,6 +444,7 @@ body { background: var(--paper); color: var(--ink); font-family: var(--f-body); 
 #p-codifica .atable { width: 100%; border-collapse: collapse; font-size: 14px; }
 #p-codifica .atable th { position: sticky; top: 0; background: var(--card); text-align: left; font-family: var(--f-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); padding: 8px 18px; border-bottom: 1px solid var(--line); }
 #p-codifica .atable td { padding: 6px 18px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+#p-codifica .atable .i { font-family: var(--f-mono); font-size: 13px; color: var(--muted); text-align: right; width: 3em; padding-right: 0; font-variant-numeric: tabular-nums; }
 #p-codifica .atable td.b { font-family: var(--f-mono); font-size: 16px; letter-spacing: 0.04em; white-space: nowrap; color: var(--muted); }
 #p-codifica .atable td.b mark { background: var(--accent-soft); color: var(--accent); font-weight: 600; border-radius: 2px; }
 #p-codifica .atable td.c { font-family: var(--f-mono); font-size: 20px; font-weight: 500; width: 5em; }
@@ -895,7 +896,7 @@ body { background: var(--paper); color: var(--ink); font-family: var(--f-body); 
     </div>
     <div class="tablewrap">
       <table class="atable">
-        <thead><tr><th scope="col">Binario</th><th scope="col">Carattere</th><th scope="col">Descrizione</th></tr></thead>
+        <thead><tr><th scope="col" class="i">#</th><th scope="col">Binario</th><th scope="col">Carattere</th><th scope="col">Descrizione</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table>
       <div class="noresult" id="tnone" hidden></div>
@@ -1651,7 +1652,7 @@ i18nApply();
       n++;
       var bcell = mark ? '<mark>' + bs.slice(0, mark) + '</mark>' + bs.slice(mark) : bs;
       var exact = (tby === 'bits' && qb.length === 8) || (tby === 'char' && q.length === 1);
-      html += '<tr class="' + info.k + (exact ? ' hit' : '') + '"><td class="b">' + bcell + '</td><td class="c">' + esc(info.ch) + '</td><td class="n">' + esc(info.name) + '</td></tr>';
+      html += '<tr class="' + info.k + (exact ? ' hit' : '') + '"><td class="i">' + b + '</td><td class="b">' + bcell + '</td><td class="c">' + esc(info.ch) + '</td><td class="n">' + esc(info.name) + '</td></tr>';
     }
     $('tbody').innerHTML = html;
     var none = $('tnone');
